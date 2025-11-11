@@ -1,0 +1,8 @@
+Django==4.2.7
+python-dotenv==1.0.0
+psycopg[binary]
+cryptography==41.0.7
+django-cryptography==1.1
+bcrypt==4.0.1
+django-axes==5.40.0
+pillow

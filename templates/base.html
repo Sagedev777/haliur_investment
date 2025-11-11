@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Haliur Investments{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header>
+        <h1>Haliur Investments</h1>
+        <nav>
+            <a href="{% url 'dashboard' %}">Dashboard</a> |
+            <a href="{% url 'account_list' %}">Accounts</a> |
+            <a href="{% url 'loans:loan_products_list' %}">Loans</a> |
+           <!-- <a href="{% url 'customers:customer_list' %}">Customers</a> |-->
+            <a href="{% url 'payments_list' %}">Payments</a> |
+            <a href="{% url 'reports:report_list' %}">Reports</a> |
+            <a href="{% url 'logout' %}">Logout</a>
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Haliur Investments</p>
+    </footer>
+</body>
+</html>

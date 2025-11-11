@@ -1,0 +1,42 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const accountTypeField = document.querySelector('#id_account_type');
+    const jointFieldsSection = document.querySelector('.field-person2_first_name').closest('fieldset');
+    
+    function toggleJointAccountFields() {
+        if (accountTypeField.value === 'JOINT') {
+            jointFieldsSection.style.display = 'block';
+        } else {
+            jointFieldsSection.style.display = 'none';
+            // Clear joint account fields when hidden
+            document.querySelector('#id_person2_first_name').value = '';
+            document.querySelector('#id_person2_last_name').value = '';
+            document.querySelector('#id_person2_contact').value = '';
+            document.querySelector('#id_person2_address').value = '';
+            document.querySelector('#id_person2_area_code').value = '';
+            document.querySelector('#id_person2_next_of_kin').value = '';
+            document.querySelector('#id_person2_nin').value = '';
+            document.querySelector('#id_person2_gender').value = '';
+        }
+    }
+    
+    // Initial toggle on page load
+    toggleJointAccountFields();
+    
+    // Toggle when account type changes
+    accountTypeField.addEventListener('change', toggleJointAccountFields);
+});
+</script>
+
+<style>
+/* Style to make the toggle more visible */
+fieldset.collapse {
+    transition: all 0.3s ease;
+}
+</style>
+{% endblock %}

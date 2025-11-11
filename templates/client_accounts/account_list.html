@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Accounts{% endblock %}
+{% block content %}
+<h2>Accounts</h2>
+<a href="{% url 'account_create' %}">Create New Account</a>
+<table>
+    <tr>
+        <th>Account No.</th>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Balance</th>
+        <th>Actions</th>
+    </tr>
+    {% for account in accounts %}
+    <tr>
+        <td>{{ account.account_number }}</td>
+        <td>{{ account.full_account_name }}</td>
+        <td>{{ account.get_account_type_display }}</td>
+        <td>{{ account.savings_balance }}</td>
+        <td>
+            <a href="{% url 'account_detail' account.pk %}">View</a> |
+            <a href="{% url 'account_edit' account.pk %}">Edit</a> |
+            <a href="{% url 'account_delete' account.pk %}">Delete</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

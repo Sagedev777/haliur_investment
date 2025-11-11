@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Loan Product Form{% endblock %}
+{% block content %}
+<h2>{% if product %}Edit{% else %}Add{% endif %} Loan Product</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">{% if product %}Update{% else %}Save{% endif %}</button>
+</form>
+{% endblock %}
