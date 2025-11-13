@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Savings Report</h2>
+<table border="1">
+  <tr><th>Client</th><th>Balance</th></tr>
+  {% for acc in accounts %}
+  <tr><td>{{ acc.client }}</td><td>{{ acc.savings_balance }}</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

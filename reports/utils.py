@@ -7,6 +7,8 @@ from django.utils import timezone
 import matplotlib.pyplot as plt
 import io
 from django.core.files.base import ContentFile
+from django.db import models  
+
 
 def generate_periodic_report(user=None, period='DAILY'):
     today = timezone.now().date()

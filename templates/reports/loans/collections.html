@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Loan Collections</h2>
+<table border="1">
+  <tr><th>Client</th><th>Payment</th><th>Date</th></tr>
+  {% for p in payments %}
+  <tr><td>{{ p.loan.client }}</td><td>{{ p.amount }}</td><td>{{ p.payment_date }}</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

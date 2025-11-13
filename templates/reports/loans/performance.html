@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Loan Performance Report</h2>
+<table border="1">
+  <tr><th>Client</th><th>Amount</th><th>Status</th></tr>
+  {% for loan in loans %}
+  <tr>
+    <td>{{ loan.client }}</td>
+    <td>{{ loan.loan_amount }}</td>
+    <td>{{ loan.status }}</td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="3">No loans found.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

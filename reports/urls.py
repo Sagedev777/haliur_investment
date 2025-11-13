@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+app_name = 'reports'
 
 urlpatterns = [
     # Dashboard and Overview URLs
@@ -41,4 +42,9 @@ urlpatterns = [
     path('generate/daily/', views.generate_daily_report, name='generate_daily_report'),
     path('generate/weekly/', views.generate_weekly_report, name='generate_weekly_report'),
     path('generate/monthly/', views.generate_monthly_report, name='generate_monthly_report'),
+    
+    # Financial PDF exports
+    path('export/financial/pdf/', views.export_financial_pdf, name='export_financial_pdf'),
+    path('export/summary/pdf/', views.export_summary_pdf, name='export_summary_pdf'),
+    path('export/profit_loss/pdf/', views.export_profit_loss_pdf, name='export_profit_loss_pdf'),
 ]

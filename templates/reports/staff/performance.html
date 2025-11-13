@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Staff Performance Report</h2>
+<table border="1">
+  <tr><th>Date</th><th>Report Type</th></tr>
+  {% for r in reports %}
+  <tr><td>{{ r.report_date }}</td><td>{{ r.get_report_type_display }}</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

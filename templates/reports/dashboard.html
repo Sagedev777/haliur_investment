@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Reports Dashboard{% endblock %}
+{% block content %}
+<h2>Reports Dashboard</h2>
+
+<ul>
+  <li><a href="{% url 'reports:loan_performance_report' %}">Loan Performance</a></li>
+  <li><a href="{% url 'reports:savings_report' %}">Savings Overview</a></li>
+  <li><a href="{% url 'reports:financial_report' %}">Financial Report</a></li>
+  <li><a href="{% url 'reports:staff_performance_report' %}">Staff Performance</a></li>
+</ul>
+
+{% if reports %}
+  <h3>System Reports</h3>
+  <table border="1" cellpadding="6" cellspacing="0">
+    <tr>
+      <th>Date</th>
+      <th>Type</th>
+      <th>Total Accounts</th>
+      <th>Total Savings</th>
+      <th>Total Loans</th>
+    </tr>
+    {% for report in reports %}
+    <tr>
+      <td>{{ report.report_date }}</td>
+      <td>{{ report.get_report_type_display }}</td>
+      <td>{{ report.total_accounts }}</td>
+      <td>{{ report.total_savings }}</td>
+      <td>{{ report.total_loans_disbursed }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+{% else %}
+  <p>No reports available yet.</p>
+{% endif %}
+{% endblock %}

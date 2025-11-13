@@ -5,6 +5,10 @@ from client_accounts.models import ClientAccount, SavingsTransaction
 from loans.models import LoanApplication, LoanPayment
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.pdfgen import canvas
+from django.http import FileResponse
+from io import BytesIO
 import csv
 from .utils import generate_periodic_report
 
@@ -162,3 +166,129 @@ def generate_weekly_report(request):
 def generate_monthly_report(request):
     generate_periodic_report(user=request.user, period='MONTHLY')
     return redirect('reports_dashboard')
+
+
+
+@login_required
+def export_financial_pdf(request):
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=landscape(A4))
+    p.setTitle("Financial Report")
+
+    p.setFont("Helvetica-Bold", 18)
+    p.drawCentredString(420, 560, "Haliur Investments - Financial Report")
+
+    p.setFont("Helvetica", 12)
+    y = 520
+    p.drawString(50, y, "Report Type")
+    p.drawString(180, y, "Date")
+    p.drawString(280, y, "Total Accounts")
+    p.drawString(420, y, "Total Savings (UGX)")
+    p.drawString(580, y, "Loans Disbursed (UGX)")
+    p.drawString(760, y, "Interest Earned (UGX)")
+    y -= 20
+
+    reports = SystemReport.objects.order_by('-report_date')
+    for report in reports:
+        if y <= 60:  # Start new page when reaching the bottom
+            p.showPage()
+            y = 550
+        p.drawString(50, y, str(report.get_report_type_display()))
+        p.drawString(180, y, report.report_date.strftime("%b %d, %Y"))
+        p.drawString(280, y, str(report.total_accounts))
+        p.drawString(420, y, f"{report.total_savings:,.2f}")
+        p.drawString(580, y, f"{report.total_loans_disbursed:,.2f}")
+        p.drawString(760, y, f"{report.total_interest_earned:,.2f}")
+        y -= 20
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename="financial_report.pdf")
+
+
+@login_required
+def export_summary_pdf(request):
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    p.setTitle("Financial Summary")
+
+    p.setFont("Helvetica-Bold", 18)
+    p.drawCentredString(300, 800, "Haliur Investments - Financial Summary")
+
+    reports = SystemReport.objects.order_by('-report_date')
+    if reports.exists():
+        latest = reports.first()
+        y = 750
+        p.setFont("Helvetica", 12)
+        summary = [
+            ("Report Date:", latest.report_date.strftime("%B %d, %Y")),
+            ("Total Accounts:", latest.total_accounts),
+            ("Active Accounts:", latest.active_accounts),
+            ("Total Savings (UGX):", f"{latest.total_savings:,.2f}"),
+            ("Total Loans Disbursed (UGX):", f"{latest.total_loans_disbursed:,.2f}"),
+            ("Interest Earned (UGX):", f"{latest.total_interest_earned:,.2f}"),
+            ("Defaulted Loans:", latest.total_loans_defaulted),
+        ]
+
+        for label, value in summary:
+            p.drawString(80, y, f"{label}")
+            p.drawRightString(500, y, str(value))
+            y -= 25
+    else:
+        p.drawCentredString(300, 700, "No summary data available.")
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename="financial_summary.pdf")
+
+
+@login_required
+def export_profit_loss_pdf(request):
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=landscape(A4))
+    p.setTitle("Profit and Loss Report")
+
+    p.setFont("Helvetica-Bold", 18)
+    p.drawCentredString(420, 560, "Haliur Investments - Profit & Loss Report")
+
+    p.setFont("Helvetica", 12)
+    y = 520
+    p.drawString(60, y, "Date")
+    p.drawString(200, y, "Total Income (UGX)")
+    p.drawString(400, y, "Total Expenses (UGX)")
+    p.drawString(600, y, "Net Profit (UGX)")
+    y -= 20
+
+    reports = SystemReport.objects.order_by('-report_date')
+    for report in reports:
+        total_income = float(report.total_interest_earned or 0) + float(getattr(report, 'other_income', 0))
+        total_expenses = float(getattr(report, 'total_expenses', 0))
+        net_profit = total_income - total_expenses
+
+        if y <= 60:
+            p.showPage()
+            y = 550
+        p.drawString(60, y, report.report_date.strftime("%b %d, %Y"))
+        p.drawString(200, y, f"{total_income:,.2f}")
+        p.drawString(400, y, f"{total_expenses:,.2f}")
+        p.drawString(600, y, f"{net_profit:,.2f}")
+        y -= 20
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename="profit_loss_report.pdf")
+
+# Financial Summary Report
+@login_required
+def financial_summary(request):
+    reports = SystemReport.objects.order_by('-report_date')
+    return render(request, 'reports/financial/summary.html', {'reports': reports})
+
+# Profit & Loss Report
+@login_required
+def profit_loss_report(request):
+    reports = SystemReport.objects.order_by('-report_date')
+    return render(request, 'reports/financial/profit_loss.html', {'reports': reports})
