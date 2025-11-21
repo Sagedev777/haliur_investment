@@ -1,23 +1,32 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
-from .models import SystemReport, ActivityLog
-from client_accounts.models import ClientAccount, SavingsTransaction
-from loans.models import LoanApplication, LoanPayment
+from django.shortcuts import render, redirect
+from django.http import HttpResponse, FileResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.pdfgen import canvas
-from django.http import FileResponse
 from io import BytesIO
 import csv
-from .utils import generate_periodic_report
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.pdfgen import canvas
+from reportlab.platypus import Image
 
+from .models import SystemReport, ActivityLog
+from .utils import generate_periodic_report
+from client_accounts.models import ClientAccount, SavingsTransaction
+from loans.models import LoanApplication, LoanPayment
+
+from io import BytesIO
+from django.http import FileResponse
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from django.contrib.auth.decorators import login_required
+from .models import SystemReport
+
+# ------------------- Dashboard -------------------
 @login_required
 def owner_monitoring(request):
     reports = SystemReport.objects.order_by('-report_date')
     return render(request, 'reports/dashboard.html', {'reports': reports})
 
-# ----- Loan Reports -----
+# ------------------- Loan Reports -------------------
 @login_required
 def loan_performance_report(request):
     loans = LoanApplication.objects.all()
@@ -38,7 +47,7 @@ def loan_collections_report(request):
     payments = LoanPayment.objects.all()
     return render(request, 'reports/loans/collections.html', {'payments': payments})
 
-# ----- Savings Reports -----
+# ------------------- Savings Reports -------------------
 @login_required
 def savings_report(request):
     accounts = ClientAccount.objects.all()
@@ -59,7 +68,7 @@ def top_savers_report(request):
     accounts = ClientAccount.objects.order_by('-savings_balance')[:10]
     return render(request, 'reports/savings/top_savers.html', {'accounts': accounts})
 
-# ----- Staff Reports -----
+# ------------------- Staff Reports -------------------
 @login_required
 def staff_performance_report(request):
     reports = SystemReport.objects.order_by('-report_date')
@@ -75,7 +84,7 @@ def staff_savings_report(request):
     users = request.user.__class__.objects.all()
     return render(request, 'reports/staff/savings.html', {'users': users})
 
-# ----- Financial Reports -----
+# ------------------- Financial Reports -------------------
 @login_required
 def financial_report(request):
     reports = SystemReport.objects.order_by('-report_date')
@@ -91,7 +100,7 @@ def profit_loss_report(request):
     reports = SystemReport.objects.order_by('-report_date')
     return render(request, 'reports/financial/profit_loss.html', {'reports': reports})
 
-# ----- Export to CSV -----
+# ------------------- CSV Exports -------------------
 @login_required
 def export_loans_csv(request):
     loans = LoanApplication.objects.all()
@@ -133,7 +142,8 @@ def export_financial_csv(request):
     writer = csv.writer(response)
     writer.writerow([
         'Report Type', 'Date', 'Total Accounts', 'Active Accounts', 'Total Savings',
-        'Total Loans Disbursed', 'Pending', 'Approved', 'Completed', 'Defaulted', 'Interest Earned'
+        'Loans Disbursed', 'Pending', 'Approved', 'Completed', 'Defaulted',
+        'Interest Earned', 'Guarantors', 'Transactions'
     ])
     for report in reports:
         writer.writerow([
@@ -147,28 +157,13 @@ def export_financial_csv(request):
             report.total_loans_approved,
             report.total_loans_completed,
             report.total_loans_defaulted,
-            report.total_interest_earned
+            report.total_interest_earned,
+            getattr(report, 'total_guarantors', 0),
+            getattr(report, 'total_transactions', 0)
         ])
     return response
 
-# ----- Generate Reports -----
-@login_required
-def generate_daily_report(request):
-    generate_periodic_report(user=request.user, period='DAILY')
-    return redirect('reports_dashboard')
-
-@login_required
-def generate_weekly_report(request):
-    generate_periodic_report(user=request.user, period='WEEKLY')
-    return redirect('reports_dashboard')
-
-@login_required
-def generate_monthly_report(request):
-    generate_periodic_report(user=request.user, period='MONTHLY')
-    return redirect('reports_dashboard')
-
-
-
+# ------------------- PDF Exports with Charts -------------------
 @login_required
 def export_financial_pdf(request):
     buffer = BytesIO()
@@ -180,31 +175,62 @@ def export_financial_pdf(request):
 
     p.setFont("Helvetica", 12)
     y = 520
-    p.drawString(50, y, "Report Type")
-    p.drawString(180, y, "Date")
-    p.drawString(280, y, "Total Accounts")
-    p.drawString(420, y, "Total Savings (UGX)")
-    p.drawString(580, y, "Loans Disbursed (UGX)")
-    p.drawString(760, y, "Interest Earned (UGX)")
+    headers = ["Report Type", "Date", "Total Accounts", "Total Savings",
+               "Loans Disbursed", "Interest Earned", "Guarantors", "Transactions"]
+    x_positions = [50, 180, 280, 420, 580, 760, 900, 1020]
+    for i, header in enumerate(headers):
+        p.drawString(x_positions[i], y, header)
     y -= 20
 
     reports = SystemReport.objects.order_by('-report_date')
     for report in reports:
-        if y <= 60:  # Start new page when reaching the bottom
+        if y <= 120:
             p.showPage()
             y = 550
-        p.drawString(50, y, str(report.get_report_type_display()))
-        p.drawString(180, y, report.report_date.strftime("%b %d, %Y"))
-        p.drawString(280, y, str(report.total_accounts))
-        p.drawString(420, y, f"{report.total_savings:,.2f}")
-        p.drawString(580, y, f"{report.total_loans_disbursed:,.2f}")
-        p.drawString(760, y, f"{report.total_interest_earned:,.2f}")
+        # Data
+        data = [
+            report.get_report_type_display(),
+            report.report_date.strftime("%b %d, %Y"),
+            str(report.total_accounts),
+            f"{report.total_savings:,.2f}",
+            f"{report.total_loans_disbursed:,.2f}",
+            f"{report.total_interest_earned:,.2f}",
+            str(getattr(report, 'total_guarantors', 0)),
+            str(getattr(report, 'total_transactions', 0))
+        ]
+        for i, d in enumerate(data):
+            p.drawString(x_positions[i], y, d)
         y -= 20
+
+        # Add chart image if exists
+        if report.chart_image:
+            try:
+                img_path = report.chart_image.path
+                p.drawImage(img_path, 50, y-150, width=700, height=150)
+                y -= 170
+            except:
+                pass
 
     p.showPage()
     p.save()
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename="financial_report.pdf")
+
+# ------------------- Generate Periodic Reports -------------------
+@login_required
+def generate_daily_report(request):
+    generate_periodic_report(user=request.user, period='DAILY')
+    return redirect('reports:reports_dashboard')
+
+@login_required
+def generate_weekly_report(request):
+    generate_periodic_report(user=request.user, period='WEEKLY')
+    return redirect('reports:reports_dashboard')
+
+@login_required
+def generate_monthly_report(request):
+    generate_periodic_report(user=request.user, period='MONTHLY')
+    return redirect('reports:reports_dashboard')
 
 
 @login_required
@@ -213,9 +239,11 @@ def export_summary_pdf(request):
     p = canvas.Canvas(buffer, pagesize=A4)
     p.setTitle("Financial Summary")
 
+    # Title
     p.setFont("Helvetica-Bold", 18)
     p.drawCentredString(300, 800, "Haliur Investments - Financial Summary")
 
+    # Get the latest report
     reports = SystemReport.objects.order_by('-report_date')
     if reports.exists():
         latest = reports.first()
@@ -243,52 +271,34 @@ def export_summary_pdf(request):
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename="financial_summary.pdf")
 
-
 @login_required
 def export_profit_loss_pdf(request):
     buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=landscape(A4))
-    p.setTitle("Profit and Loss Report")
+    p = canvas.Canvas(buffer, pagesize=A4)
+    p.setTitle("Profit & Loss Report")
 
+    # Title
     p.setFont("Helvetica-Bold", 18)
-    p.drawCentredString(420, 560, "Haliur Investments - Profit & Loss Report")
-
-    p.setFont("Helvetica", 12)
-    y = 520
-    p.drawString(60, y, "Date")
-    p.drawString(200, y, "Total Income (UGX)")
-    p.drawString(400, y, "Total Expenses (UGX)")
-    p.drawString(600, y, "Net Profit (UGX)")
-    y -= 20
+    p.drawCentredString(300, 800, "Haliur Investments - Profit & Loss Report")
 
     reports = SystemReport.objects.order_by('-report_date')
-    for report in reports:
-        total_income = float(report.total_interest_earned or 0) + float(getattr(report, 'other_income', 0))
-        total_expenses = float(getattr(report, 'total_expenses', 0))
-        net_profit = total_income - total_expenses
+    y = 750
+    p.setFont("Helvetica", 12)
 
-        if y <= 60:
-            p.showPage()
-            y = 550
-        p.drawString(60, y, report.report_date.strftime("%b %d, %Y"))
-        p.drawString(200, y, f"{total_income:,.2f}")
-        p.drawString(400, y, f"{total_expenses:,.2f}")
-        p.drawString(600, y, f"{net_profit:,.2f}")
-        y -= 20
+    if reports.exists():
+        for report in reports:
+            if y < 100:
+                p.showPage()
+                y = 750
+            p.drawString(50, y, f"Date: {report.report_date.strftime('%B %d, %Y')}")
+            p.drawString(200, y, f"Loans Disbursed: {report.total_loans_disbursed:,.2f} UGX")
+            p.drawString(400, y, f"Interest Earned: {report.total_interest_earned:,.2f} UGX")
+            p.drawString(600, y, f"Defaulted Loans: {report.total_loans_defaulted}")
+            y -= 25
+    else:
+        p.drawCentredString(300, y, "No profit/loss data available.")
 
     p.showPage()
     p.save()
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename="profit_loss_report.pdf")
-
-# Financial Summary Report
-@login_required
-def financial_summary(request):
-    reports = SystemReport.objects.order_by('-report_date')
-    return render(request, 'reports/financial/summary.html', {'reports': reports})
-
-# Profit & Loss Report
-@login_required
-def profit_loss_report(request):
-    reports = SystemReport.objects.order_by('-report_date')
-    return render(request, 'reports/financial/profit_loss.html', {'reports': reports})

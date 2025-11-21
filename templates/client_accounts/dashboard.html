@@ -1,58 +1,68 @@
 {% extends 'base.html' %}
 {% block title %}Client Dashboard{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <h2 class="text-center mb-4">Client Accounts Dashboard</h2>
 
+    <!-- Dashboard Stats -->
     <div class="row text-center mb-4">
-        <div class="col-md-4">
-            <div class="card shadow-sm p-3">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm p-3 h-100">
                 <h5>Total Accounts</h5>
-                <h3>{{ total_accounts }}</h3>
+                <h3>{{ total_accounts|default:"0" }}</h3>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm p-3">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm p-3 h-100">
                 <h5>Active Accounts</h5>
-                <h3>{{ active_accounts }}</h3>
+                <h3>{{ active_accounts|default:"0" }}</h3>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm p-3">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm p-3 h-100">
                 <h5>Total Savings (UGX)</h5>
-                <h3>{{ total_savings|floatformat:2 }}</h3>
+                <h3>{{ total_savings|floatformat:2|default:"0.00" }}</h3>
             </div>
         </div>
     </div>
 
-    <h4 class="mt-4">Recent Accounts</h4>
-    <table class="table table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>Account Number</th>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Balance (UGX)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for acc in recent_accounts %}
-            <tr>
-                <td><a href="{% url 'account_detail' acc.id %}">{{ acc.account_number }}</a></td>
-                <td>{{ acc.full_account_name }}</td>
-                <td>{{ acc.account_type }}</td>
-                <td>{{ acc.savings_balance|floatformat:2 }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Recent Accounts Table -->
+    <h4 class="mt-4 mb-3">Recent Accounts</h4>
+    {% if recent_accounts %}
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Account Number</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Balance (UGX)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for acc in recent_accounts %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'accounts:account_detail' acc.id %}">{{ acc.account_number }}</a>
+                            </td>
+                            <td>{{ acc.full_account_name }}</td>
+                            <td>{{ acc.account_type }}</td>
+                            <td>{{ acc.savings_balance|floatformat:2 }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-center text-muted">No recent accounts to display.</p>
+    {% endif %}
 
-    <div class="text-center mt-3">
-        <a href="{% url 'export_accounts_csv' %}" class="btn btn-outline-primary btn-sm">Download Accounts CSV</a>
-        <a href="{% url 'export_accounts_pdf' %}" class="btn btn-outline-danger btn-sm">Download Accounts PDF</a>
+    <!-- Action Buttons -->
+    <div class="text-center mt-4 mb-4 d-flex flex-wrap justify-content-center gap-2">
+        <a href="{% url 'accounts:export_accounts_csv' %}" class="btn btn-outline-primary btn-sm">Download Accounts CSV</a>
+        <a href="{% url 'accounts:export_accounts_pdf' %}" class="btn btn-outline-danger btn-sm">Download Accounts PDF</a>
         <button onclick="window.print()" class="btn btn-outline-dark btn-sm">Print Dashboard</button>
     </div>
-    
-
 </div>
 {% endblock %}

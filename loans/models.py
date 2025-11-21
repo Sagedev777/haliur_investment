@@ -5,11 +5,11 @@ from client_accounts.models import ClientAccount
 from decimal import Decimal
 import datetime
 
+# -----------------------
+# Loan Products
+# -----------------------
 class LoanProduct(models.Model):
-    INTEREST_METHODS = [
-        ('FLAT', 'Flat Rate'),
-        ('REDUCING', 'Reducing Balance'),
-    ]
+    INTEREST_METHODS = [('FLAT', 'Flat Rate'), ('REDUCING', 'Reducing Balance')]
     
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
@@ -35,11 +35,12 @@ class LoanProduct(models.Model):
     def __str__(self):
         return f"{self.name} - {self.interest_rate}%"
 
+
+# -----------------------
+# Guarantors
+# -----------------------
 class Guarantor(models.Model):
-    GUARANTOR_TYPES = [
-        ('INTERNAL', 'Internal (Existing Customer)'),
-        ('EXTERNAL', 'External'),
-    ]
+    GUARANTOR_TYPES = [('INTERNAL', 'Internal'), ('EXTERNAL', 'External')]
     
     guarantor_type = models.CharField(max_length=20, choices=GUARANTOR_TYPES)
     internal_customer = models.ForeignKey(ClientAccount, on_delete=models.CASCADE, null=True, blank=True)
@@ -56,11 +57,12 @@ class Guarantor(models.Model):
                 raise ValidationError('All external guarantor details are required.')
     
     def __str__(self):
-        if self.guarantor_type == 'INTERNAL':
-            return f"Internal: {self.internal_customer.full_account_name}"
-        else:
-            return f"External: {self.external_name}"
+        return f"{'Internal: ' + self.internal_customer.full_account_name if self.guarantor_type == 'INTERNAL' else 'External: ' + self.external_name}"
 
+
+# -----------------------
+# Loan Applications
+# -----------------------
 class LoanApplication(models.Model):
     STATUS_CHOICES = [
         ('PENDING', 'Pending Approval'),
@@ -101,6 +103,9 @@ class LoanApplication(models.Model):
     transaction_reference = models.CharField(max_length=100, blank=True)
     disbursement_notes = models.TextField(blank=True)
     
+    # -----------------------
+    # Utility Methods
+    # -----------------------
     def generate_application_number(self):
         year = datetime.datetime.now().year
         last_app = LoanApplication.objects.order_by('-id').first()
@@ -124,112 +129,67 @@ class LoanApplication(models.Model):
     def calculate_due_date(self):
         if not self.disbursement_date:
             return None
-        
-        loan_period = self.loan_product.loan_period
-        return self.disbursement_date + datetime.timedelta(days=loan_period)
+        return self.disbursement_date + datetime.timedelta(days=self.loan_product.loan_period)
     
     def get_days_remaining(self):
         if not self.due_date or self.status in ['COMPLETED', 'DEFAULTED', 'REJECTED']:
             return 0
-        
         today = datetime.datetime.now().date()
         due = self.due_date.date()
-        
-        if today > due:
-            return 0
-        return (due - today).days
-    
-    def get_loan_status_info(self):
-        if self.status == 'DISBURSED':
-            days_remaining = self.get_days_remaining()
-            if days_remaining == 0 and self.due_date:
-                return "OVERDUE"
-            elif days_remaining > 0:
-                return f"ACTIVE - {days_remaining} days remaining"
-        
-        return self.status
+        return max((due - today).days, 0)
     
     def get_total_paid(self):
-        """Calculate total amount paid so far"""
         return self.loanpayment_set.aggregate(total=models.Sum('payment_amount'))['total'] or Decimal('0')
     
     def get_balance_remaining(self):
-        """Calculate remaining balance"""
         return self.total_amount - self.get_total_paid()
     
     def get_payment_progress(self):
-        """Calculate payment progress percentage"""
         if self.total_amount == 0:
             return 0
         return (self.get_total_paid() / self.total_amount * 100).quantize(Decimal('0.1'))
     
     def is_overdue(self):
-        """Check if loan is overdue"""
-        if not self.due_date or self.status in ['COMPLETED', 'DEFAULTED']:
-            return False
-        return datetime.datetime.now().date() > self.due_date.date()
+        return self.status == 'DISBURSED' and self.due_date and datetime.datetime.now().date() > self.due_date.date()
     
     def clean(self):
         if not self.client_account.is_approved:
             raise ValidationError('Client account must be approved before applying for loan.')
-        
-        if not self.client_account.can_take_loan(self.loan_amount):
-            required_savings = self.loan_amount * Decimal('0.2')
-            raise ValidationError(
-                f'Customer does not have enough savings. Required: {required_savings}, '
-                f'Available: {self.client_account.savings_balance}'
-            )
-        
         max_loan = self.client_account.get_max_loan_amount()
         if self.loan_amount > max_loan:
-            raise ValidationError(
-                f'Loan amount exceeds maximum allowed based on savings. '
-                f'Maximum: {max_loan}, Requested: {self.loan_amount}'
-            )
-        
-        if self.loan_amount < self.loan_product.min_amount:
-            raise ValidationError(f'Loan amount must be at least {self.loan_product.min_amount}')
-        
-        if self.loan_amount > self.loan_product.max_amount:
-            raise ValidationError(f'Loan amount cannot exceed {self.loan_product.max_amount}')
-        
-        min_collateral = self.loan_amount * Decimal('1.2')
-        if self.collateral_value < min_collateral:
-            raise ValidationError(f'Collateral value must be at least 120% of loan amount ({min_collateral})')
+            raise ValidationError(f'Loan exceeds maximum allowed ({max_loan})')
+        if self.loan_amount < self.loan_product.min_amount or self.loan_amount > self.loan_product.max_amount:
+            raise ValidationError('Loan amount out of allowed product range.')
+        if self.collateral_value < self.loan_amount * Decimal('1.2'):
+            raise ValidationError('Collateral must be at least 120% of loan amount.')
     
     def save(self, *args, **kwargs):
         if not self.application_number:
             self.application_number = self.generate_application_number()
-        
         self.interest_amount = self.calculate_interest()
         self.total_amount = self.loan_amount + self.interest_amount
         self.payment_mode = self.loan_product.get_payment_mode()
-        
         if self.status == 'DISBURSED' and self.disbursement_date and not self.due_date:
             self.due_date = self.calculate_due_date()
-        
         if self.status == 'DISBURSED' and not self.disbursed_amount:
             self.disbursed_amount = self.loan_amount
-        
-        # Auto-update status based on payments
+        # Auto-update status
         total_paid = self.get_total_paid()
         if total_paid >= self.total_amount and self.status == 'DISBURSED':
             self.status = 'COMPLETED'
-        elif self.is_overdue() and self.status == 'DISBURSED':
+        elif self.is_overdue():
             self.status = 'DEFAULTED'
-        
         super().save(*args, **kwargs)
     
     def __str__(self):
         return f"{self.application_number} - {self.client_account.full_account_name}"
 
+
+# -----------------------
+# Loan Payments
+# -----------------------
 class LoanPayment(models.Model):
-    PAYMENT_METHODS = [
-        ('CASH', 'Cash'),
-        ('BANK_TRANSFER', 'Bank Transfer'),
-        ('MOBILE_MONEY', 'Mobile Money'),
-        ('CHEQUE', 'Cheque'),
-    ]
+    PAYMENT_METHODS = [('CASH', 'Cash'), ('BANK_TRANSFER', 'Bank Transfer'), ('MOBILE_MONEY', 'Mobile Money'), ('CHEQUE', 'Cheque')]
     
     loan_application = models.ForeignKey(LoanApplication, on_delete=models.CASCADE)
     payment_amount = models.DecimalField(max_digits=12, decimal_places=2)
@@ -240,27 +200,22 @@ class LoanPayment(models.Model):
     notes = models.TextField(blank=True)
     
     def clean(self):
-        """Validate payment"""
         if self.payment_amount <= 0:
             raise ValidationError('Payment amount must be greater than zero.')
-        
-        # Check if payment exceeds remaining balance
-        remaining_balance = self.loan_application.get_balance_remaining()
-        if self.payment_amount > remaining_balance:
-            raise ValidationError(f'Payment amount ({self.payment_amount}) exceeds remaining balance ({remaining_balance})')
+        if self.payment_amount > self.loan_application.get_balance_remaining():
+            raise ValidationError('Payment exceeds remaining balance.')
     
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
-        
-        # Update loan status based on payments
-        total_paid = self.loan_application.get_total_paid()
-        if total_paid >= self.loan_application.total_amount:
-            self.loan_application.status = 'COMPLETED'
-            self.loan_application.save()
-        elif self.loan_application.is_overdue() and self.loan_application.status == 'DISBURSED':
-            self.loan_application.status = 'DEFAULTED'
-            self.loan_application.save()
+        # Update loan status automatically
+        loan = self.loan_application
+        if loan.get_total_paid() >= loan.total_amount:
+            loan.status = 'COMPLETED'
+            loan.save()
+        elif loan.is_overdue():
+            loan.status = 'DEFAULTED'
+            loan.save()
     
     def __str__(self):
-        return f"Payment of {self.payment_amount} for {self.loan_application.application_number}"
+        return f"Payment {self.payment_amount} for {self.loan_application.application_number}"

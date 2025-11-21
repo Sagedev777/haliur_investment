@@ -1,18 +1,38 @@
 {% extends 'base.html' %}
+{% block title %}Loan Application Details{% endblock %}
+
 {% block content %}
-<h2>Loan Application Details</h2>
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Loan Application Details</h2>
 
-<p><strong>Application No:</strong> {{ application.application_number }}</p>
-<p><strong>Client:</strong> {{ application.client_account }}</p>
-<p><strong>Loan Amount:</strong> {{ application.loan_amount }}</p>
-<p><strong>Status:</strong> {{ application.status }}</p>
+    <div class="card shadow-sm p-4 mb-4">
+        <p><strong>Application No:</strong> {{ application.application_number }}</p>
+        <p><strong>Client:</strong> {{ application.client_account }}</p>
+        <p><strong>Loan Amount:</strong> UGX {{ application.loan_amount|floatformat:2 }}</p>
+        <p><strong>Status:</strong>
+            {% if application.status == 'PENDING' %}
+                <span class="badge bg-warning text-dark">{{ application.status }}</span>
+            {% elif application.status == 'APPROVED' %}
+                <span class="badge bg-success">{{ application.status }}</span>
+            {% elif application.status == 'REJECTED' %}
+                <span class="badge bg-danger">{{ application.status }}</span>
+            {% elif application.status == 'DISBURSED' %}
+                <span class="badge bg-primary">{{ application.status }}</span>
+            {% else %}
+                <span class="badge bg-secondary">{{ application.status }}</span>
+            {% endif %}
+        </p>
+    </div>
 
-<hr>
-<h3>Actions</h3>
-<a href="{% url 'loans:loan_application_approve' application.pk %}">Approve</a> |
-<a href="{% url 'loans:loan_application_reject' application.pk %}">Reject</a> |
-<a href="{% url 'loans:loan_application_disburse' application.pk %}">Disburse</a>
+    <div class="mb-4 text-center">
+        <h4>Actions</h4>
+        <a href="{% url 'loans:loan_application_approve' application.pk %}" class="btn btn-success btn-sm me-2">Approve</a>
+        <a href="{% url 'loans:loan_application_reject' application.pk %}" class="btn btn-danger btn-sm me-2">Reject</a>
+        <a href="{% url 'loans:loan_application_disburse' application.pk %}" class="btn btn-primary btn-sm">Disburse</a>
+    </div>
 
-<hr>
-<a href="{% url 'loans:loan_applications_list' %}">Back</a>
+    <div class="text-center">
+        <a href="{% url 'loans:loan_applications_list' %}" class="btn btn-secondary btn-sm">Back to Applications</a>
+    </div>
+</div>
 {% endblock %}

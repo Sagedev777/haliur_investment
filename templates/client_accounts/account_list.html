@@ -5,8 +5,8 @@
     <h2 class="text-center mb-4">All Client Accounts</h2>
 
     <div class="mb-3 text-end">
-        <a href="{% url 'account_create' %}" class="btn btn-primary btn-sm">+ New Account</a>
-        <a href="{% url 'export_accounts_csv' %}" class="btn btn-success btn-sm">Export CSV</a>
+        <a href="{% url 'accounts:account_create' %}" class="btn btn-primary btn-sm">+ New Account</a>
+        <a href="{% url 'accounts:export_accounts_csv' %}" class="btn btn-success btn-sm">Export CSV</a>
         <button onclick="window.print()" class="btn btn-outline-dark btn-sm">Print</button>
     </div>
 
@@ -32,8 +32,8 @@
                 <td>{% if acc.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Inactive</span>{% endif %}</td>
                 <td>{{ acc.registration_date|date:"M d, Y" }}</td>
                 <td>
-                    <a href="{% url 'account_detail' acc.id %}" class="btn btn-sm btn-outline-primary">View</a>
-                    <a href="{% url 'account_edit' acc.id %}" class="btn btn-sm btn-outline-warning">Edit</a>
+                    <a href="{% url 'accounts:account_detail' acc.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                    <a href="{% url 'accounts:account_edit' acc.id %}" class="btn btn-sm btn-outline-warning">Edit</a>
                 </td>
             </tr>
             {% empty %}

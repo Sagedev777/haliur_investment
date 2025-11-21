@@ -1,14 +1,11 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 from .models import LoanProduct, LoanApplication, Guarantor, LoanPayment
 from client_accounts.models import ClientAccount
 from .forms import LoanProductForm, LoanApplicationForm, GuarantorForm, LoanPaymentForm
-from django.http import HttpResponse
 import csv
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.lib.units import inch
 
 # ---------------------
 # Loan Product Views
@@ -20,25 +17,19 @@ def loan_products_list(request):
 
 @login_required
 def loan_product_create(request):
-    if request.method == 'POST':
-        form = LoanProductForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('loan_products_list')
-    else:
-        form = LoanProductForm()
+    form = LoanProductForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('loan_products_list')
     return render(request, 'loans/loan_product_form.html', {'form': form})
 
 @login_required
 def loan_product_edit(request, pk):
     product = get_object_or_404(LoanProduct, pk=pk)
-    if request.method == 'POST':
-        form = LoanProductForm(request.POST, instance=product)
-        if form.is_valid():
-            form.save()
-            return redirect('loan_products_list')
-    else:
-        form = LoanProductForm(instance=product)
+    form = LoanProductForm(request.POST or None, instance=product)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('loan_products_list')
     return render(request, 'loans/loan_product_form.html', {'form': form})
 
 @login_required
@@ -47,42 +38,38 @@ def loan_product_delete(request, pk):
     product.delete()
     return redirect('loan_products_list')
 
+
 # ---------------------
 # Loan Application Views
 # ---------------------
 @login_required
 def loan_applications_list(request):
-    applications = LoanApplication.objects.all()
+    applications = LoanApplication.objects.all().order_by('-application_date')
     return render(request, 'loans/loan_applications_list.html', {'applications': applications})
 
 @login_required
 def loan_application_create(request):
-    if request.method == 'POST':
-        form = LoanApplicationForm(request.POST, request.FILES)
-        if form.is_valid():
-            loan_app = form.save(commit=False)
-            loan_app.loan_officer = request.user
-            loan_app.save()
-            return redirect('loan_applications_list')
-    else:
-        form = LoanApplicationForm()
+    form = LoanApplicationForm(request.POST or None, request.FILES or None)
+    if request.method == 'POST' and form.is_valid():
+        loan_app = form.save(commit=False)
+        loan_app.loan_officer = request.user
+        loan_app.save()
+        return redirect('loan_applications_list')
     return render(request, 'loans/loan_application_form.html', {'form': form})
 
 @login_required
 def loan_application_detail(request, pk):
     application = get_object_or_404(LoanApplication, pk=pk)
-    return render(request, 'loans/loan_application_detail.html', {'application': application})
+    payments = application.loanpayment_set.all()
+    return render(request, 'loans/loan_application_detail.html', {'application': application, 'payments': payments})
 
 @login_required
 def loan_application_edit(request, pk):
     application = get_object_or_404(LoanApplication, pk=pk)
-    if request.method == 'POST':
-        form = LoanApplicationForm(request.POST, request.FILES, instance=application)
-        if form.is_valid():
-            form.save()
-            return redirect('loan_applications_list')
-    else:
-        form = LoanApplicationForm(instance=application)
+    form = LoanApplicationForm(request.POST or None, request.FILES or None, instance=application)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('loan_applications_list')
     return render(request, 'loans/loan_application_form.html', {'form': form})
 
 @login_required
@@ -94,28 +81,32 @@ def loan_application_delete(request, pk):
 @login_required
 def loan_application_approve(request, pk):
     app = get_object_or_404(LoanApplication, pk=pk)
-    app.status = 'APPROVED'
-    app.approval_date = timezone.now()
-    app.approved_by = request.user
-    app.save()
+    if app.status == 'PENDING':
+        app.status = 'APPROVED'
+        app.approval_date = timezone.now()
+        app.approved_by = request.user
+        app.save()
     return redirect('loan_applications_list')
 
 @login_required
 def loan_application_reject(request, pk):
     app = get_object_or_404(LoanApplication, pk=pk)
-    app.status = 'REJECTED'
-    app.approved_by = request.user
-    app.save()
+    if app.status == 'PENDING':
+        app.status = 'REJECTED'
+        app.approved_by = request.user
+        app.save()
     return redirect('loan_applications_list')
 
 @login_required
 def loan_application_disburse(request, pk):
     app = get_object_or_404(LoanApplication, pk=pk)
-    app.status = 'DISBURSED'
-    app.disbursement_date = timezone.now()
-    app.disbursed_by = request.user
-    app.save()
+    if app.status == 'APPROVED':
+        app.status = 'DISBURSED'
+        app.disbursement_date = timezone.now()
+        app.disbursed_by = request.user
+        app.save()
     return redirect('loan_applications_list')
+
 
 # ---------------------
 # Guarantor Views
@@ -127,25 +118,19 @@ def guarantors_list(request):
 
 @login_required
 def guarantor_create(request):
-    if request.method == 'POST':
-        form = GuarantorForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('guarantors_list')
-    else:
-        form = GuarantorForm()
+    form = GuarantorForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('guarantors_list')
     return render(request, 'loans/guarantor_form.html', {'form': form})
 
 @login_required
 def guarantor_edit(request, pk):
     guarantor = get_object_or_404(Guarantor, pk=pk)
-    if request.method == 'POST':
-        form = GuarantorForm(request.POST, instance=guarantor)
-        if form.is_valid():
-            form.save()
-            return redirect('guarantors_list')
-    else:
-        form = GuarantorForm(instance=guarantor)
+    form = GuarantorForm(request.POST or None, instance=guarantor)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('guarantors_list')
     return render(request, 'loans/guarantor_form.html', {'form': form})
 
 @login_required
@@ -154,37 +139,32 @@ def guarantor_delete(request, pk):
     guarantor.delete()
     return redirect('guarantors_list')
 
+
 # ---------------------
-# Payment Views
+# Loan Payment Views
 # ---------------------
 @login_required
 def payments_list(request):
-    payments = LoanPayment.objects.all()
+    payments = LoanPayment.objects.all().order_by('-payment_date')
     return render(request, 'loans/payments_list.html', {'payments': payments})
 
 @login_required
 def payment_create(request):
-    if request.method == 'POST':
-        form = LoanPaymentForm(request.POST)
-        if form.is_valid():
-            payment = form.save(commit=False)
-            payment.received_by = request.user
-            payment.save()
-            return redirect('payments_list')
-    else:
-        form = LoanPaymentForm()
+    form = LoanPaymentForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        payment = form.save(commit=False)
+        payment.received_by = request.user
+        payment.save()
+        return redirect('payments_list')
     return render(request, 'loans/payment_form.html', {'form': form})
 
 @login_required
 def payment_edit(request, pk):
     payment = get_object_or_404(LoanPayment, pk=pk)
-    if request.method == 'POST':
-        form = LoanPaymentForm(request.POST, instance=payment)
-        if form.is_valid():
-            form.save()
-            return redirect('payments_list')
-    else:
-        form = LoanPaymentForm(instance=payment)
+    form = LoanPaymentForm(request.POST or None, instance=payment)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('payments_list')
     return render(request, 'loans/payment_form.html', {'form': form})
 
 @login_required
@@ -199,8 +179,9 @@ def loan_payments(request, loan_id):
     payments = loan.loanpayment_set.all()
     return render(request, 'loans/loan_payments.html', {'loan': loan, 'payments': payments})
 
+
 # ---------------------
-# Loan Management Views
+# Loan Status Views
 # ---------------------
 @login_required
 def active_loans(request):
@@ -222,6 +203,7 @@ def overdue_loans(request):
     loans = LoanApplication.objects.filter(status='DISBURSED')
     overdue = [loan for loan in loans if loan.is_overdue()]
     return render(request, 'loans/overdue_loans.html', {'loans': overdue})
+
 
 # ---------------------
 # API Views (JSON)
@@ -247,8 +229,8 @@ def api_loan_product_detail(request, pk):
 
 @login_required
 def api_loan_applications(request):
-    applications = list(LoanApplication.objects.values())
-    return JsonResponse(applications, safe=False)
+    apps = list(LoanApplication.objects.values())
+    return JsonResponse(apps, safe=False)
 
 @login_required
 def api_loan_application_detail(request, pk):
@@ -273,148 +255,18 @@ def api_loan_payments(request, loan_id):
     return JsonResponse(payments, safe=False)
 
 
-# ========================
-# CSV EXPORTS
-# ========================
+# ---------------------
+# CSV Export
+# ---------------------
 @login_required
-def export_loan_products_csv(request):
+def export_loans_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="loan_products.csv"'
+
     writer = csv.writer(response)
-    writer.writerow(['Name', 'Interest Rate', 'Min Amount', 'Max Amount', 'Loan Period', 'Installments'])
+    writer.writerow(['Name', 'Interest Rate', 'Loan Period', 'Min Amount', 'Max Amount', 'Active'])
 
-    for product in LoanProduct.objects.all():
-        writer.writerow([
-            product.name,
-            product.interest_rate,
-            product.min_amount,
-            product.max_amount,
-            product.loan_period,
-            product.number_of_installments
-        ])
-    return response
+    for loan in LoanProduct.objects.all():
+        writer.writerow([loan.name, loan.interest_rate, loan.loan_period, loan.min_amount, loan.max_amount, loan.is_active])
 
-
-@login_required
-def export_loan_applications_csv(request):
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="loan_applications.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['Application Number', 'Client Account', 'Amount', 'Status', 'Date'])
-
-    for app in LoanApplication.objects.all():
-        writer.writerow([
-            app.application_number,
-            app.client_account.full_account_name,
-            app.loan_amount,
-            app.status,
-            app.application_date
-        ])
-    return response
-
-
-@login_required
-def export_loan_payments_csv(request):
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="loan_payments.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['Loan', 'Amount', 'Date', 'Received By'])
-
-    for pay in LoanPayment.objects.all():
-        writer.writerow([
-            pay.loan.application_number,
-            pay.payment_amount,
-            pay.payment_date,
-            pay.received_by.username
-        ])
-    return response
-
-
-# ========================
-# PDF EXPORTS
-# ========================
-@login_required
-def export_loan_products_pdf(request):
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="loan_products.pdf"'
-    p = canvas.Canvas(response, pagesize=A4)
-    width, height = A4
-
-    p.setFont("Helvetica-Bold", 14)
-    p.drawString(1 * inch, height - 1 * inch, "Loan Products Report")
-
-    p.setFont("Helvetica", 11)
-    y = height - 1.5 * inch
-    p.drawString(1 * inch, y, "Name | Interest | Min | Max | Period | Installments")
-
-    y -= 0.3 * inch
-    for product in LoanProduct.objects.all():
-        line = f"{product.name} | {product.interest_rate}% | {product.min_amount} | {product.max_amount} | {product.loan_period} | {product.number_of_installments}"
-        p.drawString(1 * inch, y, line)
-        y -= 0.25 * inch
-        if y <= 1 * inch:
-            p.showPage()
-            p.setFont("Helvetica", 11)
-            y = height - 1 * inch
-
-    p.showPage()
-    p.save()
-    return response
-
-
-@login_required
-def export_loan_applications_pdf(request):
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="loan_applications.pdf"'
-    p = canvas.Canvas(response, pagesize=A4)
-    width, height = A4
-
-    p.setFont("Helvetica-Bold", 14)
-    p.drawString(1 * inch, height - 1 * inch, "Loan Applications Report")
-
-    p.setFont("Helvetica", 11)
-    y = height - 1.5 * inch
-    p.drawString(1 * inch, y, "Number | Account | Amount | Status | Date")
-
-    y -= 0.3 * inch
-    for app in LoanApplication.objects.all():
-        line = f"{app.application_number} | {app.client_account.full_account_name} | {app.loan_amount} | {app.status} | {app.application_date.strftime('%Y-%m-%d')}"
-        p.drawString(1 * inch, y, line)
-        y -= 0.25 * inch
-        if y <= 1 * inch:
-            p.showPage()
-            p.setFont("Helvetica", 11)
-            y = height - 1 * inch
-
-    p.showPage()
-    p.save()
-    return response
-
-
-@login_required
-def export_loan_payments_pdf(request):
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="loan_payments.pdf"'
-    p = canvas.Canvas(response, pagesize=A4)
-    width, height = A4
-
-    p.setFont("Helvetica-Bold", 14)
-    p.drawString(1 * inch, height - 1 * inch, "Loan Payments Report")
-
-    p.setFont("Helvetica", 11)
-    y = height - 1.5 * inch
-    p.drawString(1 * inch, y, "Loan | Amount | Date | Received By")
-
-    y -= 0.3 * inch
-    for pay in LoanPayment.objects.all():
-        line = f"{pay.loan.application_number} | {pay.payment_amount} | {pay.payment_date.strftime('%Y-%m-%d')} | {pay.received_by.username}"
-        p.drawString(1 * inch, y, line)
-        y -= 0.25 * inch
-        if y <= 1 * inch:
-            p.showPage()
-            p.setFont("Helvetica", 11)
-            y = height - 1 * inch
-
-    p.showPage()
-    p.save()
     return response

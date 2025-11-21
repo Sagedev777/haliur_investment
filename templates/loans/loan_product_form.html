@@ -1,12 +1,18 @@
 {% extends 'base.html' %}
+{% block title %}{{ form.instance.pk|yesno:"Edit Loan Product,Add New Loan Product" }}{% endblock %}
+
 {% block content %}
-<h2>{{ form.instance.pk|yesno:"Edit Loan Product,Add New Loan Product" }}</h2>
+<div class="container mt-4">
+    <h2 class="text-center mb-4">{{ form.instance.pk|yesno:"Edit Loan Product,Add New Loan Product" }}</h2>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Save</button>
-</form>
+    <form method="post" class="card p-4 shadow-sm">
+        {% csrf_token %}
+        {{ form.as_p }}
 
-<a href="{% url 'loans:loan_products_list' %}">Back to List</a>
+        <div class="text-center mt-3">
+            <button type="submit" class="btn btn-success btn-sm">Save</button>
+            <a href="{% url 'loans:loan_products_list' %}" class="btn btn-secondary btn-sm">Back to List</a>
+        </div>
+    </form>
+</div>
 {% endblock %}
