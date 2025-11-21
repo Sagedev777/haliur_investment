@@ -29,4 +29,11 @@ urlpatterns = [
     path('api/accounts/', views.api_account_list, name='api_account_list'),
     path('api/account/<int:pk>/', views.api_account_detail, name='api_account_detail'),
     path('api/savings/balance/<int:account_id>/', views.api_savings_balance, name='api_savings_balance'),
+    
+# CSV and PDF Export URLs
+path('accounts/export/csv/', views.export_accounts_csv, name='export_accounts_csv'),
+path('accounts/export/pdf/', views.export_accounts_pdf, name='export_accounts_pdf'),
+path('transactions/export/csv/', views.export_transactions_csv, name='export_transactions_csv'),
+path('transactions/export/pdf/', views.export_transactions_pdf, name='export_transactions_pdf'),
+
 ]

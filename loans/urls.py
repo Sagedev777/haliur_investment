@@ -48,4 +48,15 @@ urlpatterns = [
     path('api/application/<int:pk>/', views.api_loan_application_detail, name='api_loan_application_detail'),
     path('api/guarantors/', views.api_guarantors, name='api_guarantors'),
     path('api/payments/loan/<int:loan_id>/', views.api_loan_payments, name='api_loan_payments'),
+    
+    # Export URLs (PDF + CSV)
+    path('export/products/pdf/', views.export_loan_products_pdf, name='export_loan_products_pdf'),
+    path('export/products/csv/', views.export_loan_products_csv, name='export_loan_products_csv'),
+    
+    path('export/applications/pdf/', views.export_loan_applications_pdf, name='export_loan_applications_pdf'),
+    path('export/applications/csv/', views.export_loan_applications_csv, name='export_loan_applications_csv'),
+    
+    path('export/payments/pdf/', views.export_loan_payments_pdf, name='export_loan_payments_pdf'),
+    path('export/payments/csv/', views.export_loan_payments_csv, name='export_loan_payments_csv'),
+    
 ]

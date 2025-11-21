@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ form.instance.pk|yesno:"Edit Payment,New Payment" }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Payment</button>
+</form>
+
+<a href="{% url 'loans:payments_list' %}">Back</a>
+{% endblock %}

@@ -9,6 +9,9 @@ from django.contrib.auth.models import User
 from decimal import Decimal
 import csv
 from django.http import HttpResponse
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
 
 # -----------------------
 # Dashboard
@@ -245,4 +248,65 @@ def export_transactions_csv(request):
     writer.writerow(['Account Number', 'Type', 'Amount', 'Date', 'Processed By'])
     for tx in SavingsTransaction.objects.all():
         writer.writerow([tx.client_account.account_number, tx.transaction_type, tx.amount, tx.transaction_date, tx.processed_by.username])
+    return response
+
+@login_required
+def export_accounts_pdf(request):
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="accounts.pdf"'
+
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(1 * inch, height - 1 * inch, "Client Accounts Report")
+
+    p.setFont("Helvetica", 11)
+    y = height - 1.5 * inch
+    p.drawString(1 * inch, y, "Account Number     Account Type     Full Name     Balance")
+
+    y -= 0.3 * inch
+    accounts = ClientAccount.objects.all()
+    for acc in accounts:
+        line = f"{acc.account_number}     {acc.account_type}     {acc.full_account_name}     {acc.savings_balance}"
+        p.drawString(1 * inch, y, line)
+        y -= 0.25 * inch
+        if y <= 1 * inch:  # Start new page if needed
+            p.showPage()
+            p.setFont("Helvetica", 11)
+            y = height - 1 * inch
+
+    p.showPage()
+    p.save()
+    return response
+
+
+@login_required
+def export_transactions_pdf(request):
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="transactions.pdf"'
+
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(1 * inch, height - 1 * inch, "Savings Transactions Report")
+
+    p.setFont("Helvetica", 11)
+    y = height - 1.5 * inch
+    p.drawString(1 * inch, y, "Account Number     Type     Amount     Date     Processed By")
+
+    y -= 0.3 * inch
+    transactions = SavingsTransaction.objects.all()
+    for tx in transactions:
+        line = f"{tx.client_account.account_number}     {tx.transaction_type}     {tx.amount}     {tx.transaction_date.strftime('%Y-%m-%d')}     {tx.processed_by.username}"
+        p.drawString(1 * inch, y, line)
+        y -= 0.25 * inch
+        if y <= 1 * inch:
+            p.showPage()
+            p.setFont("Helvetica", 11)
+            y = height - 1 * inch
+
+    p.showPage()
+    p.save()
     return response

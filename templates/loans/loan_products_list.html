@@ -1,23 +1,36 @@
 {% extends 'base.html' %}
-{% block title %}Loan Products{% endblock %}
 {% block content %}
 <h2>Loan Products</h2>
-<a href="{% url 'loans:loan_product_create' %}">Add New Product</a>
-<table>
-    <tr>
-        <th>Name</th>
-        <th>Interest Rate</th>
-        <th>Actions</th>
-    </tr>
-    {% for product in products %}
-    <tr>
-        <td>{{ product.name }}</td>
-        <td>{{ product.interest_rate }}%</td>
-        <td>
-            <a href="{% url 'loans:loan_product_edit' product.pk %}">Edit</a> |
-            <a href="{% url 'loans:loan_product_delete' product.pk %}">Delete</a>
-        </td>
-    </tr>
-    {% endfor %}
+
+<a href="{% url 'loans:loan_product_create' %}" class="btn btn-primary">Add New Product</a>
+
+<table border="1" cellpadding="8" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Interest Rate (%)</th>
+            <th>Min Amount</th>
+            <th>Max Amount</th>
+            <th>Loan Period</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for product in products %}
+        <tr>
+            <td>{{ product.name }}</td>
+            <td>{{ product.interest_rate }}</td>
+            <td>{{ product.min_amount }}</td>
+            <td>{{ product.max_amount }}</td>
+            <td>{{ product.loan_period }}</td>
+            <td>
+                <a href="{% url 'loans:loan_product_edit' product.pk %}">Edit</a> |
+                <a href="{% url 'loans:loan_product_delete' product.pk %}">Delete</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">No loan products found.</td></tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% endblock %}

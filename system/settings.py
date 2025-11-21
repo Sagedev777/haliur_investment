@@ -29,8 +29,6 @@ INSTALLED_APPS = [
     # Haliqur Investments Business Apps
     'client_accounts',
     'loans',
-    #'customers', 
-    #'payments',
     'reports',
     # Security Apps
     #'django_axes',

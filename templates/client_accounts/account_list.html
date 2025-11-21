@@ -1,28 +1,45 @@
 {% extends 'base.html' %}
-{% block title %}Accounts{% endblock %}
+{% block title %}Client Accounts{% endblock %}
 {% block content %}
-<h2>Accounts</h2>
-<a href="{% url 'account_create' %}">Create New Account</a>
-<table>
-    <tr>
-        <th>Account No.</th>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Balance</th>
-        <th>Actions</th>
-    </tr>
-    {% for account in accounts %}
-    <tr>
-        <td>{{ account.account_number }}</td>
-        <td>{{ account.full_account_name }}</td>
-        <td>{{ account.get_account_type_display }}</td>
-        <td>{{ account.savings_balance }}</td>
-        <td>
-            <a href="{% url 'account_detail' account.pk %}">View</a> |
-            <a href="{% url 'account_edit' account.pk %}">Edit</a> |
-            <a href="{% url 'account_delete' account.pk %}">Delete</a>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="container mt-4">
+    <h2 class="text-center mb-4">All Client Accounts</h2>
+
+    <div class="mb-3 text-end">
+        <a href="{% url 'account_create' %}" class="btn btn-primary btn-sm">+ New Account</a>
+        <a href="{% url 'export_accounts_csv' %}" class="btn btn-success btn-sm">Export CSV</a>
+        <button onclick="window.print()" class="btn btn-outline-dark btn-sm">Print</button>
+    </div>
+
+    <table class="table table-bordered table-striped shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Account #</th>
+                <th>Client Name</th>
+                <th>Type</th>
+                <th>Balance (UGX)</th>
+                <th>Status</th>
+                <th>Registered</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for acc in accounts %}
+            <tr>
+                <td>{{ acc.account_number }}</td>
+                <td>{{ acc.full_account_name }}</td>
+                <td>{{ acc.account_type }}</td>
+                <td>{{ acc.savings_balance|floatformat:2 }}</td>
+                <td>{% if acc.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Inactive</span>{% endif %}</td>
+                <td>{{ acc.registration_date|date:"M d, Y" }}</td>
+                <td>
+                    <a href="{% url 'account_detail' acc.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                    <a href="{% url 'account_edit' acc.id %}" class="btn btn-sm btn-outline-warning">Edit</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center">No accounts found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

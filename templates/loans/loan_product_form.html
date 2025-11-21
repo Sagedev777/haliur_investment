@@ -1,10 +1,12 @@
 {% extends 'base.html' %}
-{% block title %}Loan Product Form{% endblock %}
 {% block content %}
-<h2>{% if product %}Edit{% else %}Add{% endif %} Loan Product</h2>
+<h2>{{ form.instance.pk|yesno:"Edit Loan Product,Add New Loan Product" }}</h2>
+
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">{% if product %}Update{% else %}Save{% endif %}</button>
+    <button type="submit">Save</button>
 </form>
+
+<a href="{% url 'loans:loan_products_list' %}">Back to List</a>
 {% endblock %}

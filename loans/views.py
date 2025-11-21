@@ -4,6 +4,11 @@ from django.contrib.auth.decorators import login_required
 from .models import LoanProduct, LoanApplication, Guarantor, LoanPayment
 from client_accounts.models import ClientAccount
 from .forms import LoanProductForm, LoanApplicationForm, GuarantorForm, LoanPaymentForm
+from django.http import HttpResponse
+import csv
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
 
 # ---------------------
 # Loan Product Views
@@ -266,3 +271,150 @@ def api_loan_payments(request, loan_id):
     loan = get_object_or_404(LoanApplication, pk=loan_id)
     payments = list(loan.loanpayment_set.values())
     return JsonResponse(payments, safe=False)
+
+
+# ========================
+# CSV EXPORTS
+# ========================
+@login_required
+def export_loan_products_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="loan_products.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Name', 'Interest Rate', 'Min Amount', 'Max Amount', 'Loan Period', 'Installments'])
+
+    for product in LoanProduct.objects.all():
+        writer.writerow([
+            product.name,
+            product.interest_rate,
+            product.min_amount,
+            product.max_amount,
+            product.loan_period,
+            product.number_of_installments
+        ])
+    return response
+
+
+@login_required
+def export_loan_applications_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="loan_applications.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Application Number', 'Client Account', 'Amount', 'Status', 'Date'])
+
+    for app in LoanApplication.objects.all():
+        writer.writerow([
+            app.application_number,
+            app.client_account.full_account_name,
+            app.loan_amount,
+            app.status,
+            app.application_date
+        ])
+    return response
+
+
+@login_required
+def export_loan_payments_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="loan_payments.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Loan', 'Amount', 'Date', 'Received By'])
+
+    for pay in LoanPayment.objects.all():
+        writer.writerow([
+            pay.loan.application_number,
+            pay.payment_amount,
+            pay.payment_date,
+            pay.received_by.username
+        ])
+    return response
+
+
+# ========================
+# PDF EXPORTS
+# ========================
+@login_required
+def export_loan_products_pdf(request):
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="loan_products.pdf"'
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(1 * inch, height - 1 * inch, "Loan Products Report")
+
+    p.setFont("Helvetica", 11)
+    y = height - 1.5 * inch
+    p.drawString(1 * inch, y, "Name | Interest | Min | Max | Period | Installments")
+
+    y -= 0.3 * inch
+    for product in LoanProduct.objects.all():
+        line = f"{product.name} | {product.interest_rate}% | {product.min_amount} | {product.max_amount} | {product.loan_period} | {product.number_of_installments}"
+        p.drawString(1 * inch, y, line)
+        y -= 0.25 * inch
+        if y <= 1 * inch:
+            p.showPage()
+            p.setFont("Helvetica", 11)
+            y = height - 1 * inch
+
+    p.showPage()
+    p.save()
+    return response
+
+
+@login_required
+def export_loan_applications_pdf(request):
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="loan_applications.pdf"'
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(1 * inch, height - 1 * inch, "Loan Applications Report")
+
+    p.setFont("Helvetica", 11)
+    y = height - 1.5 * inch
+    p.drawString(1 * inch, y, "Number | Account | Amount | Status | Date")
+
+    y -= 0.3 * inch
+    for app in LoanApplication.objects.all():
+        line = f"{app.application_number} | {app.client_account.full_account_name} | {app.loan_amount} | {app.status} | {app.application_date.strftime('%Y-%m-%d')}"
+        p.drawString(1 * inch, y, line)
+        y -= 0.25 * inch
+        if y <= 1 * inch:
+            p.showPage()
+            p.setFont("Helvetica", 11)
+            y = height - 1 * inch
+
+    p.showPage()
+    p.save()
+    return response
+
+
+@login_required
+def export_loan_payments_pdf(request):
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="loan_payments.pdf"'
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(1 * inch, height - 1 * inch, "Loan Payments Report")
+
+    p.setFont("Helvetica", 11)
+    y = height - 1.5 * inch
+    p.drawString(1 * inch, y, "Loan | Amount | Date | Received By")
+
+    y -= 0.3 * inch
+    for pay in LoanPayment.objects.all():
+        line = f"{pay.loan.application_number} | {pay.payment_amount} | {pay.payment_date.strftime('%Y-%m-%d')} | {pay.received_by.username}"
+        p.drawString(1 * inch, y, line)
+        y -= 0.25 * inch
+        if y <= 1 * inch:
+            p.showPage()
+            p.setFont("Helvetica", 11)
+            y = height - 1 * inch
+
+    p.showPage()
+    p.save()
+    return response

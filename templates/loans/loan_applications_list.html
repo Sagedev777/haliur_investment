@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Loan Applications</h2>
+
+<a href="{% url 'loans:loan_application_create' %}" class="btn btn-primary">Apply for Loan</a>
+
+<table border="1" cellpadding="8" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Application No</th>
+            <th>Client</th>
+            <th>Loan Amount</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for app in applications %}
+        <tr>
+            <td>{{ app.application_number }}</td>
+            <td>{{ app.client_account }}</td>
+            <td>{{ app.loan_amount }}</td>
+            <td>{{ app.status }}</td>
+            <td>
+                <a href="{% url 'loans:loan_application_detail' app.pk %}">View</a> |
+                <a href="{% url 'loans:loan_application_edit' app.pk %}">Edit</a> |
+                <a href="{% url 'loans:loan_application_delete' app.pk %}">Delete</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No applications found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
