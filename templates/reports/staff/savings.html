@@ -1,10 +1,29 @@
-{% extends 'base.html' %}
+{% extends 'reports/base.html' %}
+{% block title %}Staff Savings{% endblock %}
+
 {% block content %}
-<h2>Staff Loans/Savings Report</h2>
-<table border="1">
-  <tr><th>Username</th><th>Email</th></tr>
-  {% for u in users %}
-  <tr><td>{{ u.username }}</td><td>{{ u.email }}</td></tr>
-  {% endfor %}
+<h1 class="mb-4">Savings Processed per Staff</h1>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Staff</th>
+            <th>Account ID</th>
+            <th>Client</th>
+            <th>Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for txn in savings %}
+        <tr>
+            <td>{{ txn.staff.username }}</td>
+            <td>{{ txn.account.id }}</td>
+            <td>{{ txn.account.client.name }}</td>
+            <td>{{ txn.amount|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center">No savings found</td></tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% endblock %}

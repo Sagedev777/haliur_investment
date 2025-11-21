@@ -1,0 +1,46 @@
+{% extends 'reports/base.html' %}
+{% block title %}Savings Transactions{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Savings Transactions</h1>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-3"><input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date }}"></div>
+    <div class="col-md-3"><input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date }}"></div>
+    <div class="col-md-3">
+        <select name="type" class="form-select">
+            <option value="">All Types</option>
+            <option value="deposit">Deposit</option>
+            <option value="withdrawal">Withdrawal</option>
+        </select>
+    </div>
+    <div class="col-md-3"><button class="btn btn-primary w-100">Filter</button></div>
+</form>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Account</th>
+            <th>Client</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for txn in transactions %}
+        <tr>
+            <td>{{ txn.id }}</td>
+            <td>{{ txn.account.id }}</td>
+            <td>{{ txn.account.client.name }}</td>
+            <td>{{ txn.type|capfirst }}</td>
+            <td>{{ txn.amount|floatformat:2 }}</td>
+            <td>{{ txn.date|date:"Y-m-d" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center">No transactions found</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

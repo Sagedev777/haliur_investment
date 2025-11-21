@@ -14,6 +14,7 @@ from reportlab.lib.units import inch
 from functools import wraps
 from .models import ClientAccount
 from django.utils import timezone
+from .forms import ClientAccountForm
 # -----------------------
 # Role-based decorator
 # -----------------------
@@ -120,41 +121,30 @@ def account_detail(request, pk):
 
 @login_required
 @role_required(['Admin', 'Staff'])
+# views.py
+
 def account_edit(request, pk):
     account = get_object_or_404(ClientAccount, pk=pk)
 
     if request.method == 'POST':
-        account.person1_first_name = request.POST.get('person1_first_name')
-        account.person1_last_name = request.POST.get('person1_last_name')
-        account.person1_contact = request.POST.get('person1_contact')
-        account.person1_address = request.POST.get('person1_address')
-        account.person1_area_code = request.POST.get('person1_area_code')
-        account.person1_next_of_kin = request.POST.get('person1_next_of_kin')
-        account.person1_gender = request.POST.get('person1_gender')
-        account.business_location = request.POST.get('business_location')
-        account.business_sector = request.POST.get('business_sector')
-        account.person2_first_name = request.POST.get('person2_first_name')
-        account.person2_last_name = request.POST.get('person2_last_name')
-        account.person2_contact = request.POST.get('person2_contact')
-        account.person2_address = request.POST.get('person2_address')
-        account.person2_area_code = request.POST.get('person2_area_code')
-        account.person2_next_of_kin = request.POST.get('person2_next_of_kin')
-        account.person2_nin = request.POST.get('person2_nin')
-        account.person2_gender = request.POST.get('person2_gender')
+        form = ClientAccountForm(request.POST, instance=account)
+        if form.is_valid():
+            account = form.save(commit=False)
+            
+            # Staff edits require admin approval
+            if request.user.groups.filter(name='Staff').exists():
+                account.is_approved = False
+                messages.info(request, "Your changes are submitted for Admin approval.")
+            else:
+                account.is_approved = True
+                messages.success(request, "Account updated successfully.")
+            
+            account.save()
+            return redirect('accounts:account_detail', pk=account.pk)
+    else:
+        form = ClientAccountForm(instance=account)
 
-        # Staff edits require admin approval
-        if request.user.groups.filter(name='Staff').exists():
-            account.is_approved = False
-            account.edit_requested_by = request.user
-            messages.info(request, "Your changes are submitted for Admin approval.")
-        else:
-            account.is_approved = True
-            messages.success(request, "Account updated successfully.")
-
-        account.save()
-        return redirect('accounts:account_detail', pk=account.pk)
-
-    return render(request, 'client_accounts/account_form.html', {'account': account})
+    return render(request, 'client_accounts/account_form.html', {'form': form, 'account': account})
 
 
 @login_required

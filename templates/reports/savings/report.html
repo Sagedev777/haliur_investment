@@ -1,10 +1,29 @@
-{% extends 'base.html' %}
+{% extends 'reports/base.html' %}
+{% block title %}Savings Report{% endblock %}
+
 {% block content %}
-<h2>Savings Report</h2>
-<table border="1">
-  <tr><th>Client</th><th>Balance</th></tr>
-  {% for acc in accounts %}
-  <tr><td>{{ acc.client }}</td><td>{{ acc.savings_balance }}</td></tr>
-  {% endfor %}
+<h1 class="mb-4">Savings Accounts</h1>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Client</th>
+            <th>Balance</th>
+            <th>Account Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for account in accounts %}
+        <tr>
+            <td>{{ account.id }}</td>
+            <td>{{ account.client.name }}</td>
+            <td>{{ account.savings_balance|floatformat:2 }}</td>
+            <td>{{ account.is_active|yesno:"Active,Inactive" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center">No accounts found</td></tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% endblock %}

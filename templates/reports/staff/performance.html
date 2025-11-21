@@ -1,10 +1,29 @@
-{% extends 'base.html' %}
+{% extends 'reports/base.html' %}
+{% block title %}Staff Performance{% endblock %}
+
 {% block content %}
-<h2>Staff Performance Report</h2>
-<table border="1">
-  <tr><th>Date</th><th>Report Type</th></tr>
-  {% for r in reports %}
-  <tr><td>{{ r.report_date }}</td><td>{{ r.get_report_type_display }}</td></tr>
-  {% endfor %}
+<h1 class="mb-4">Staff Performance</h1>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Staff</th>
+            <th>Loans Handled</th>
+            <th>Savings Processed</th>
+            <th>Reports Generated</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for staff in staff_list %}
+        <tr>
+            <td>{{ staff.username }}</td>
+            <td>{{ staff.loans_count }}</td>
+            <td>{{ staff.savings_count }}</td>
+            <td>{{ staff.reports_count }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center">No staff data available</td></tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% endblock %}

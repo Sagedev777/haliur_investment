@@ -1,56 +1,29 @@
-{% extends 'base.html' %}
-{% block title %}Profit & Loss Report{% endblock %}
+{% extends 'reports/base.html' %}
+{% block title %}Profit & Loss{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="text-center mb-4">Profit & Loss Report</h2>
+<h1 class="mb-4">Profit & Loss Report</h1>
 
-    <div class="text-end mb-3">
-        <button class="btn btn-secondary btn-sm" onclick="printReport()">🖨️ Print</button>
-        <button class="btn btn-primary btn-sm" onclick="downloadPDF('Profit_Loss_Report')">⬇️ Download PDF</button>
-        <a href="{% url 'reports:export_financial_csv' %}" class="btn btn-info btn-sm">CSV</a>
-    </div>
-
-    <div id="report-content">
-        <table class="table table-bordered table-hover shadow-sm">
-            <thead class="table-dark">
-                <tr>
-                    <th>Date</th>
-                    <th>Total Income (UGX)</th>
-                    <th>Total Expenses (UGX)</th>
-                    <th>Profit/Loss (UGX)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for report in reports %}
-                <tr>
-                    <td>{{ report.report_date|date:"M d, Y" }}</td>
-                    <td>{{ report.total_income|floatformat:2 }}</td>
-                    <td>{{ report.total_expenses|floatformat:2 }}</td>
-                    <td>{{ report.profit_loss|floatformat:2 }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="4" class="text-center">No financial data available.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script>
-function printReport() { window.print(); }
-async function downloadPDF(filename) {
-    const { jsPDF } = window.jspdf;
-    const content = document.getElementById("report-content");
-    const canvas = await html2canvas(content, { scale: 2 });
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-    const width = pdf.internal.pageSize.getWidth();
-    const height = (canvas.height * width) / canvas.width;
-    pdf.addImage(imgData, "PNG", 0, 0, width, height);
-    pdf.save(filename + ".pdf");
-}
-</script>
+<table class="table table-striped table-bordered">
+    <thead class="table-dark">
+        <tr>
+            <th>Period</th>
+            <th>Revenue</th>
+            <th>Expenses</th>
+            <th>Profit/Loss</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in financials %}
+        <tr>
+            <td>{{ item.period }}</td>
+            <td>{{ item.revenue|floatformat:2 }}</td>
+            <td>{{ item.expenses|floatformat:2 }}</td>
+            <td>{{ item.profit|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center">No data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

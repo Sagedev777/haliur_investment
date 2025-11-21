@@ -15,7 +15,7 @@ urlpatterns = [
     # ---------------------
     # Loan Applications URLs
     # ---------------------
-    path('applications/', views.loan_applications_list, name='loan_applications_list'),
+    path('applications/', views.loan_applications_list, name='list_loans'),
     path('applications/create/', views.loan_application_create, name='loan_application_create'),
     path('applications/<int:pk>/', views.loan_application_detail, name='loan_application_detail'),
     path('applications/<int:pk>/edit/', views.loan_application_edit, name='loan_application_edit'),

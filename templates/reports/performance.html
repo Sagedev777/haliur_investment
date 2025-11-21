@@ -1,0 +1,55 @@
+{% extends 'reports/base.html' %}
+{% block title %}Loan Performance{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Loan Performance Report</h1>
+
+<form method="get" class="mb-3">
+    <div class="row g-2">
+        <div class="col-md-3">
+            <input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date }}">
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date }}">
+        </div>
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="disbursed">Disbursed</option>
+                <option value="rejected">Rejected</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Client</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Application Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for loan in loans %}
+        <tr>
+            <td>{{ loan.id }}</td>
+            <td>{{ loan.client.name }}</td>
+            <td>{{ loan.amount|floatformat:2 }}</td>
+            <td>{{ loan.status|capfirst }}</td>
+            <td>{{ loan.created_at|date:"Y-m-d" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" class="text-center">No loans found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

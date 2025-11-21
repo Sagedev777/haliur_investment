@@ -1,42 +1,29 @@
-{% load form_tags %}
+{% extends "core/base.html" %}
 
-{% extends 'base.html' %}
-{% block title %}Login{% endblock %}
+{% block title %}Login - Haliur Investments{% endblock %}
 
 {% block content %}
-<div class="container mt-5" style="max-width: 400px;">
-    <div class="card shadow-sm p-4">
-        <h2 class="text-center mb-4">Login</h2>
-
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <h3 class="text-center mb-3">Login</h3>
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
             {% endfor %}
         {% endif %}
-
-        <form method="post" novalidate>
+        <form method="post" action="{% url 'core:login' %}">
             {% csrf_token %}
-            
             <div class="mb-3">
-                {{ form.username.label_tag }}
-                {{ form.username|attr:"class:form-control" }}
-                {% if form.username.errors %}
-                    <div class="text-danger small">{{ form.username.errors }}</div>
-                {% endif %}
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" name="username" required>
             </div>
-
             <div class="mb-3">
-                {{ form.password.label_tag }}
-                {{ form.password|attr:"class:form-control" }}
-                {% if form.password.errors %}
-                    <div class="text-danger small">{{ form.password.errors }}</div>
-                {% endif %}
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required>
             </div>
-
             {% if next %}
                 <input type="hidden" name="next" value="{{ next }}">
             {% endif %}
-
             <button type="submit" class="btn btn-primary w-100">Login</button>
         </form>
     </div>

@@ -31,6 +31,7 @@ urlpatterns = [
     path('accounts/<int:pk>/', views.account_detail, name='account_detail'),
     path('accounts/<int:pk>/edit/', views.account_edit, name='account_edit'),
     path('accounts/<int:pk>/delete/', views.account_delete, name='account_delete'),
+    path('accounts/export/csv/', views.export_accounts_csv, name='export_accounts_csv'),
 
     # Admin-only approvals
     path('accounts/<int:pk>/approve/', views.account_approve, name='account_approve'),
@@ -41,8 +42,8 @@ urlpatterns = [
     # SAVINGS TRANSACTIONS
     # ----------------------------
     path('savings/', views.savings_list, name='savings_list'),
-    path('savings/deposit/', views.savings_deposit, name='savings_deposit'),
-    path('savings/withdrawal/', views.savings_withdrawal, name='savings_withdrawal'),
+    path('savings/deposit/<int:account_id>/', views.savings_deposit, name='savings_deposit'),
+    path('savings/withdrawal/<int:account_id>/', views.savings_withdrawal, name='savings_withdrawal'),
     path('savings/transactions/', views.savings_transactions, name='savings_transactions'),
     path('savings/account/<int:account_id>/', views.account_savings, name='account_savings'),
 
@@ -58,8 +59,8 @@ urlpatterns = [
     # ----------------------------
     # EXPORTS (CSV & PDF)
     # ----------------------------
-    path('accounts/export/csv/', views.export_accounts_csv, name='export_accounts_csv'),
-    path('accounts/export/pdf/', views.export_accounts_pdf, name='export_accounts_pdf'),
+    path('transactions/export/csv/<int:account_id>/', views.export_transactions_csv, name='export_transactions_csv'),
+    path('transactions/export/pdf/<int:account_id>/', views.export_transactions_pdf, name='export_transactions_pdf'),
     path('transactions/export/csv/', views.export_transactions_csv, name='export_transactions_csv'),
     path('transactions/export/pdf/', views.export_transactions_pdf, name='export_transactions_pdf'),
 ]
