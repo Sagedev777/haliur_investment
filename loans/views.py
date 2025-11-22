@@ -76,7 +76,7 @@ def loan_application_edit(request, pk):
 def loan_application_delete(request, pk):
     application = get_object_or_404(LoanApplication, pk=pk)
     application.delete()
-    return redirect('loan_applications_list')
+    return redirect('loans:list_loan')
 
 @login_required
 def loan_application_approve(request, pk):
