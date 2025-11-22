@@ -76,11 +76,11 @@ class LoanApplication(models.Model):
     application_number = models.CharField(max_length=20, unique=True, blank=True)
     client_account = models.ForeignKey(ClientAccount, on_delete=models.CASCADE)
     loan_product = models.ForeignKey(LoanProduct, on_delete=models.CASCADE)
-    loan_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    loan_amount = models.DecimalField(max_digits=12, decimal_places=2)  # entered by applicant
     
-    interest_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    payment_mode = models.CharField(max_length=20, default='')
+    interest_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, editable=False)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, editable=False)
+    payment_mode = models.CharField(max_length=20, default='', editable=False)
     
     collateral_description = models.TextField()
     collateral_value = models.DecimalField(max_digits=12, decimal_places=2)
@@ -166,19 +166,27 @@ class LoanApplication(models.Model):
     def save(self, *args, **kwargs):
         if not self.application_number:
             self.application_number = self.generate_application_number()
+    
+        # AUTO CALCULATE INTEREST
         self.interest_amount = self.calculate_interest()
         self.total_amount = self.loan_amount + self.interest_amount
+    
+        # AUTO SET PAYMENT MODE
         self.payment_mode = self.loan_product.get_payment_mode()
+    
+        # SET DUE DATE if disbursed
         if self.status == 'DISBURSED' and self.disbursement_date and not self.due_date:
             self.due_date = self.calculate_due_date()
         if self.status == 'DISBURSED' and not self.disbursed_amount:
             self.disbursed_amount = self.loan_amount
-        # Auto-update status
+    
+        # AUTO UPDATE STATUS BASED ON PAYMENTS
         total_paid = self.get_total_paid()
         if total_paid >= self.total_amount and self.status == 'DISBURSED':
             self.status = 'COMPLETED'
         elif self.is_overdue():
             self.status = 'DEFAULTED'
+    
         super().save(*args, **kwargs)
     
     def __str__(self):
