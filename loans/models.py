@@ -18,7 +18,7 @@ class LoanProduct(models.Model):
     min_amount = models.DecimalField(max_digits=12, decimal_places=2)
     max_amount = models.DecimalField(max_digits=12, decimal_places=2)
     loan_period = models.IntegerField(help_text="Loan duration in days")
-    number_of_installments = models.IntegerField()
+    number_of_installments = models.IntegerField(editable=False, default=0)
     is_active = models.BooleanField(default=True)
     created_date = models.DateTimeField(auto_now_add=True)
     
@@ -31,6 +31,20 @@ class LoanProduct(models.Model):
             return 'MONTHLY'
         else:
             return 'CUSTOM'
+
+    def save(self, *args, **kwargs):
+        # Auto calculate number of installments based on loan period
+        # Example: 1 installment per week
+        if self.loan_period <= 7:
+            self.number_of_installments = 1
+        elif self.loan_period <= 14:
+            self.number_of_installments = 2
+        elif self.loan_period <= 30:
+            self.number_of_installments = 4
+        else:
+            self.number_of_installments = max(1, self.loan_period // 7)  # 1 installment per week for long loans
+        
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return f"{self.name} - {self.interest_rate}%"

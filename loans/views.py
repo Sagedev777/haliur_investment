@@ -20,7 +20,7 @@ def loan_product_create(request):
     form = LoanProductForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         form.save()
-        return redirect('loan_products_list')
+        return redirect('loans:loan_products_list')
     return render(request, 'loans/loan_product_form.html', {'form': form})
 
 @login_required
@@ -76,7 +76,7 @@ def loan_application_edit(request, pk):
 def loan_application_delete(request, pk):
     application = get_object_or_404(LoanApplication, pk=pk)
     application.delete()
-    return redirect('loans:list_loan')
+    return redirect('loans:list_loans')
 
 @login_required
 def loan_application_approve(request, pk):

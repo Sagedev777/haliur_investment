@@ -59,6 +59,7 @@
                 </li>
 
                 <!-- LOANS -->
+
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle 
                        {% if 'loans' in request.path %}active{% endif %}"
@@ -66,26 +67,18 @@
                         Loans
                     </a>
                     <ul class="dropdown-menu">
+                        <!-- Loan Products -->
+                        <li><a class="dropdown-item" href="{% url 'loans:loan_products_list' %}">Loan Products</a></li>
+                        <li><a class="dropdown-item" href="{% url 'loans:loan_product_create' %}">Add Loan Product</a></li>
+                        <li><a class="dropdown-item" href="{% url 'loans:loan_application_create' %}">Apply Loan</a></li>
                         <li><a class="dropdown-item" href="{% url 'loans:list_loans' %}">All Loans</a></li>
-                        <li><a class="dropdown-item" href="{% url 'loans:loan_application_create' %}">
-                            Apply Loan
-                        </a></li>
-                        <li><a class="dropdown-item" href="{% url 'reports:loan_performance' %}">
-                            Performance
-                        </a></li>
-                        <li><a class="dropdown-item" href="{% url 'reports:loan_portfolio_report' %}">
-                            Portfolio
-                        </a></li>
-                        <li><a class="dropdown-item" href="{% url 'reports:loan_defaults_report' %}">
-                            Defaults
-                        </a></li>
-                        <li><a class="dropdown-item" href="{% url 'reports:loan_collections_report' %}">
-                            Collections
-                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'reports:loan_performance' %}">Performance</a></li>
+                        <li><a class="dropdown-item" href="{% url 'reports:loan_portfolio_report' %}">Portfolio</a></li>
+                        <li><a class="dropdown-item" href="{% url 'reports:loan_defaults_report' %}">Defaults</a></li>
+                        <li><a class="dropdown-item" href="{% url 'reports:loan_collections_report' %}">Collections</a></li>
                     </ul>
                 </li>
 
-                <!-- SAVINGS (only reports—no savings app needed) -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle 
                        {% if 'savings' in request.path %}active{% endif %}"
