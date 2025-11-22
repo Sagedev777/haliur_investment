@@ -1,45 +1,53 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block title %}Client Accounts{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-    <h2 class="text-center mb-4">All Client Accounts</h2>
+    <h2 class="mb-4">Client Accounts</h2>
 
-    <div class="mb-3 text-end">
-        <a href="{% url 'accounts:account_create' %}" class="btn btn-primary btn-sm">+ New Account</a>
-        <a href="{% url 'accounts:export_accounts_csv' %}" class="btn btn-success btn-sm">Export CSV</a>
-        <button onclick="window.print()" class="btn btn-outline-dark btn-sm">Print</button>
+    <div class="mb-3 d-flex justify-content-between">
+        <a href="{% url 'accounts:account_create' %}" class="btn btn-primary">+ New Account</a>
+        <input type="text" id="searchInput" class="form-control w-25" placeholder="Search by name or account">
     </div>
 
-    <table class="table table-bordered table-striped shadow-sm">
+    <table class="table table-bordered table-striped table-hover">
         <thead class="table-dark">
             <tr>
                 <th>Account #</th>
                 <th>Client Name</th>
-                <th>Type</th>
+                <th>Contact</th>
                 <th>Balance (UGX)</th>
-                <th>Status</th>
-                <th>Registered</th>
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody>
-            {% for acc in accounts %}
+        <tbody id="accountsTable">
+            {% for account in accounts %}
             <tr>
-                <td>{{ acc.account_number }}</td>
-                <td>{{ acc.full_account_name }}</td>
-                <td>{{ acc.account_type }}</td>
-                <td>{{ acc.savings_balance|floatformat:2 }}</td>
-                <td>{% if acc.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Inactive</span>{% endif %}</td>
-                <td>{{ acc.registration_date|date:"M d, Y" }}</td>
+                <td>{{ account.id }}</td>
+                <td>{{ account.person1_first_name }} {{ account.person1_last_name }}</td>
+                <td>{{ account.person1_contact }}</td>
+                <td>{{ account.balance }}</td>
                 <td>
-                    <a href="{% url 'accounts:account_detail' acc.id %}" class="btn btn-sm btn-outline-primary">View</a>
-                    <a href="{% url 'accounts:account_edit' acc.id %}" class="btn btn-sm btn-outline-warning">Edit</a>
+                    <a href="{% url 'accounts:account_detail' account.id %}" class="btn btn-sm btn-info">View</a>
+                    <a href="{% url 'accounts:account_edit' account.id %}" class="btn btn-sm btn-warning">Edit</a>
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="7" class="text-center">No accounts found.</td></tr>
+            <tr>
+                <td colspan="5" class="text-center">No accounts found.</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<script>
+const searchInput = document.getElementById("searchInput");
+searchInput.addEventListener("input", function() {
+    const filter = this.value.toLowerCase();
+    document.querySelectorAll("#accountsTable tr").forEach(tr => {
+        tr.style.display = [...tr.children].some(td => td.textContent.toLowerCase().includes(filter)) ? "" : "none";
+    });
+});
+</script>
 {% endblock %}
