@@ -14,6 +14,7 @@ from reportlab.lib.units import inch
 from functools import wraps
 from .models import ClientAccount
 from django.utils import timezone
+from .models import ClientAccount
 from .forms import ClientAccountForm
 # -----------------------
 # Role-based decorator
@@ -66,22 +67,31 @@ def account_list(request):
 
 
 @login_required
-@role_required(['Admin', 'Staff'])
+@role_required(['Admin', 'Staff', 'Manager'])
 def account_create(request):
     if request.method == 'POST':
-        # Validate required fields manually
+        submitted_data = request.POST.copy()
         errors = {}
+
+        # Manual validation before creating the object
         required_fields = [
             'account_type', 'person1_first_name', 'person1_last_name', 
             'person1_contact', 'person1_nin', 'person1_gender',
             'business_location', 'business_sector'
         ]
         
+        # Check required fields
         for field in required_fields:
             if not request.POST.get(field):
                 errors[field] = 'This field is required.'
-        
-        # For joint accounts, validate person2 fields
+
+        # Check for duplicate NIN
+        person1_nin = request.POST.get('person1_nin')
+        if person1_nin:
+            if ClientAccount.objects.filter(person1_nin=person1_nin, is_approved=True).exists():
+                errors['person1_nin'] = 'Person with this NIN already has an active account.'
+
+        # For joint accounts, validate person2 fields and check duplicate NIN
         if request.POST.get('account_type') == 'JOINT':
             joint_required_fields = [
                 'person2_first_name', 'person2_last_name', 'person2_contact',
@@ -90,55 +100,76 @@ def account_create(request):
             for field in joint_required_fields:
                 if not request.POST.get(field):
                     errors[field] = 'This field is required for joint accounts.'
-        
+            
+            # Check for duplicate NIN for person2
+            person2_nin = request.POST.get('person2_nin')
+            if person2_nin:
+                if ClientAccount.objects.filter(person1_nin=person2_nin, is_approved=True).exists():
+                    errors['person2_nin'] = 'Person with this NIN already has an active account.'
+                # Also check if person2 NIN is same as person1 NIN
+                if person2_nin == person1_nin:
+                    errors['person2_nin'] = 'Secondary account holder cannot have the same NIN as primary account holder.'
+
+        # If there are validation errors, return them
         if errors:
-            # There are errors, render form with errors and submitted data
+            messages.error(request, "Please correct the errors below.")
             return render(request, 'client_accounts/account_form.html', {
                 'errors': errors,
-                'submitted_data': request.POST,
+                'submitted_data': submitted_data,
                 'title': 'Create Client Account'
             })
-        
-        # No errors, create the account
-        account = ClientAccount(
-            account_type=request.POST.get('account_type'),
-            person1_first_name=request.POST.get('person1_first_name'),
-            person1_last_name=request.POST.get('person1_last_name'),
-            person1_contact=request.POST.get('person1_contact'),
-            person1_address=request.POST.get('person1_address'),
-            person1_area_code=request.POST.get('person1_area_code'),
-            person1_next_of_kin=request.POST.get('person1_next_of_kin'),
-            person1_nin=request.POST.get('person1_nin'),
-            person1_gender=request.POST.get('person1_gender'),
-            business_location=request.POST.get('business_location'),
-            business_sector=request.POST.get('business_sector'),
-            person2_first_name=request.POST.get('person2_first_name'),
-            person2_last_name=request.POST.get('person2_last_name'),
-            person2_contact=request.POST.get('person2_contact'),
-            person2_address=request.POST.get('person2_address'),
-            person2_area_code=request.POST.get('person2_area_code'),
-            person2_next_of_kin=request.POST.get('person2_next_of_kin'),
-            person2_nin=request.POST.get('person2_nin'),
-            person2_gender=request.POST.get('person2_gender'),
-            loan_officer=request.user
-        )
 
-        # Staff edits require Admin approval
-        if request.user.groups.filter(name='Staff').exists():
-            account.is_approved = False
-            account.edit_requested_by = request.user
-        else:
-            account.is_approved = True
+        # If no validation errors, create the account
+        try:
+            account = ClientAccount(
+                account_type=request.POST.get('account_type'),
+                person1_first_name=request.POST.get('person1_first_name'),
+                person1_last_name=request.POST.get('person1_last_name'),
+                person1_contact=request.POST.get('person1_contact'),
+                person1_address=request.POST.get('person1_address'),
+                person1_area_code=request.POST.get('person1_area_code'),
+                person1_next_of_kin=request.POST.get('person1_next_of_kin'),
+                person1_nin=request.POST.get('person1_nin'),
+                person1_gender=request.POST.get('person1_gender'),
+                business_location=request.POST.get('business_location'),
+                business_sector=request.POST.get('business_sector'),
+                person2_first_name=request.POST.get('person2_first_name'),
+                person2_last_name=request.POST.get('person2_last_name'),
+                person2_contact=request.POST.get('person2_contact'),
+                person2_address=request.POST.get('person2_address'),
+                person2_area_code=request.POST.get('person2_area_code'),
+                person2_next_of_kin=request.POST.get('person2_next_of_kin'),
+                person2_nin=request.POST.get('person2_nin'),
+                person2_gender=request.POST.get('person2_gender'),
+                loan_officer=request.user
+            )
 
-        account.save()
-        messages.success(request, f"Account {account.account_number} created successfully.")
-        return redirect('accounts:account_list')
+            # Staff edits require Admin approval
+            if request.user.groups.filter(name='Staff').exists():
+                account.is_approved = False
+                account.edit_requested_by = request.user
+            else:
+                account.is_approved = True
+
+            account.save()
+            
+            messages.success(request, f"Account {account.account_number} created successfully.")
+            return redirect('accounts:account_list')
+
+        except Exception as e:
+            # Handle unexpected errors during save
+            errors['general'] = f"An error occurred while saving: {str(e)}"
+            messages.error(request, "An unexpected error occurred. Please try again.")
+            return render(request, 'client_accounts/account_form.html', {
+                'errors': errors,
+                'submitted_data': submitted_data,
+                'title': 'Create Client Account'
+            })
     
     # GET request - render empty form
     return render(request, 'client_accounts/account_form.html', {
         'title': 'Create Client Account'
     })
-
 @login_required
 @role_required(['Admin', 'Staff', 'Manager'])
 def account_detail(request, pk):
