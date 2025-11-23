@@ -69,6 +69,37 @@ def account_list(request):
 @role_required(['Admin', 'Staff'])
 def account_create(request):
     if request.method == 'POST':
+        # Validate required fields manually
+        errors = {}
+        required_fields = [
+            'account_type', 'person1_first_name', 'person1_last_name', 
+            'person1_contact', 'person1_nin', 'person1_gender',
+            'business_location', 'business_sector'
+        ]
+        
+        for field in required_fields:
+            if not request.POST.get(field):
+                errors[field] = 'This field is required.'
+        
+        # For joint accounts, validate person2 fields
+        if request.POST.get('account_type') == 'JOINT':
+            joint_required_fields = [
+                'person2_first_name', 'person2_last_name', 'person2_contact',
+                'person2_nin', 'person2_gender'
+            ]
+            for field in joint_required_fields:
+                if not request.POST.get(field):
+                    errors[field] = 'This field is required for joint accounts.'
+        
+        if errors:
+            # There are errors, render form with errors and submitted data
+            return render(request, 'client_accounts/account_form.html', {
+                'errors': errors,
+                'submitted_data': request.POST,
+                'title': 'Create Client Account'
+            })
+        
+        # No errors, create the account
         account = ClientAccount(
             account_type=request.POST.get('account_type'),
             person1_first_name=request.POST.get('person1_first_name'),
@@ -102,8 +133,11 @@ def account_create(request):
         account.save()
         messages.success(request, f"Account {account.account_number} created successfully.")
         return redirect('accounts:account_list')
-    return render(request, 'client_accounts/account_form.html')
-
+    
+    # GET request - render empty form
+    return render(request, 'client_accounts/account_form.html', {
+        'title': 'Create Client Account'
+    })
 
 @login_required
 @role_required(['Admin', 'Staff', 'Manager'])

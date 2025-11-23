@@ -29,14 +29,14 @@ def loan_product_edit(request, pk):
     form = LoanProductForm(request.POST or None, instance=product)
     if request.method == 'POST' and form.is_valid():
         form.save()
-        return redirect('loan_products_list')
+        return redirect('loans:loan_products_list')
     return render(request, 'loans/loan_product_form.html', {'form': form})
 
 @login_required
 def loan_product_delete(request, pk):
     product = get_object_or_404(LoanProduct, pk=pk)
     product.delete()
-    return redirect('loan_products_list')
+    return redirect('loans:loan_products_list')
 
 
 # ---------------------
