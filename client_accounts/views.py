@@ -16,6 +16,9 @@ from .models import ClientAccount
 from django.utils import timezone
 from .models import ClientAccount
 from .forms import ClientAccountForm
+import random
+import string
+from django.utils import timezone
 # -----------------------
 # Role-based decorator
 # -----------------------
@@ -66,6 +69,24 @@ def account_list(request):
     return render(request, 'client_accounts/account_list.html', {'accounts': accounts})
 
 
+def generate_account_number():
+    """Generate account number in format: HIL + YYMMDD + random digits + random letter"""
+    now = timezone.now()
+    date_part = now.strftime("%y%m%d")  # YYMMDD format
+    random_digits = ''.join(random.choices(string.digits, k=7))
+    random_letter = random.choice(string.ascii_lowercase)
+    
+    account_number = f"HIL{date_part}{random_digits}{random_letter}"
+    
+    # Check if account number already exists
+    while ClientAccount.objects.filter(account_number=account_number).exists():
+        random_digits = ''.join(random.choices(string.digits, k=7))
+        random_letter = random.choice(string.ascii_lowercase)
+        account_number = f"HIL{date_part}{random_digits}{random_letter}"
+    
+    return account_number
+
+# Add this li                                                                                                                                                                                                                                                                                                        )
 @login_required
 @role_required(['Admin', 'Staff', 'Manager'])
 def account_create(request):
@@ -122,6 +143,8 @@ def account_create(request):
         # If no validation errors, create the account
         try:
             account = ClientAccount(
+                
+                account_number=generate_account_number(), 
                 account_type=request.POST.get('account_type'),
                 person1_first_name=request.POST.get('person1_first_name'),
                 person1_last_name=request.POST.get('person1_last_name'),
