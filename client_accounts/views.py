@@ -1,150 +1,180 @@
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
-from django.db.models import Sum
-from .models import ClientAccount, SavingsTransaction
+from django.db.models import Sum, Q, Count
+from .models import ClientAccount, SavingsTransaction, UserProfile, ClientEditRequest, ClientAuditLog
 from loans.models import LoanApplication  # Loan model must have status: PENDING, APPROVED, REJECTED, DISBURSED
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from decimal import Decimal
 import csv
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 from functools import wraps
-from .models import ClientAccount
 from django.utils import timezone
-from .models import ClientAccount
-from .forms import ClientAccountForm
-import random
-import string
-from django.utils import timezone
+from django.core.paginator import Paginator
+import json
+from django.views.decorators.http import require_POST
+from django.core.exceptions import ValidationError
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+
 # -----------------------
-# Role-based decorator
+# Role-based decorator - UPDATED TO USE UserProfile
 # -----------------------
-def role_required(roles):
-    """Restrict view access to certain user groups"""
+def role_required(allowed_roles):
+    """
+    Restrict view access to certain user roles using UserProfile
+    """
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
-            if request.user.is_superuser or request.user.groups.filter(name__in=roles).exists():
+            if request.user.is_superuser:
                 return view_func(request, *args, **kwargs)
+            
+            try:
+                profile = request.user.profile
+                if profile.role in allowed_roles:
+                    return view_func(request, *args, **kwargs)
+            except UserProfile.DoesNotExist:
+                pass
+            
             messages.error(request, "You do not have permission to access this page.")
             return redirect('accounts:dashboard')
         return _wrapped_view
     return decorator
 
+def get_user_role(request):
+    """Helper function to get user role from UserProfile"""
+    if request.user.is_superuser:
+        return UserProfile.ROLE_ADMIN
+    try:
+        return request.user.profile.role
+    except UserProfile.DoesNotExist:
+        return None
 
 # -----------------------
-# Dashboard
+# Dashboard - UPDATED
 # -----------------------
 @login_required
 def dashboard(request):
-    total_accounts = ClientAccount.objects.count()
-    active_accounts = ClientAccount.objects.filter(is_active=True).count()
-    total_savings = ClientAccount.objects.aggregate(total=Sum('savings_balance'))['total'] or Decimal('0')
-
-    recent_accounts = ClientAccount.objects.order_by('-registration_date')[:5]
-    recent_savings = SavingsTransaction.objects.order_by('-transaction_date')[:5]
-    recent_loans = LoanApplication.objects.order_by('-application_date')[:5]
-
+    user_role = get_user_role(request)
+    
+    # Base querysets
+    accounts_qs = ClientAccount.objects.all()
+    transactions_qs = SavingsTransaction.objects.all()
+    
+    # Filter by role if not admin
+    if user_role == UserProfile.ROLE_STAFF:
+        accounts_qs = accounts_qs.filter(loan_officer=request.user)
+        transactions_qs = transactions_qs.filter(processed_by=request.user)
+    elif user_role == UserProfile.ROLE_LOAN_OFFICER:
+        accounts_qs = accounts_qs.filter(loan_officer=request.user)
+    
+    # Calculate statistics
+    total_accounts = accounts_qs.count()
+    active_accounts = accounts_qs.filter(account_status=ClientAccount.STATUS_ACTIVE).count()
+    pending_accounts = accounts_qs.filter(account_status=ClientAccount.STATUS_PENDING).count()
+    total_savings = accounts_qs.aggregate(total=Sum('savings_balance'))['total'] or Decimal('0')
+    
+    # Recent data
+    recent_accounts = accounts_qs.order_by('-registration_date')[:5]
+    recent_savings = transactions_qs.order_by('-transaction_date')[:5]
+    
+    # Get loans if available
+    recent_loans = []
+    try:
+        if user_role == UserProfile.ROLE_ADMIN or user_role == UserProfile.ROLE_LOAN_OFFICER:
+            recent_loans = LoanApplication.objects.all().order_by('-application_date')[:5]
+        elif user_role == UserProfile.ROLE_STAFF:
+            recent_loans = LoanApplication.objects.filter(client_account__loan_officer=request.user).order_by('-application_date')[:5]
+    except:
+        recent_loans = []
+    
+    # Pending approvals for admin
+    pending_edit_requests = []
+    if user_role == UserProfile.ROLE_ADMIN:
+        pending_edit_requests = ClientEditRequest.objects.filter(
+            status=ClientEditRequest.STATUS_PENDING
+        ).order_by('-created_at')[:5]
+    
     context = {
+        'user_role': user_role,
         'total_accounts': total_accounts,
         'active_accounts': active_accounts,
+        'pending_accounts': pending_accounts,
         'total_savings': total_savings,
         'recent_accounts': recent_accounts,
         'recent_savings': recent_savings,
         'recent_loans': recent_loans,
+        'pending_edit_requests': pending_edit_requests,
     }
     return render(request, 'client_accounts/dashboard.html', context)
 
 
 # -----------------------
-# Client Accounts
+# Client Accounts - UPDATED
 # -----------------------
 @login_required
-@role_required(['Admin', 'Staff', 'Manager'])
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_STAFF, UserProfile.ROLE_MANAGER, UserProfile.ROLE_LOAN_OFFICER])
 def account_list(request):
-    accounts = ClientAccount.objects.all().order_by('-registration_date')
-    return render(request, 'client_accounts/account_list.html', {'accounts': accounts})
+    user_role = get_user_role(request)
+    
+    # Get filter parameters
+    status_filter = request.GET.get('status', '')
+    search_query = request.GET.get('search', '')
+    
+    # Base queryset
+    accounts = ClientAccount.objects.all()
+    
+    # Filter by role
+    if user_role == UserProfile.ROLE_STAFF or user_role == UserProfile.ROLE_LOAN_OFFICER:
+        accounts = accounts.filter(loan_officer=request.user)
+    
+    # Apply filters
+    if status_filter:
+        accounts = accounts.filter(account_status=status_filter)
+    
+    if search_query:
+        accounts = accounts.filter(
+            Q(account_number__icontains=search_query) |
+            Q(person1_first_name__icontains=search_query) |
+            Q(person1_last_name__icontains=search_query) |
+            Q(person1_nin__icontains=search_query) |
+            Q(person2_first_name__icontains=search_query) |
+            Q(person2_last_name__icontains=search_query) |
+            Q(person2_nin__icontains=search_query)
+        )
+    
+    # Order and paginate
+    accounts = accounts.order_by('-registration_date')
+    paginator = Paginator(accounts, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'status_filter': status_filter,
+        'search_query': search_query,
+        'status_choices': ClientAccount.STATUS_CHOICES,
+        'user_role': user_role,
+    }
+    return render(request, 'client_accounts/account_list.html', context)
 
 
-def generate_account_number():
-    """Generate account number in format: HIL + YYMMDD + random digits + random letter"""
-    now = timezone.now()
-    date_part = now.strftime("%y%m%d")  # YYMMDD format
-    random_digits = ''.join(random.choices(string.digits, k=7))
-    random_letter = random.choice(string.ascii_lowercase)
-    
-    account_number = f"HIL{date_part}{random_digits}{random_letter}"
-    
-    # Check if account number already exists
-    while ClientAccount.objects.filter(account_number=account_number).exists():
-        random_digits = ''.join(random.choices(string.digits, k=7))
-        random_letter = random.choice(string.ascii_lowercase)
-        account_number = f"HIL{date_part}{random_digits}{random_letter}"
-    
-    return account_number
-
-# Add this li                                                                                                                                                                                                                                                                                                        )
 @login_required
-@role_required(['Admin', 'Staff', 'Manager'])
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_STAFF, UserProfile.ROLE_LOAN_OFFICER])
 def account_create(request):
+    """Create a new client account with proper workflow"""
+    user_role = get_user_role(request)
+    
     if request.method == 'POST':
-        submitted_data = request.POST.copy()
-        errors = {}
-
-        # Manual validation before creating the object
-        required_fields = [
-            'account_type', 'person1_first_name', 'person1_last_name', 
-            'person1_contact', 'person1_nin', 'person1_gender',
-            'business_location', 'business_sector'
-        ]
-        
-        # Check required fields
-        for field in required_fields:
-            if not request.POST.get(field):
-                errors[field] = 'This field is required.'
-
-        # Check for duplicate NIN
-        person1_nin = request.POST.get('person1_nin')
-        if person1_nin:
-            if ClientAccount.objects.filter(person1_nin=person1_nin, is_approved=True).exists():
-                errors['person1_nin'] = 'Person with this NIN already has an active account.'
-
-        # For joint accounts, validate person2 fields and check duplicate NIN
-        if request.POST.get('account_type') == 'JOINT':
-            joint_required_fields = [
-                'person2_first_name', 'person2_last_name', 'person2_contact',
-                'person2_nin', 'person2_gender'
-            ]
-            for field in joint_required_fields:
-                if not request.POST.get(field):
-                    errors[field] = 'This field is required for joint accounts.'
-            
-            # Check for duplicate NIN for person2
-            person2_nin = request.POST.get('person2_nin')
-            if person2_nin:
-                if ClientAccount.objects.filter(person1_nin=person2_nin, is_approved=True).exists():
-                    errors['person2_nin'] = 'Person with this NIN already has an active account.'
-                # Also check if person2 NIN is same as person1 NIN
-                if person2_nin == person1_nin:
-                    errors['person2_nin'] = 'Secondary account holder cannot have the same NIN as primary account holder.'
-
-        # If there are validation errors, return them
-        if errors:
-            messages.error(request, "Please correct the errors below.")
-            return render(request, 'client_accounts/account_form.html', {
-                'errors': errors,
-                'submitted_data': submitted_data,
-                'title': 'Create Client Account'
-            })
-
-        # If no validation errors, create the account
         try:
+            # Create account instance
             account = ClientAccount(
-                
-                account_number=generate_account_number(), 
                 account_type=request.POST.get('account_type'),
                 person1_first_name=request.POST.get('person1_first_name'),
                 person1_last_name=request.POST.get('person1_last_name'),
@@ -156,159 +186,816 @@ def account_create(request):
                 person1_gender=request.POST.get('person1_gender'),
                 business_location=request.POST.get('business_location'),
                 business_sector=request.POST.get('business_sector'),
-                person2_first_name=request.POST.get('person2_first_name'),
-                person2_last_name=request.POST.get('person2_last_name'),
-                person2_contact=request.POST.get('person2_contact'),
-                person2_address=request.POST.get('person2_address'),
-                person2_area_code=request.POST.get('person2_area_code'),
-                person2_next_of_kin=request.POST.get('person2_next_of_kin'),
-                person2_nin=request.POST.get('person2_nin'),
-                person2_gender=request.POST.get('person2_gender'),
-                loan_officer=request.user
+                loan_officer=request.user,
+                created_by=request.user,
             )
-
-            # Staff edits require Admin approval
-            if request.user.groups.filter(name='Staff').exists():
-                account.is_approved = False
-                account.edit_requested_by = request.user
+            
+            # For joint accounts
+            if request.POST.get('account_type') == 'JOINT':
+                # Check if linking to existing client
+                person2_client_id = request.POST.get('person2_client')
+                if person2_client_id:
+                    account.person2_client_id = person2_client_id
+                else:
+                    # Manual entry
+                    account.person2_first_name = request.POST.get('person2_first_name')
+                    account.person2_last_name = request.POST.get('person2_last_name')
+                    account.person2_contact = request.POST.get('person2_contact')
+                    account.person2_address = request.POST.get('person2_address')
+                    account.person2_area_code = request.POST.get('person2_area_code')
+                    account.person2_next_of_kin = request.POST.get('person2_next_of_kin')
+                    account.person2_nin = request.POST.get('person2_nin')
+                    account.person2_gender = request.POST.get('person2_gender')
+            
+            # Set account status based on user role
+            if user_role == UserProfile.ROLE_ADMIN:
+                account.account_status = ClientAccount.STATUS_ACTIVE
+                account.approved_by = request.user
+                account.approval_date = timezone.now()
+                messages.success(request, f"Account created successfully and activated.")
             else:
-                account.is_approved = True
-
+                # Staff/Loan Officer: Account needs admin approval
+                account.account_status = ClientAccount.STATUS_PENDING
+                messages.success(request, f"Account created successfully. Waiting for admin approval.")
+            
+            # Save the account
             account.save()
             
-            messages.success(request, f"Account {account.account_number} created successfully.")
-            return redirect('accounts:account_list')
-
-        except Exception as e:
-            # Handle unexpected errors during save
-            errors['general'] = f"An error occurred while saving: {str(e)}"
-            messages.error(request, "An unexpected error occurred. Please try again.")
+            # Create audit log
+            ClientAuditLog.objects.create(
+                client=account,
+                action=ClientAuditLog.ACTION_CREATE,
+                performed_by=request.user,
+                note=f"Account created by {request.user.username}"
+            )
+            
+            return redirect('accounts:account_detail', pk=account.pk)
+            
+        except ValidationError as e:
+            # Handle validation errors
+            messages.error(request, f"Validation error: {e}")
             return render(request, 'client_accounts/account_form.html', {
-                'errors': errors,
-                'submitted_data': submitted_data,
-                'title': 'Create Client Account'
+                'title': 'Create Client Account',
+                'error': str(e),
+                'submitted_data': request.POST,
+                'user_role': user_role,
+            })
+        except Exception as e:
+            # Handle other errors
+            messages.error(request, f"An error occurred: {str(e)}")
+            return render(request, 'client_accounts/account_form.html', {
+                'title': 'Create Client Account',
+                'error': f"An unexpected error occurred: {str(e)}",
+                'submitted_data': request.POST,
+                'user_role': user_role,
             })
     
-    # GET request - render empty form
+    # GET request - render form
+    # Get active accounts for joint account linking
+    active_accounts = ClientAccount.objects.filter(account_status=ClientAccount.STATUS_ACTIVE)
+    
     return render(request, 'client_accounts/account_form.html', {
-        'title': 'Create Client Account'
+        'title': 'Create Client Account',
+        'active_accounts': active_accounts,
+        'user_role': user_role,
     })
+
+
 @login_required
-@role_required(['Admin', 'Staff', 'Manager'])
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_STAFF, UserProfile.ROLE_MANAGER, UserProfile.ROLE_LOAN_OFFICER])
 def account_detail(request, pk):
     account = get_object_or_404(ClientAccount, pk=pk)
-    savings_transactions = SavingsTransaction.objects.filter(client_account=account).order_by('-transaction_date')
-    loans = LoanApplication.objects.filter(client_account=account).order_by('-application_date')
+    user_role = get_user_role(request)
+    
+    # Check permission: Staff/Loan Officer can only see their own clients
+    if user_role in [UserProfile.ROLE_STAFF, UserProfile.ROLE_LOAN_OFFICER] and account.loan_officer != request.user:
+        messages.error(request, "You do not have permission to view this account.")
+        return redirect('accounts:account_list')
+    
+    savings_transactions = SavingsTransaction.objects.filter(
+        client_account=account
+    ).order_by('-transaction_date')[:10]
+    
+    # Get loans if available
+    loans = []
+    active_loans_count = 0
+    try:
+        loans = LoanApplication.objects.filter(client_account=account).order_by('-application_date')[:10]
+        active_loans_count = LoanApplication.objects.filter(
+            client_account=account,
+            status__in=['APPROVED', 'DISBURSED', 'ACTIVE']
+        ).count()
+    except:
+        pass
+    
+
+    active_loans_count = sum(1 for loan in loans if loan.status in ['APPROVED', 'DISBURSED', 'ACTIVE'])
+    # Get audit logs
+    audit_logs = ClientAuditLog.objects.filter(client=account).order_by('-timestamp')[:10]
+    
+    # Get pending edit requests
+    edit_requests = account.edit_requests.filter(status=ClientEditRequest.STATUS_PENDING)
+    
+    # Add this calculation
+    active_loans_count = LoanApplication.objects.filter(
+        client_account=account,
+        status__in=['APPROVED', 'DISBURSED', 'ACTIVE']
+    ).count()
+    
     context = {
         'account': account,
         'savings_transactions': savings_transactions,
         'loans': loans,
+        'audit_logs': audit_logs,
+        'edit_requests': edit_requests,
+        'user_role': user_role,
+        'can_edit': (
+            user_role == UserProfile.ROLE_ADMIN or 
+            (user_role in [UserProfile.ROLE_STAFF, UserProfile.ROLE_LOAN_OFFICER] and account.loan_officer == request.user)
+        ),
+        'active_loans_count': active_loans_count,
     }
     return render(request, 'client_accounts/account_detail.html', context)
 
 
 @login_required
-@role_required(['Admin', 'Staff'])
-# views.py
-
 def account_edit(request, pk):
+    """
+    Edit client account with proper workflow:
+    - Admin: Direct edit
+    - Staff/Loan Officer: Create edit request for approval
+    """
     account = get_object_or_404(ClientAccount, pk=pk)
-
+    user_role = get_user_role(request)
+    
+    # Check permission
+    if user_role not in [UserProfile.ROLE_ADMIN] and account.loan_officer != request.user:
+        messages.error(request, "You do not have permission to edit this account.")
+        return redirect('accounts:account_detail', pk=account.pk)
+    
     if request.method == 'POST':
-        form = ClientAccountForm(request.POST, instance=account)
-        if form.is_valid():
-            account = form.save(commit=False)
-            
-            # Staff edits require admin approval
-            if request.user.groups.filter(name='Staff').exists():
-                account.is_approved = False
-                messages.info(request, "Your changes are submitted for Admin approval.")
-            else:
-                account.is_approved = True
+        if user_role == UserProfile.ROLE_ADMIN:
+            # Admin can edit directly
+            try:
+                # Update account fields
+                for field in ['person1_first_name', 'person1_last_name', 'person1_contact', 
+                             'person1_address', 'person1_area_code', 'person1_next_of_kin',
+                             'business_location', 'business_sector']:
+                    if field in request.POST:
+                        setattr(account, field, request.POST.get(field))
+                
+                # Handle joint account updates
+                if account.account_type == 'JOINT':
+                    person2_client_id = request.POST.get('person2_client')
+                    if person2_client_id:
+                        account.person2_client_id = person2_client_id
+                    else:
+                        for field in ['person2_first_name', 'person2_last_name', 'person2_contact',
+                                     'person2_address', 'person2_area_code', 'person2_next_of_kin',
+                                     'person2_nin', 'person2_gender']:
+                            if field in request.POST:
+                                setattr(account, field, request.POST.get(field))
+                
+                account.last_edited_by = request.user
+                account.last_edited_date = timezone.now()
+                account.save()
+                
                 messages.success(request, "Account updated successfully.")
+                return redirect('accounts:account_detail', pk=account.pk)
+                
+            except Exception as e:
+                messages.error(request, f"Error updating account: {str(e)}")
+        else:
+            # Staff/Loan Officer: Create edit request
+            changes = {}
+            for field in request.POST:
+                if field not in ['csrfmiddlewaretoken'] and request.POST[field]:
+                    current_value = getattr(account, field, None)
+                    if current_value != request.POST[field]:
+                        changes[field] = request.POST[field]
             
-            account.save()
-            return redirect('accounts:account_detail', pk=account.pk)
-    else:
-        form = ClientAccountForm(instance=account)
-
-    return render(request, 'client_accounts/account_form.html', {'form': form, 'account': account})
+            if changes:
+                try:
+                    edit_request = account.submit_edit_request(request.user, changes)
+                    messages.success(request, "Edit request submitted for admin approval.")
+                    return redirect('accounts:account_detail', pk=account.pk)
+                except Exception as e:
+                    messages.error(request, f"Error submitting edit request: {str(e)}")
+            else:
+                messages.warning(request, "No changes detected.")
+    
+    # GET request - show form with current data
+    active_accounts = ClientAccount.objects.filter(account_status=ClientAccount.STATUS_ACTIVE).exclude(pk=account.pk)
+    
+    return render(request, 'client_accounts/account_edit.html', {
+        'account': account,
+        'active_accounts': active_accounts,
+        'user_role': user_role,
+    })
 
 
 @login_required
-@role_required(['Admin'])
-def account_delete(request, pk):
+@role_required([UserProfile.ROLE_ADMIN])
+def account_approve(request, pk):
+    """Approve a pending account"""
     account = get_object_or_404(ClientAccount, pk=pk)
-    account.is_active = False
-    account.save()
-    messages.success(request, f"Account {account.account_number} deactivated.")
-    return redirect('accounts:account_list')
+    
+    if account.account_status != ClientAccount.STATUS_PENDING:
+        messages.error(request, "Only pending accounts can be approved.")
+        return redirect('accounts:account_detail', pk=account.pk)
+    
+    if account.approve_account(request.user):
+        messages.success(request, f"Account {account.account_number} approved successfully.")
+    else:
+        messages.error(request, "Failed to approve account.")
+    
+    return redirect('accounts:account_detail', pk=account.pk)
+
+
+@login_required
+@role_required([UserProfile.ROLE_ADMIN])
+def account_reject(request, pk):
+    """Reject a pending account"""
+    account = get_object_or_404(ClientAccount, pk=pk)
+    
+    if account.account_status != ClientAccount.STATUS_PENDING:
+        messages.error(request, "Only pending accounts can be rejected.")
+        return redirect('accounts:account_detail', pk=account.pk)
+    
+    reason = request.POST.get('reason', '')
+    if account.reject_account(request.user, reason):
+        messages.success(request, f"Account {account.account_number} rejected.")
+    else:
+        messages.error(request, "Failed to reject account.")
+    
+    return redirect('accounts:account_detail', pk=account.pk)
+
+
+@login_required
+@role_required([UserProfile.ROLE_ADMIN])
+def account_change_status(request, pk):
+    """Change account status"""
+    account = get_object_or_404(ClientAccount, pk=pk)
+    
+    if request.method == 'POST':
+        new_status = request.POST.get('new_status')
+        reason = request.POST.get('reason', '')
+        
+        if new_status not in dict(ClientAccount.STATUS_CHOICES).keys():
+            messages.error(request, "Invalid status.")
+        else:
+            account.change_status(new_status, request.user, reason)
+            messages.success(request, f"Account status changed to {new_status}.")
+    
+    return redirect('accounts:account_detail', pk=account.pk)
 
 
 # -----------------------
-# Savings
+# Edit Request Management - UPDATED
 # -----------------------
 @login_required
-@role_required(['Admin', 'Staff', 'Accountant', 'Loan Officer'])
+@role_required([UserProfile.ROLE_ADMIN])
+def edit_request_list(request):
+    """List all edit requests"""
+    status_filter = request.GET.get('status', 'PENDING')
+    edit_requests = ClientEditRequest.objects.all()
+    
+    if status_filter:
+        edit_requests = edit_requests.filter(status=status_filter)
+    
+    edit_requests = edit_requests.order_by('-created_at')
+    
+    return render(request, 'client_accounts/edit_request_list.html', {
+        'edit_requests': edit_requests,
+        'status_filter': status_filter,
+    })
+
+
+@login_required
+@role_required([UserProfile.ROLE_ADMIN])
+def edit_request_detail(request, pk):
+    """View edit request details"""
+    edit_request = get_object_or_404(ClientEditRequest, pk=pk)
+    
+    return render(request, 'client_accounts/edit_request_detail.html', {
+        'edit_request': edit_request,
+    })
+
+
+@login_required
+@role_required([UserProfile.ROLE_ADMIN])
+def edit_request_approve(request, pk):
+    """Approve an edit request"""
+    edit_request = get_object_or_404(ClientEditRequest, pk=pk)
+    
+    if edit_request.status != ClientEditRequest.STATUS_PENDING:
+        messages.error(request, "Only pending edit requests can be approved.")
+        return redirect('accounts:edit_request_detail', pk=pk)
+    
+    comment = request.POST.get('comment', '')
+    
+    if edit_request.approve(request.user, comment):
+        messages.success(request, "Edit request approved and changes applied.")
+    else:
+        messages.error(request, "Failed to approve edit request.")
+    
+    return redirect('accounts:edit_request_detail', pk=pk)
+
+
+@login_required
+@role_required([UserProfile.ROLE_ADMIN])
+def edit_request_reject(request, pk):
+    """Reject an edit request"""
+    edit_request = get_object_or_404(ClientEditRequest, pk=pk)
+    
+    if edit_request.status != ClientEditRequest.STATUS_PENDING:
+        messages.error(request, "Only pending edit requests can be rejected.")
+        return redirect('accounts:edit_request_detail', pk=pk)
+    
+    comment = request.POST.get('comment', '')
+    
+    if edit_request.reject(request.user, comment):
+        messages.success(request, "Edit request rejected.")
+    else:
+        messages.error(request, "Failed to reject edit request.")
+    
+    return redirect('accounts:edit_request_detail', pk=pk)
+
+
+# -----------------------
+# Savings Management - UPDATED
+# -----------------------
+@login_required
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_STAFF, UserProfile.ROLE_ACCOUNTANT, UserProfile.ROLE_LOAN_OFFICER])
 def savings_list(request):
+    """List all savings transactions"""
+    user_role = get_user_role(request)
+    
     transactions = SavingsTransaction.objects.all().order_by('-transaction_date')
-    return render(request, 'client_accounts/savings_list.html', {'transactions': transactions})
+    
+    # Filter by user if not admin
+    if user_role == UserProfile.ROLE_STAFF:
+        transactions = transactions.filter(processed_by=request.user)
+    elif user_role == UserProfile.ROLE_LOAN_OFFICER:
+        # Loan officers see transactions for their clients
+        client_accounts = ClientAccount.objects.filter(loan_officer=request.user)
+        transactions = transactions.filter(client_account__in=client_accounts)
+    
+    # Apply filters
+    account_filter = request.GET.get('account', '')
+    type_filter = request.GET.get('type', '')
+    
+    if account_filter:
+        transactions = transactions.filter(client_account__account_number__icontains=account_filter)
+    
+    if type_filter:
+        transactions = transactions.filter(transaction_type=type_filter)
+    
+    # Pagination
+    paginator = Paginator(transactions, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'client_accounts/savings_list.html', {
+        'page_obj': page_obj,
+        'account_filter': account_filter,
+        'type_filter': type_filter,
+        'user_role': user_role,
+    })
 
 
 @login_required
-@role_required(['Admin', 'Staff'])
-def savings_deposit(request):
-    if request.method == 'POST':
-        account_id = request.POST.get('account_id')
-        amount = Decimal(request.POST.get('amount'))
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_STAFF, UserProfile.ROLE_ACCOUNTANT])
+def savings_deposit(request, account_id=None):
+    """Process a savings deposit"""
+    account = None
+    if account_id:
         account = get_object_or_404(ClientAccount, pk=account_id)
-        transaction = SavingsTransaction(
-            client_account=account,
-            transaction_type='DEPOSIT',
-            amount=amount,
-            processed_by=request.user
-        )
-        transaction.save()
-        messages.success(request, f"Deposited {amount} to {account.account_number}.")
-        return redirect('accounts:account_detail', pk=account_id)
-    return render(request, 'client_accounts/savings_form.html', {'type': 'Deposit'})
-
-
-@login_required
-@role_required(['Admin', 'Staff'])
-def savings_withdrawal(request):
+        # Check permission for non-admin users
+        user_role = get_user_role(request)
+        if user_role not in [UserProfile.ROLE_ADMIN] and account.loan_officer != request.user:
+            messages.error(request, "You do not have permission to deposit to this account.")
+            return redirect('accounts:account_list')
+    
     if request.method == 'POST':
-        account_id = request.POST.get('account_id')
-        amount = Decimal(request.POST.get('amount'))
-        account = get_object_or_404(ClientAccount, pk=account_id)
-        if amount > account.savings_balance:
-            messages.error(request, "Insufficient balance.")
-            return redirect('accounts:account_detail', pk=account_id)
-        transaction = SavingsTransaction(
-            client_account=account,
-            transaction_type='WITHDRAWAL',
-            amount=amount,
-            processed_by=request.user
-        )
-        transaction.save()
-        messages.success(request, f"Withdrew {amount} from {account.account_number}.")
-        return redirect('accounts:account_detail', pk=account_id)
-    return render(request, 'client_accounts/savings_form.html', {'type': 'Withdrawal'})
+        try:
+            if not account:
+                account_number = request.POST.get('account_number')
+                account = get_object_or_404(ClientAccount, account_number=account_number)
+            
+            amount = Decimal(request.POST.get('amount'))
+            notes = request.POST.get('notes', '')
+            
+            transaction = SavingsTransaction(
+                client_account=account,
+                transaction_type='DEPOSIT',
+                amount=amount,
+                processed_by=request.user,
+                notes=notes
+            )
+            transaction.save()
+            
+            messages.success(request, f"Deposited {amount} to account {account.account_number}.")
+            
+            if account_id:
+                return redirect('accounts:account_detail', pk=account_id)
+            else:
+                return redirect('accounts:savings_list')
+                
+        except ValidationError as e:
+            messages.error(request, f"Validation error: {e}")
+        except Exception as e:
+            messages.error(request, f"Error processing deposit: {str(e)}")
+    
+    # GET request
+    accounts = ClientAccount.objects.filter(account_status=ClientAccount.STATUS_ACTIVE)
+    
+    return render(request, 'client_accounts/savings_deposit.html', {
+        'account': account,
+        'accounts': accounts,
+        'user_role': get_user_role(request),
+    })
 
 
 @login_required
-@role_required(['Admin', 'Staff', 'Accountant', 'Loan Officer'])
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_STAFF, UserProfile.ROLE_ACCOUNTANT])
+def savings_withdrawal(request, account_id=None):
+    """Process a savings withdrawal"""
+    account = None
+    if account_id:
+        account = get_object_or_404(ClientAccount, pk=account_id)
+        # Check permission for non-admin users
+        user_role = get_user_role(request)
+        if user_role not in [UserProfile.ROLE_ADMIN] and account.loan_officer != request.user:
+            messages.error(request, "You do not have permission to withdraw from this account.")
+            return redirect('accounts:account_list')
+    
+    if request.method == 'POST':
+        try:
+            if not account:
+                account_number = request.POST.get('account_number')
+                account = get_object_or_404(ClientAccount, account_number=account_number)
+            
+            amount = Decimal(request.POST.get('amount'))
+            notes = request.POST.get('notes', '')
+            
+            # Check sufficient balance
+            if amount > account.savings_balance:
+                messages.error(request, "Insufficient balance for withdrawal.")
+                return render(request, 'client_accounts/savings_withdrawal.html', {
+                    'account': account,
+                    'accounts': ClientAccount.objects.filter(account_status=ClientAccount.STATUS_ACTIVE),
+                    'user_role': get_user_role(request),
+                })
+            
+            transaction = SavingsTransaction(
+                client_account=account,
+                transaction_type='WITHDRAWAL',
+                amount=amount,
+                processed_by=request.user,
+                notes=notes
+            )
+            transaction.save()
+            
+            messages.success(request, f"Withdrew {amount} from account {account.account_number}.")
+            
+            if account_id:
+                return redirect('accounts:account_detail', pk=account_id)
+            else:
+                return redirect('accounts:savings_list')
+                
+        except ValidationError as e:
+            messages.error(request, f"Validation error: {e}")
+        except Exception as e:
+            messages.error(request, f"Error processing withdrawal: {str(e)}")
+    
+    # GET request
+    accounts = ClientAccount.objects.filter(account_status=ClientAccount.STATUS_ACTIVE)
+    
+    return render(request, 'client_accounts/savings_withdrawal.html', {
+        'account': account,
+        'accounts': accounts,
+        'user_role': get_user_role(request),
+    })
+
+
+@login_required
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_ACCOUNTANT])
+def transaction_reverse(request, pk):
+    """Reverse a savings transaction"""
+    transaction = get_object_or_404(SavingsTransaction, pk=pk)
+    
+    if request.method == 'POST':
+        reason = request.POST.get('reason', '')
+        
+        try:
+            if transaction.reverse_transaction(request.user, reason):
+                messages.success(request, f"Transaction {transaction.reference_number} reversed successfully.")
+            else:
+                messages.error(request, "Failed to reverse transaction.")
+        except ValidationError as e:
+            messages.error(request, f"Cannot reverse transaction: {e}")
+        except Exception as e:
+            messages.error(request, f"Error: {str(e)}")
+    
+    return redirect('accounts:savings_list')
+
+
+@login_required
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_STAFF, UserProfile.ROLE_ACCOUNTANT, UserProfile.ROLE_LOAN_OFFICER])
 def account_savings(request, account_id):
+    """View savings transactions for a specific account"""
     account = get_object_or_404(ClientAccount, pk=account_id)
+    user_role = get_user_role(request)
+    
+    # Check permission
+    if user_role not in [UserProfile.ROLE_ADMIN] and account.loan_officer != request.user:
+        messages.error(request, "You do not have permission to view this account's savings.")
+        return redirect('accounts:account_list')
+    
     transactions = SavingsTransaction.objects.filter(client_account=account).order_by('-transaction_date')
-    return render(request, 'client_accounts/account_savings.html', {'account': account, 'transactions': transactions})
+    
+    return render(request, 'client_accounts/account_savings.html', {
+        'account': account,
+        'transactions': transactions,
+        'user_role': user_role,
+    })
 
 
 # -----------------------
-# Loan Actions (Admin only)
+# Reports - UPDATED
 # -----------------------
 @login_required
-@role_required(['Admin'])
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_MANAGER, UserProfile.ROLE_ACCOUNTANT])
+def reports_dashboard(request):
+    """Reports dashboard with statistics"""
+    # Date filters
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    
+    # Base querysets
+    accounts = ClientAccount.objects.all()
+    transactions = SavingsTransaction.objects.all()
+    
+    # Apply date filters
+    if start_date:
+        accounts = accounts.filter(registration_date__gte=start_date)
+        transactions = transactions.filter(transaction_date__gte=start_date)
+    
+    if end_date:
+        accounts = accounts.filter(registration_date__lte=end_date)
+        transactions = transactions.filter(transaction_date__lte=end_date)
+    
+    # Statistics
+    stats = {
+        'total_accounts': accounts.count(),
+        'active_accounts': accounts.filter(account_status=ClientAccount.STATUS_ACTIVE).count(),
+        'pending_accounts': accounts.filter(account_status=ClientAccount.STATUS_PENDING).count(),
+        'total_savings': accounts.aggregate(total=Sum('savings_balance'))['total'] or Decimal('0'),
+        'total_deposits': transactions.filter(transaction_type='DEPOSIT').aggregate(total=Sum('amount'))['total'] or Decimal('0'),
+        'total_withdrawals': transactions.filter(transaction_type='WITHDRAWAL').aggregate(total=Sum('amount'))['total'] or Decimal('0'),
+    }
+    
+    # Account type distribution
+    account_types = accounts.values('account_type').annotate(count=Count('id'))
+    
+    # Top accounts by savings
+    top_savings = accounts.filter(account_status=ClientAccount.STATUS_ACTIVE).order_by('-savings_balance')[:10]
+    
+    # Recent transactions
+    recent_transactions = transactions.order_by('-transaction_date')[:10]
+    
+    context = {
+        'stats': stats,
+        'account_types': account_types,
+        'top_savings': top_savings,
+        'recent_transactions': recent_transactions,
+        'start_date': start_date,
+        'end_date': end_date,
+        'user_role': get_user_role(request),
+    }
+    return render(request, 'client_accounts/reports_dashboard.html', context)
+
+
+# -----------------------
+# API Endpoints - UPDATED
+# -----------------------
+@login_required
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_STAFF, UserProfile.ROLE_MANAGER, UserProfile.ROLE_ACCOUNTANT, UserProfile.ROLE_LOAN_OFFICER])
+def api_account_list(request):
+    """API endpoint for account list (JSON)"""
+    user_role = get_user_role(request)
+    accounts = ClientAccount.objects.all()
+    
+    if user_role == UserProfile.ROLE_STAFF:
+        accounts = accounts.filter(loan_officer=request.user)
+    elif user_role == UserProfile.ROLE_LOAN_OFFICER:
+        accounts = accounts.filter(loan_officer=request.user)
+    
+    data = list(accounts.values(
+        'id', 'account_number', 'account_type', 'account_status',
+        'person1_first_name', 'person1_last_name', 'savings_balance'
+    ))
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_STAFF, UserProfile.ROLE_MANAGER, UserProfile.ROLE_ACCOUNTANT, UserProfile.ROLE_LOAN_OFFICER])
+def api_account_detail(request, pk):
+    """API endpoint for account detail (JSON)"""
+    account = get_object_or_404(ClientAccount, pk=pk)
+    user_role = get_user_role(request)
+    
+    # Check permission
+    if user_role not in [UserProfile.ROLE_ADMIN] and account.loan_officer != request.user:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    data = {
+        'id': account.id,
+        'account_number': account.account_number,
+        'account_type': account.account_type,
+        'account_status': account.account_status,
+        'person1_first_name': account.person1_first_name,
+        'person1_last_name': account.person1_last_name,
+        'person1_contact': account.person1_contact,
+        'person1_nin': account.person1_nin,
+        'savings_balance': str(account.savings_balance),
+        'total_savings_deposited': str(account.total_savings_deposited),
+        'registration_date': account.registration_date.isoformat(),
+    }
+    return JsonResponse(data)
+
+
+@login_required
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_STAFF, UserProfile.ROLE_MANAGER, UserProfile.ROLE_ACCOUNTANT, UserProfile.ROLE_LOAN_OFFICER])
+def api_savings_balance(request, account_id):
+    """API endpoint for account savings balance"""
+    account = get_object_or_404(ClientAccount, pk=account_id)
+    user_role = get_user_role(request)
+    
+    # Check permission
+    if user_role not in [UserProfile.ROLE_ADMIN] and account.loan_officer != request.user:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    return JsonResponse({
+        'account_number': account.account_number,
+        'balance': str(account.savings_balance),
+        'last_update': account.last_savings_date.isoformat() if account.last_savings_date else None,
+    })
+
+
+# -----------------------
+# Export Functions - UPDATED
+# -----------------------
+@login_required
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_MANAGER])
+def export_accounts_csv(request):
+    """Export accounts to CSV"""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="accounts_%s.csv"' % timezone.now().strftime('%Y%m%d')
+    
+    writer = csv.writer(response)
+    writer.writerow([
+        'Account Number', 'Account Type', 'Status', 
+        'Primary Holder', 'Primary NIN', 'Primary Contact',
+        'Secondary Holder', 'Secondary NIN', 'Secondary Contact',
+        'Business Location', 'Business Sector',
+        'Savings Balance', 'Total Deposited', 'Registration Date'
+    ])
+    
+    for acc in ClientAccount.objects.all().order_by('-registration_date'):
+        primary_holder = f"{acc.person1_first_name} {acc.person1_last_name}"
+        secondary_holder = f"{acc.person2_first_name} {acc.person2_last_name}" if acc.person2_first_name else ""
+        
+        writer.writerow([
+            acc.account_number,
+            acc.get_account_type_display(),
+            acc.get_account_status_display(),
+            primary_holder,
+            acc.person1_nin,
+            acc.person1_contact,
+            secondary_holder,
+            acc.person2_nin or '',
+            acc.person2_contact or '',
+            acc.business_location,
+            acc.business_sector,
+            acc.savings_balance,
+            acc.total_savings_deposited,
+            acc.registration_date.strftime('%Y-%m-%d %H:%M:%S')
+        ])
+    
+    return response
+
+
+@login_required
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_MANAGER])
+def export_transactions_csv(request,  account_id=None):
+    """Export savings transactions to CSV"""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="transactions_%s.csv"' % timezone.now().strftime('%Y%m%d')
+    
+        # Determine filename and filter based on account_id
+    if account_id:
+        account = get_object_or_404(ClientAccount, pk=account_id)
+        filename = f"transactions_{account.account_number}_{timezone.now().strftime('%Y%m%d')}.csv"
+        transactions = SavingsTransaction.objects.filter(client_account=account)
+    else:
+        filename = f"transactions_all_{timezone.now().strftime('%Y%m%d')}.csv"
+        transactions = SavingsTransaction.objects.all()
+    
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    writer = csv.writer(response)
+    writer.writerow([
+        'Reference', 'Account Number', 'Transaction Type', 'Amount',
+        'Date', 'Processed By', 'Notes', 'Status'
+    ])
+    
+    for tx in SavingsTransaction.objects.all().order_by('-transaction_date'):
+        writer.writerow([
+            tx.reference_number,
+            tx.client_account.account_number,
+            tx.get_transaction_type_display(),
+            tx.amount,
+            tx.transaction_date.strftime('%Y-%m-%d %H:%M:%S'),
+            tx.processed_by.username if tx.processed_by else '',
+            tx.notes,
+            tx.transaction_status
+        ])
+    
+    return response
+
+
+# -----------------------
+# Audit Logs
+# -----------------------
+@login_required
+@role_required([UserProfile.ROLE_ADMIN])
+def audit_logs(request):
+    """View system audit logs"""
+    logs = ClientAuditLog.objects.all().order_by('-timestamp')
+    
+    # Apply filters
+    action_filter = request.GET.get('action', '')
+    account_filter = request.GET.get('account', '')
+    
+    if action_filter:
+        logs = logs.filter(action=action_filter)
+    
+    if account_filter:
+        logs = logs.filter(client__account_number__icontains=account_filter)
+    
+    # Pagination
+    paginator = Paginator(logs, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'client_accounts/audit_logs.html', {
+        'page_obj': page_obj,
+        'action_filter': action_filter,
+        'account_filter': account_filter,
+        'action_choices': ClientAuditLog.ACTION_CHOICES,
+    })
+
+
+# -----------------------
+# Search Functions
+# -----------------------
+@login_required
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_STAFF, UserProfile.ROLE_MANAGER, UserProfile.ROLE_ACCOUNTANT, UserProfile.ROLE_LOAN_OFFICER])
+def search_accounts(request):
+    """Search for accounts (AJAX endpoint)"""
+    query = request.GET.get('q', '')
+    
+    if not query or len(query) < 2:
+        return JsonResponse([], safe=False)
+    
+    accounts = ClientAccount.objects.filter(
+        Q(account_number__icontains=query) |
+        Q(person1_first_name__icontains=query) |
+        Q(person1_last_name__icontains=query) |
+        Q(person1_nin__icontains=query) |
+        Q(person2_first_name__icontains=query) |
+        Q(person2_last_name__icontains=query) |
+        Q(person2_nin__icontains=query)
+    ).filter(account_status=ClientAccount.STATUS_ACTIVE)[:10]
+    
+    results = []
+    for acc in accounts:
+        results.append({
+            'id': acc.id,
+            'account_number': acc.account_number,
+            'name': acc.full_account_name,
+            'balance': str(acc.savings_balance),
+        })
+    
+    return JsonResponse(results, safe=False)
+
+
+# -----------------------
+# Loan Actions (Admin only) - Keep existing
+# -----------------------
+@login_required
+@role_required([UserProfile.ROLE_ADMIN])
 def approve_loan(request, pk):
     loan = get_object_or_404(LoanApplication, pk=pk)
     loan.status = 'APPROVED'
@@ -319,7 +1006,7 @@ def approve_loan(request, pk):
 
 
 @login_required
-@role_required(['Admin'])
+@role_required([UserProfile.ROLE_ADMIN])
 def reject_loan(request, pk):
     loan = get_object_or_404(LoanApplication, pk=pk)
     loan.status = 'REJECTED'
@@ -330,7 +1017,7 @@ def reject_loan(request, pk):
 
 
 @login_required
-@role_required(['Admin'])
+@role_required([UserProfile.ROLE_ADMIN])
 def disburse_loan(request, pk):
     loan = get_object_or_404(LoanApplication, pk=pk)
     if loan.status != 'APPROVED':
@@ -342,66 +1029,73 @@ def disburse_loan(request, pk):
     messages.success(request, f"Loan {loan.id} disbursed successfully.")
     return redirect('loans:loan_list')
 
-
 # -----------------------
-# API & Reports (JSON, CSV, PDF)
+# Account Deactivation (instead of deletion)
 # -----------------------
 @login_required
-@role_required(['Admin', 'Staff', 'Accountant', 'Loan Officer'])
-def api_account_list(request):
-    accounts = list(ClientAccount.objects.values('id', 'account_number', 'account_type', 'person1_first_name', 'person1_last_name', 'savings_balance'))
-    return JsonResponse(accounts, safe=False)
-
-
-@login_required
-@role_required(['Admin', 'Staff', 'Accountant', 'Loan Officer'])
-def api_account_detail(request, pk):
+@role_required([UserProfile.ROLE_ADMIN])
+def account_delete(request, pk):
+    """Deactivate/close an account (set status to CLOSED)"""
     account = get_object_or_404(ClientAccount, pk=pk)
-    data = {
-        'id': account.id,
-        'account_number': account.account_number,
-        'account_type': account.account_type,
-        'person1_first_name': account.person1_first_name,
-        'person1_last_name': account.person1_last_name,
-        'savings_balance': str(account.savings_balance),
+    
+    if request.method == 'POST':
+        reason = request.POST.get('reason', 'Account closed by admin')
+        account.change_status(ClientAccount.STATUS_CLOSED, request.user, reason)
+        messages.success(request, f"Account {account.account_number} has been closed.")
+        return redirect('accounts:account_list')
+    
+    return render(request, 'client_accounts/account_confirm_delete.html', {
+        'account': account,
+    })
+
+
+# -----------------------
+# Savings Transactions View
+# -----------------------
+@login_required
+def savings_transactions(request):
+    """View all savings transactions with filtering"""
+    user_role = get_user_role(request)
+    
+    transactions = SavingsTransaction.objects.all().order_by('-transaction_date')
+    
+    # Filter by user role
+    if user_role == UserProfile.ROLE_STAFF:
+        transactions = transactions.filter(processed_by=request.user)
+    elif user_role == UserProfile.ROLE_LOAN_OFFICER:
+        client_accounts = ClientAccount.objects.filter(loan_officer=request.user)
+        transactions = transactions.filter(client_account__in=client_accounts)
+    
+    # Apply filters
+    account_filter = request.GET.get('account', '')
+    type_filter = request.GET.get('type', '')
+    
+    if account_filter:
+        transactions = transactions.filter(client_account__account_number__icontains=account_filter)
+    
+    if type_filter:
+        transactions = transactions.filter(transaction_type=type_filter)
+    
+    # Pagination
+    paginator = Paginator(transactions, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'account_filter': account_filter,
+        'type_filter': type_filter,
+        'user_role': user_role,
     }
-    return JsonResponse(data)
+    return render(request, 'client_accounts/savings_transactions.html', context)
 
-
+# -----------------------
+# PDF Export Functions (Add these to views.py)
+# -----------------------
 @login_required
-@role_required(['Admin', 'Staff', 'Accountant', 'Loan Officer'])
-def api_savings_balance(request, account_id):
-    account = get_object_or_404(ClientAccount, pk=account_id)
-    return JsonResponse({'balance': str(account.savings_balance)})
-
-
-@login_required
-@role_required(['Admin'])
-def export_accounts_csv(request):
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="accounts.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['Account Number', 'Type', 'Person 1', 'Person 2', 'Balance'])
-    for acc in ClientAccount.objects.all():
-        writer.writerow([acc.account_number, acc.account_type, acc.full_account_name, '', acc.savings_balance])
-    return response
-
-
-@login_required
-@role_required(['Admin'])
-def export_transactions_csv(request):
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="transactions.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['Account Number', 'Type', 'Amount', 'Date', 'Processed By'])
-    for tx in SavingsTransaction.objects.all():
-        writer.writerow([tx.client_account.account_number, tx.transaction_type, tx.amount, tx.transaction_date, tx.processed_by.username])
-    return response
-
-
-@login_required
-@role_required(['Admin'])
+@role_required([UserProfile.ROLE_ADMIN])
 def export_accounts_pdf(request):
+    """Export accounts to PDF"""
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="accounts.pdf"'
 
@@ -415,7 +1109,7 @@ def export_accounts_pdf(request):
     p.drawString(1 * inch, y, "Account Number     Account Type     Full Name     Balance")
 
     y -= 0.3 * inch
-    for acc in ClientAccount.objects.all():
+    for acc in ClientAccount.objects.all().order_by('-registration_date'):
         line = f"{acc.account_number}     {acc.account_type}     {acc.full_account_name}     {acc.savings_balance}"
         p.drawString(1 * inch, y, line)
         y -= 0.25 * inch
@@ -430,23 +1124,36 @@ def export_accounts_pdf(request):
 
 
 @login_required
-@role_required(['Admin'])
-def export_transactions_pdf(request):
+@role_required([UserProfile.ROLE_ADMIN])
+def export_transactions_pdf(request, account_id=None):
+    """Export savings transactions to PDF"""
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="transactions.pdf"'
+    if account_id:
+        account = get_object_or_404(ClientAccount, pk=account_id)
+        filename = f"transactions_{account.account_number}.pdf"
+        transactions = SavingsTransaction.objects.filter(client_account=account)
+    else:
+        filename = "transactions_all.pdf"
+        transactions = SavingsTransaction.objects.all()
+
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
     p = canvas.Canvas(response, pagesize=A4)
     width, height = A4
 
     p.setFont("Helvetica-Bold", 14)
-    p.drawString(1 * inch, height - 1 * inch, "Savings Transactions Report")
+    if account_id:
+        p.drawString(1 * inch, height - 1 * inch, f"Savings Transactions Report - {account.account_number}")
+    else:
+        p.drawString(1 * inch, height - 1 * inch, "Savings Transactions Report")
+    
     p.setFont("Helvetica", 11)
     y = height - 1.5 * inch
     p.drawString(1 * inch, y, "Account Number     Type     Amount     Date     Processed By")
 
     y -= 0.3 * inch
-    for tx in SavingsTransaction.objects.all():
-        line = f"{tx.client_account.account_number}     {tx.transaction_type}     {tx.amount}     {tx.transaction_date.strftime('%Y-%m-%d')}     {tx.processed_by.username}"
+    for tx in transactions.order_by('-transaction_date'):
+        line = f"{tx.client_account.account_number}     {tx.transaction_type}     {tx.amount}     {tx.transaction_date.strftime('%Y-%m-%d')}     {tx.processed_by.username if tx.processed_by else 'System'}"
         p.drawString(1 * inch, y, line)
         y -= 0.25 * inch
         if y <= 1 * inch:
@@ -457,26 +1164,3 @@ def export_transactions_pdf(request):
     p.showPage()
     p.save()
     return response
-
-
-@login_required
-def account_approve(request, pk):
-    account = get_object_or_404(ClientAccount, pk=pk)
-    account.is_approved = True
-    account.approval_date = timezone.now()
-    account.save()
-    return redirect('accounts:accounts_list')  # or wherever you want to redirect
-
-@login_required
-def account_reject(request, pk):
-    account = get_object_or_404(ClientAccount, pk=pk)
-    account.is_approved = False  # or set a "rejected" field if you have one
-    account.rejection_date = timezone.now()  # optional
-    account.save()
-    return redirect('accounts:accounts_list')  # adjust redirect as needed
-
-
-@login_required
-def savings_transactions(request):
-    transactions = SavingsTransaction.objects.all()  # or filter by user
-    return render(request, 'client_accounts/savings_transactions.html', {'transactions': transactions})

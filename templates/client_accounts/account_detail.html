@@ -1,87 +1,546 @@
-{% extends "base.html" %}
-{% block title %}Account Detail{% endblock %}
+{% extends 'client_accounts/base.html' %}
 
-{% block content %}
-<div class="container mt-4">
-    <h2>Account Detail: {{ account.client_name }}</h2>
+{% block title %}Account: {{ account.account_number }}{% endblock %}
 
-    <ul class="nav nav-tabs mb-3" id="accountTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions">Transactions</button>
+{% block page_title %}Account Details{% endblock %}
+{% block page_subtitle %}{{ account.account_number }} - {{ account.full_account_name }}{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{% url 'accounts:account_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Back to List
+    </a>
+    {% if can_edit %}
+    <a href="{% url 'accounts:account_edit' account.pk %}" class="btn btn-warning ms-2">
+        <i class="fas fa-edit me-2"></i>Edit Account
+    </a>
+    {% endif %}
+    {% if user_role == 'ADMIN' %}
+    <button type="button" class="btn btn-primary dropdown-toggle ms-2" data-bs-toggle="dropdown">
+        Admin Actions
+    </button>
+    <ul class="dropdown-menu">
+        {% if account.account_status == 'PENDING' %}
+        <li>
+            <a class="dropdown-item" href="{% url 'accounts:account_approve' account.pk %}">
+                <i class="fas fa-check me-2 text-success"></i>Approve Account
+            </a>
         </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="loans-tab" data-bs-toggle="tab" data-bs-target="#loans">Loans</button>
+        <li>
+            <a class="dropdown-item" href="{% url 'accounts:account_reject' account.pk %}">
+                <i class="fas fa-times me-2 text-danger"></i>Reject Account
+            </a>
         </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile">Profile</button>
+        {% endif %}
+        <li>
+            <a class="dropdown-item" href="{% url 'accounts:account_change_status' account.pk %}">
+                <i class="fas fa-exchange-alt me-2"></i>Change Status
+            </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+            <a class="dropdown-item" href="{% url 'accounts:savings_deposit_account' account.pk %}">
+                <i class="fas fa-money-bill-wave me-2 text-success"></i>Make Deposit
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="{% url 'accounts:savings_withdrawal_account' account.pk %}">
+                <i class="fas fa-wallet me-2 text-warning"></i>Make Withdrawal
+            </a>
         </li>
     </ul>
+    {% endif %}
+</div>
+{% endblock %}
 
-    <div class="tab-content">
-        <div class="tab-pane fade show active" id="transactions">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th>Balance</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for tx in transactions %}
-                    <tr>
-                        <td>{{ tx.date }}</td>
-                        <td>{{ tx.tx_type }}</td>
-                        <td>{{ tx.amount }}</td>
-                        <td>{{ tx.balance }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="4" class="text-center">No transactions</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+{% block content %}
+<div class="row">
+    <!-- Account Information -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Account Information</h6>
+                <span class="badge bg-{% if account.account_status == 'ACTIVE' %}success{% elif account.account_status == 'PENDING' %}warning{% elif account.account_status == 'SUSPENDED' %}danger{% else %}secondary{% endif %}">
+                    {{ account.get_account_status_display }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <th class="text-muted" width="40%">Account Number:</th>
+                                <td><strong>{{ account.account_number }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Account Type:</th>
+                                <td>{{ account.get_account_type_display }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Registration Date:</th>
+                                <td>{{ account.registration_date|date:"F d, Y" }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Loan Officer:</th>
+                                <td>{{ account.loan_officer.get_full_name|default:account.loan_officer.username }}</td>
+                            </tr>
+                            {% if account.created_by %}
+                            <tr>
+                                <th class="text-muted">Created By:</th>
+                                <td>{{ account.created_by.get_full_name|default:account.created_by.username }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if account.approved_by %}
+                            <tr>
+                                <th class="text-muted">Approved By:</th>
+                                <td>{{ account.approved_by.get_full_name|default:account.approved_by.username }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <th class="text-muted" width="40%">Savings Balance:</th>
+                                <td><strong class="text-success">UGX {{ account.savings_balance|floatformat:0 }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Total Deposited:</th>
+                                <td>UGX {{ account.total_savings_deposited|floatformat:0 }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Last Savings Date:</th>
+                                <td>{{ account.last_savings_date|date:"F d, Y"|default:"Never" }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Business Location:</th>
+                                <td>{{ account.business_location }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Business Sector:</th>
+                                <td>{{ account.business_sector }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <div class="tab-pane fade" id="loans">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Loan ID</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                        <th>Due Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for loan in loans %}
-                    <tr>
-                        <td>{{ loan.id }}</td>
-                        <td>{{ loan.amount }}</td>
-                        <td>{{ loan.status }}</td>
-                        <td>{{ loan.due_date }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="4" class="text-center">No loans</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        
+        <!-- Primary Account Holder -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Primary Account Holder</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        {% if account.person1_photo %}
+                        <img src="{{ account.person1_photo.url }}" class="img-fluid rounded" style="max-height: 150px;" alt="Photo">
+                        {% else %}
+                        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 150px;">
+                            <i class="fas fa-user fa-3x text-muted"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-9">
+                        <table class="table table-sm">
+                            <tr>
+                                <th class="text-muted" width="30%">Full Name:</th>
+                                <td>{{ account.person1_first_name }} {{ account.person1_last_name }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Gender:</th>
+                                <td>{{ account.get_person1_gender_display }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Contact:</th>
+                                <td>{{ account.person1_contact }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">NIN:</th>
+                                <td>{{ account.person1_nin }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Address:</th>
+                                <td>{{ account.person1_address }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Next of Kin:</th>
+                                <td>{{ account.person1_next_of_kin }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
+        
+        {% if account.account_type == 'JOINT' %}
+        <!-- Secondary Account Holder -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Secondary Account Holder</h6>
+            </div>
+            <div class="card-body">
+                {% if account.person2_client %}
+                <div class="alert alert-info">
+                    <i class="fas fa-link me-2"></i>Linked to existing client: 
+                    <a href="{% url 'accounts:account_detail' account.person2_client.pk %}">
+                        {{ account.person2_client.account_number }}
+                    </a>
+                </div>
+                {% endif %}
+                
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        {% if account.person2_photo %}
+                        <img src="{{ account.person2_photo.url }}" class="img-fluid rounded" style="max-height: 150px;" alt="Photo">
+                        {% else %}
+                        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 150px;">
+                            <i class="fas fa-user fa-3x text-muted"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-9">
+                        <table class="table table-sm">
+                            <tr>
+                                <th class="text-muted" width="30%">Full Name:</th>
+                                <td>{{ account.person2_first_name }} {{ account.person2_last_name }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Gender:</th>
+                                <td>{{ account.get_person2_gender_display }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Contact:</th>
+                                <td>{{ account.person2_contact }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">NIN:</th>
+                                <td>{{ account.person2_nin }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Address:</th>
+                                <td>{{ account.person2_address }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Next of Kin:</th>
+                                <td>{{ account.person2_next_of_kin }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Right Sidebar -->
+    <div class="col-lg-4">
+        <!-- Quick Stats -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Stats</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Total Transactions</span>
+                        <span class="badge bg-primary rounded-pill">{{ savings_transactions.count }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Total Loans</span>
+                        <span class="badge bg-primary rounded-pill">{{ loans.count }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Active Loans</span>
+                        <span class="badge bg-success rounded-pill">
+                            {{ active_loans_count }}
+                        </span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Max Loan Eligibility</span>
+                        <span class="badge bg-info rounded-pill">UGX {{ account.get_max_loan_amount|floatformat:0 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Transactions -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Recent Transactions</h6>
+                <a href="{% url 'accounts:account_savings' account.pk %}" class="btn btn-sm btn-outline-primary">
+                    View All
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for transaction in savings_transactions|slice:":5" %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <small class="mb-1">
+                                {% if transaction.transaction_type == 'DEPOSIT' %}
+                                <i class="fas fa-arrow-down text-success me-2"></i>
+                                {% else %}
+                                <i class="fas fa-arrow-up text-danger me-2"></i>
+                                {% endif %}
+                                {{ transaction.get_transaction_type_display }}
+                            </small>
+                            <small class="text-muted">{{ transaction.transaction_date|date:"M d" }}</small>
+                        </div>
+                        <div class="d-flex w-100 justify-content-between">
+                            <strong>UGX {{ transaction.amount|floatformat:0 }}</strong>
+                            {% if transaction.is_reversed %}
+                            <span class="badge bg-secondary">Reversed</span>
+                            {% endif %}
+                        </div>
+                        {% if transaction.notes %}
+                        <small class="text-muted">{{ transaction.notes|truncatechars:30 }}</small>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-center text-muted py-3">
+                        No transactions yet
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'accounts:savings_deposit_account' account.pk %}" class="btn btn-success">
+                        <i class="fas fa-money-bill-wave me-2"></i>Make Deposit
+                    </a>
+                    <a href="{% url 'accounts:savings_withdrawal_account' account.pk %}" class="btn btn-warning">
+                        <i class="fas fa-wallet me-2"></i>Make Withdrawal
+                    </a>
+                    {% if account.can_take_loan %}
+                    <a href="#" class="btn btn-primary">
+                        <i class="fas fa-hand-holding-usd me-2"></i>Apply for Loan
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        <div class="tab-pane fade" id="profile">
-            <dl class="row">
-                <dt class="col-sm-3">Client Name</dt>
-                <dd class="col-sm-9">{{ account.client_name }}</dd>
+<!-- Tabs for Detailed Views -->
+<ul class="nav nav-tabs mt-4" id="accountTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions" type="button">
+            <i class="fas fa-exchange-alt me-2"></i>Savings Transactions
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="loans-tab" data-bs-toggle="tab" data-bs-target="#loans" type="button">
+            <i class="fas fa-hand-holding-usd me-2"></i>Loans
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button">
+            <i class="fas fa-history me-2"></i>Audit Logs
+        </button>
+    </li>
+</ul>
 
-                <dt class="col-sm-3">Account Number</dt>
-                <dd class="col-sm-9">{{ account.id }}</dd>
-
-                <dt class="col-sm-3">Type</dt>
-                <dd class="col-sm-9">{{ account.account_type }}</dd>
-
-                <dt class="col-sm-3">Balance</dt>
-                <dd class="col-sm-9">{{ account.balance }}</dd>
-            </dl>
+<div class="tab-content" id="accountTabsContent">
+    <!-- Transactions Tab -->
+    <div class="tab-pane fade show active" id="transactions" role="tabpanel">
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">All Savings Transactions</h6>
+                <div>
+                    <a href="{% url 'accounts:export_transactions_csv' account.pk %}" class="btn btn-sm btn-success">
+                        <i class="fas fa-file-export me-2"></i>Export
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Reference</th>
+                                <th>Amount</th>
+                                <th>Balance After</th>
+                                <th>Processed By</th>
+                                <th>Notes</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in savings_transactions %}
+                            <tr>
+                                <td>{{ transaction.transaction_date|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    {% if transaction.transaction_type == 'DEPOSIT' %}
+                                    <span class="badge bg-success">Deposit</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Withdrawal</span>
+                                    {% endif %}
+                                </td>
+                                <td><small>{{ transaction.reference_number }}</small></td>
+                                <td>
+                                    {% if transaction.transaction_type == 'DEPOSIT' %}
+                                    <span class="text-success">+UGX {{ transaction.amount|floatformat:0 }}</span>
+                                    {% else %}
+                                    <span class="text-danger">-UGX {{ transaction.amount|floatformat:0 }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>UGX {{ transaction.client_account.savings_balance|floatformat:0 }}</td>
+                                <td>{{ transaction.processed_by.username|default:"System" }}</td>
+                                <td>{{ transaction.notes|truncatechars:30 }}</td>
+                                <td>
+                                    {% if transaction.is_reversed %}
+                                    <span class="badge bg-secondary">Reversed</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Completed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">
+                                    No transactions found
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loans Tab -->
+    <div class="tab-pane fade" id="loans" role="tabpanel">
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Loan History</h6>
+                {% if account.can_take_loan and account.has_minimum_savings %}
+                <a href="#" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus me-2"></i>New Loan Application
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Loan ID</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Applied Date</th>
+                                <th>Approved Date</th>
+                                <th>Interest Rate</th>
+                                <th>Remaining Balance</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loan in loans %}
+                            <tr>
+                                <td>LOAN-{{ loan.id|stringformat:"06d" }}</td>
+                                <td>UGX {{ loan.loan_amount|floatformat:0 }}</td>
+                                <td>
+                                    {% if loan.status == 'PENDING' %}
+                                    <span class="badge bg-warning">Pending</span>
+                                    {% elif loan.status == 'APPROVED' %}
+                                    <span class="badge bg-info">Approved</span>
+                                    {% elif loan.status == 'DISBURSED' %}
+                                    <span class="badge bg-success">Disbursed</span>
+                                    {% elif loan.status == 'REJECTED' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ loan.application_date|date:"M d, Y" }}</td>
+                                <td>{{ loan.approval_date|date:"M d, Y"|default:"-" }}</td>
+                                <td>{{ loan.interest_rate }}%</td>
+                                <td>UGX {{ loan.remaining_balance|floatformat:0 }}</td>
+                                <td>
+                                    <a href="#" class="btn btn-sm btn-outline-primary">View</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">
+                                    No loan applications found
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Audit Logs Tab -->
+    <div class="tab-pane fade" id="audit" role="tabpanel">
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Account Audit Logs</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Action</th>
+                                <th>Performed By</th>
+                                <th>Changes</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in audit_logs %}
+                            <tr>
+                                <td>{{ log.timestamp|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <span class="badge bg-{% if log.action == 'CREATE' %}success{% elif log.action == 'UPDATE' %}info{% elif log.action == 'APPROVE_EDIT' %}success{% elif log.action == 'REJECT_EDIT' %}danger{% else %}secondary{% endif %}">
+                                        {{ log.get_action_display }}
+                                    </span>
+                                </td>
+                                <td>{{ log.performed_by.username|default:"System" }}</td>
+                                <td>
+                                    {% if log.changed_data %}
+                                    <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#changes-{{ log.id }}">
+                                        View Changes
+                                    </button>
+                                    <div class="collapse mt-2" id="changes-{{ log.id }}">
+                                        <div class="card card-body">
+                                            <pre class="mb-0" style="font-size: 12px;">{{ log.changed_data|pprint }}</pre>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">No changes</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ log.note|truncatechars:50 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    No audit logs found
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>

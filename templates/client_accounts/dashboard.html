@@ -1,68 +1,275 @@
-{% extends 'base.html' %}
-{% block title %}Client Dashboard{% endblock %}
+{% extends 'client_accounts/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Welcome back, {{ request.user.username }}{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{% url 'accounts:account_create' %}" class="btn btn-primary">
+        <i class="fas fa-user-plus me-2"></i>New Account
+    </a>
+    <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+        <span class="visually-hidden">Toggle Dropdown</span>
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'accounts:savings_deposit' %}"><i class="fas fa-money-bill-wave me-2"></i>Deposit</a></li>
+        <li><a class="dropdown-item" href="{% url 'accounts:savings_withdrawal' %}"><i class="fas fa-wallet me-2"></i>Withdrawal</a></li>
+    </ul>
+</div>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="text-center mb-4">Client Accounts Dashboard</h2>
-
-    <!-- Dashboard Stats -->
-    <div class="row text-center mb-4">
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm p-3 h-100">
-                <h5>Total Accounts</h5>
-                <h3>{{ total_accounts|default:"0" }}</h3>
-            </div>
-        </div>
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm p-3 h-100">
-                <h5>Active Accounts</h5>
-                <h3>{{ active_accounts|default:"0" }}</h3>
-            </div>
-        </div>
-        <div class="col-md-4 mb-3">
-            <div class="card shadow-sm p-3 h-100">
-                <h5>Total Savings (UGX)</h5>
-                <h3>{{ total_savings|floatformat:2|default:"0.00" }}</h3>
+<div class="row">
+    <!-- Statistics Cards -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-start-primary">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                            Total Clients</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ total_accounts }}</div>
+                        <div class="mt-2 mb-0 text-muted text-xs">
+                            <span class="text-success me-2"><i class="fas fa-arrow-up"></i> {{ active_accounts }} Active</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-
-    <!-- Recent Accounts Table -->
-    <h4 class="mt-4 mb-3">Recent Accounts</h4>
-    {% if recent_accounts %}
-        <div class="table-responsive">
-            <table class="table table-hover table-striped">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Account Number</th>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Balance (UGX)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for acc in recent_accounts %}
-                        <tr>
-                            <td>
-                                <a href="{% url 'accounts:account_detail' acc.id %}">{{ acc.account_number }}</a>
-                            </td>
-                            <td>{{ acc.full_account_name }}</td>
-                            <td>{{ acc.account_type }}</td>
-                            <td>{{ acc.savings_balance|floatformat:2 }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-start-success">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                            Total Savings</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">UGX {{ total_savings|floatformat:0 }}</div>
+                        <div class="mt-2 mb-0 text-muted text-xs">
+                            Combined savings balance
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-piggy-bank fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
         </div>
-    {% else %}
-        <p class="text-center text-muted">No recent accounts to display.</p>
-    {% endif %}
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-start-warning">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">
+                            Pending Loans</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ recent_loans.count }}</div>
+                        <div class="mt-2 mb-0 text-muted text-xs">
+                            Awaiting approval
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-hand-holding-usd fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-start-info">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs fw-bold text-info text-uppercase mb-1">
+                            Today's Transactions</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ recent_savings.count }}</div>
+                        <div class="mt-2 mb-0 text-muted text-xs">
+                            Recent savings activity
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exchange-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <!-- Action Buttons -->
-    <div class="text-center mt-4 mb-4 d-flex flex-wrap justify-content-center gap-2">
-        <a href="{% url 'accounts:export_accounts_csv' %}" class="btn btn-outline-primary btn-sm">Download Accounts CSV</a>
-        <a href="{% url 'accounts:export_accounts_pdf' %}" class="btn btn-outline-danger btn-sm">Download Accounts PDF</a>
-        <button onclick="window.print()" class="btn btn-outline-dark btn-sm">Print Dashboard</button>
+<div class="row">
+    <!-- Recent Clients -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 fw-bold text-primary">Recent Client Accounts</h6>
+                <a href="{% url 'accounts:account_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Account No.</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for account in recent_accounts %}
+                            <tr>
+                                <td><strong>{{ account.account_number }}</strong></td>
+                                <td>{{ account.full_account_name|truncatechars:20 }}</td>
+                                <td>{{ account.get_account_type_display }}</td>
+                                <td>
+                                    {% if account.account_status == "ACTIVE" %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% elif account.account_status == "PENDING" %}
+                                    <span class="badge bg-warning">Pending</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ account.account_status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-3 text-muted">No recent accounts</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Transactions -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 fw-bold text-primary">Recent Savings Transactions</h6>
+                <a href="{% url 'accounts:savings_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Account</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in recent_savings %}
+                            <tr>
+                                <td>{{ transaction.client_account.account_number }}</td>
+                                <td>
+                                    {% if transaction.transaction_type == "DEPOSIT" %}
+                                    <span class="badge bg-success">Deposit</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Withdrawal</span>
+                                    {% endif %}
+                                </td>
+                                <td>UGX {{ transaction.amount|floatformat:0 }}</td>
+                                <td>{{ transaction.transaction_date|date:"M d, H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-3 text-muted">No recent transactions</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Quick Actions -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 fw-bold text-primary">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <a href="{% url 'accounts:account_create' %}" class="btn btn-primary w-100 p-3 d-flex flex-column align-items-center">
+                            <i class="fas fa-user-plus fa-2x mb-2"></i>
+                            <span>New Client Account</span>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'accounts:savings_deposit' %}" class="btn btn-success w-100 p-3 d-flex flex-column align-items-center">
+                            <i class="fas fa-money-bill-wave fa-2x mb-2"></i>
+                            <span>Savings Deposit</span>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'accounts:savings_withdrawal' %}" class="btn btn-warning w-100 p-3 d-flex flex-column align-items-center">
+                            <i class="fas fa-wallet fa-2x mb-2"></i>
+                            <span>Savings Withdrawal</span>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'accounts:reports_dashboard' %}" class="btn btn-info w-100 p-3 d-flex flex-column align-items-center">
+                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                            <span>Generate Reports</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Information -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 fw-bold text-primary">System Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Logged in as</small>
+                            <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Last Login</small>
+                            <strong>{{ request.user.last_login|date:"M d, Y H:i"|default:"Never" }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Current Date</small>
+                            <strong>{% now "F d, Y" %}</strong>
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Current Time</small>
+                            <strong>{% now "H:i" %}</strong>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">System Status:</span>
+                    <span class="badge bg-success">Operational</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

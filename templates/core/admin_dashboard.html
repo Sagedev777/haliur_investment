@@ -1,163 +1,571 @@
-{% extends "core/base.html" %}
-
-{% block title %}Admin Dashboard{% endblock %}
-
-{% block content %}
-
-<!-- ADMIN NAVIGATION -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 rounded">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="#">Admin Panel</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
-                data-bs-target="#adminNavbar" aria-controls="adminNavbar" aria-expanded="false" 
-                aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="adminNavbar">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'core:admin_dashboard' %}">Dashboard</a>
-                </li>
-
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="reportsDropdown" 
-                       role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Reports
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="reportsDropdown">
-                        <li><a class="dropdown-item" href="{% url 'reports:reports_dashboard' %}">Reports Dashboard</a></li>
-                        <li><a class="dropdown-item" href="{% url 'reports:loan_performance' %}">Loan Performance</a></li>
-                        <li><a class="dropdown-item" href="{% url 'reports:savings_report' %}">Savings Report</a></li>
-                        <li><a class="dropdown-item" href="{% url 'reports:financial_report' %}">Financial Report</a></li>
-                    </ul>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'loans:list_loans' %}">Loans</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'accounts:savings_list' %}">Savings</a>
-                </li>
-
-            </ul>
-
-            <a href="{% url 'core:logout' %}" class="btn btn-danger">Logout</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Haliqua Investments</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --dark-bg: #343a40;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--primary-color) 0%, #1a2530 100%);
+            color: white;
+            position: fixed;
+            width: 250px;
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px 0;
+        }
+        
+        .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .logo span {
+            color: var(--secondary-color);
+        }
+        
+        .nav-link {
+            color: #b0b7c3;
+            padding: 12px 20px;
+            margin: 5px 0;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: white;
+            background-color: rgba(255,255,255,0.1);
+            border-left: 3px solid var(--secondary-color);
+        }
+        
+        .nav-link i {
+            width: 25px;
+        }
+        
+        .stat-card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            opacity: 0.8;
+        }
+        
+        .card-clients {
+            border-top: 4px solid var(--primary-color);
+        }
+        
+        .card-savings {
+            border-top: 4px solid var(--success-color);
+        }
+        
+        .card-loans {
+            border-top: 4px solid var(--warning-color);
+        }
+        
+        .card-pending {
+            border-top: 4px solid var(--danger-color);
+        }
+        
+        .dashboard-header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .table-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .table-title {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--light-bg);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .badge-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .badge-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-approved {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        
+        .user-profile {
+            background-color: var(--light-bg);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: var(--secondary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-action {
+            background-color: var(--light-bg);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .btn-action:hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                overflow: hidden;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            HALI<span>QUA</span>
+        </div>
+        
+        <nav class="nav flex-column mt-4">
+            <a class="nav-link active" href="#">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a class="nav-link" href="{% url 'accounts:account_list' %}">
+                <i class="fas fa-users"></i> Client Accounts
+            </a>
+            <a class="nav-link" href="{% url 'accounts:savings_list' %}">
+                <i class="fas fa-piggy-bank"></i> Savings
+            </a>
+            <a class="nav-link" href="#">
+                <i class="fas fa-hand-holding-usd"></i> Loans
+            </a>
+            <a class="nav-link" href="{% url 'accounts:reports_dashboard' %}">
+                <i class="fas fa-chart-bar"></i> Reports
+            </a>
+            <a class="nav-link" href="{% url 'accounts:audit_logs' %}">
+                <i class="fas fa-clipboard-list"></i> Audit Logs
+            </a>
+            <a class="nav-link" href="{% url 'accounts:edit_request_list' %}">
+                <i class="fas fa-edit"></i> Edit Requests
+                {% if pending_edit_requests.count > 0 %}
+                <span class="badge bg-danger float-end">{{ pending_edit_requests.count }}</span>
+                {% endif %}
+            </a>
+            <a class="nav-link" href="#">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+        </nav>
+        
+        <div class="user-profile">
+            <div class="user-avatar">
+                {{ request.user.username|first|upper }}
+            </div>
+            <div>
+                <div style="font-weight: 500;">{{ request.user.get_full_name|default:request.user.username }}</div>
+                <small class="text-muted">Admin</small>
+            </div>
         </div>
     </div>
-</nav>
-
-
-<!-- PAGE HEADING -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Admin Dashboard</h2>
-</div>
-
-
-<!-- QUICK NAV CARDS -->
-<div class="row mb-4">
-
-    <div class="col-md-2">
-        <a href="{% url 'reports:reports_dashboard' %}" class="text-decoration-none">
-            <div class="card text-white bg-primary mb-3 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Reports</h5>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="container-fluid">
+                <h4 class="mb-0">Admin Dashboard</h4>
+                <div class="d-flex align-items-center">
+                    <div class="quick-actions">
+                        <button class="btn-action">
+                            <i class="fas fa-plus"></i> New Account
+                        </button>
+                        <button class="btn-action">
+                            <i class="fas fa-file-export"></i> Export
+                        </button>
+                        <a href="{% url 'core:login' %}" class="btn-action">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
                 </div>
             </div>
-        </a>
-    </div>
-
-    <div class="col-md-2">
-        <a href="{% url 'reports:loan_performance' %}" class="text-decoration-none">
-            <div class="card text-white bg-success mb-3 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Loans Performance</h5>
+        </nav>
+        
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div class="row">
+                <div class="col-md-6">
+                    <h1 class="h3 mb-2">Welcome back, {{ request.user.get_full_name|default:request.user.username }}</h1>
+                    <p class="text-muted">Here's what's happening with your business today.</p>
                 </div>
-            </div>
-        </a>
-    </div>
-
-    <div class="col-md-2">
-        <a href="{% url 'reports:savings_report' %}" class="text-decoration-none">
-            <div class="card text-white bg-info mb-3 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Savings</h5>
+                <div class="col-md-6 text-end">
+                    <p class="mb-1"><i class="fas fa-calendar-alt me-2"></i> {{ current_date|date:"F d, Y" }}</p>
+                    <p class="text-muted"><i class="fas fa-clock me-2"></i> {{ current_time|time:"H:i" }}</p>
                 </div>
-            </div>
-        </a>
-    </div>
-
-    <div class="col-md-2">
-        <a href="{% url 'reports:financial_report' %}" class="text-decoration-none">
-            <div class="card text-white bg-warning mb-3 text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Financials</h5>
-                </div>
-            </div>
-        </a>
-    </div>
-
-</div>
-
-
-<!-- SYSTEM STATS -->
-<div class="row mb-4">
-
-    <div class="col-md-3">
-        <div class="card text-white bg-primary mb-3">
-            <div class="card-body text-center">
-                <h5 class="card-title">Total Clients</h5>
-                <p class="card-text display-6">{{ total_clients }}</p>
             </div>
         </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="card text-white bg-success mb-3">
-            <div class="card-body text-center">
-                <h5 class="card-title">Active Accounts</h5>
-                <p class="card-text display-6">{{ active_accounts }}</p>
+        
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-xl-3 col-md-6">
+                <div class="card stat-card card-clients">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="text-muted mb-1">Total Clients</h6>
+                                <h2 class="mb-0">{{ total_clients }}</h2>
+                                <small class="text-muted">
+                                    <i class="fas fa-arrow-up text-success me-1"></i>
+                                    {{ active_accounts }} Active
+                                </small>
+                            </div>
+                            <div class="stat-icon text-primary">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card stat-card card-savings">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="text-muted mb-1">Total Savings</h6>
+                                <h2 class="mb-0">UGX {{ total_savings|floatformat:0 }}</h2>
+                                <small class="text-muted">Combined savings balance</small>
+                            </div>
+                            <div class="stat-icon text-success">
+                                <i class="fas fa-piggy-bank"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card stat-card card-loans">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="text-muted mb-1">Pending Loans</h6>
+                                <h2 class="mb-0">{{ pending_loans }}</h2>
+                                <small class="text-muted">Waiting for approval</small>
+                            </div>
+                            <div class="stat-icon text-warning">
+                                <i class="fas fa-hand-holding-usd"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card stat-card card-pending">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="text-muted mb-1">Pending Accounts</h6>
+                                <h2 class="mb-0">{{ pending_accounts }}</h2>
+                                <small class="text-muted">Awaiting activation</small>
+                            </div>
+                            <div class="stat-icon text-danger">
+                                <i class="fas fa-user-clock"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="card text-white bg-info mb-3">
-            <div class="card-body text-center">
-                <h5 class="card-title">Total Savings</h5>
-                <p class="card-text display-6">{{ total_savings }}</p>
+        
+        <!-- Charts & Tables Row -->
+        <div class="row">
+            <!-- Recent Clients -->
+            <div class="col-lg-6">
+                <div class="table-card">
+                    <h5 class="table-title">Recent Client Accounts</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Account No.</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for account in recent_accounts %}
+                                <tr>
+                                    <td><strong>{{ account.account_number }}</strong></td>
+                                    <td>{{ account.full_account_name|truncatechars:20 }}</td>
+                                    <td>{{ account.get_account_type_display }}</td>
+                                    <td>
+                                        {% if account.account_status == "ACTIVE" %}
+                                        <span class="badge badge-status badge-active">Active</span>
+                                        {% elif account.account_status == "PENDING" %}
+                                        <span class="badge badge-status badge-pending">Pending</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">{{ account.account_status }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No recent accounts</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end mt-2">
+                        <a href="{% url 'accounts:account_list' %}" class="btn btn-sm btn-outline-primary">View All Clients</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Transactions -->
+            <div class="col-lg-6">
+                <div class="table-card">
+                    <h5 class="table-title">Recent Savings Transactions</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Account</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in recent_transactions %}
+                                <tr>
+                                    <td>{{ transaction.client_account.account_number }}</td>
+                                    <td>
+                                        {% if transaction.transaction_type == "DEPOSIT" %}
+                                        <span class="badge bg-success">Deposit</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Withdrawal</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>UGX {{ transaction.amount|floatformat:0 }}</td>
+                                    <td>{{ transaction.transaction_date|date:"M d, H:i" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No recent transactions</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end mt-2">
+                        <a href="{% url 'accounts:savings_list' %}" class="btn btn-sm btn-outline-primary">View All Transactions</a>
+                    </div>
+                </div>
             </div>
         </div>
+        
+        <!-- Second Row: Pending Items -->
+        <div class="row">
+            <!-- Pending Loans -->
+            <div class="col-lg-6">
+                <div class="table-card">
+                    <h5 class="table-title">
+                        <i class="fas fa-clock me-2 text-warning"></i>Pending Loan Applications
+                        <span class="badge bg-warning float-end">{{ pending_loans }}</span>
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Client</th>
+                                    <th>Amount</th>
+                                    <th>Applied</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for loan in pending_loans_list %}
+                                <tr>
+                                    <td>{{ loan.client_account.full_account_name|truncatechars:20 }}</td>
+                                    <td><strong>UGX {{ loan.loan_amount|floatformat:0 }}</strong></td>
+                                    <td>{{ loan.application_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-outline-success">Review</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No pending loans</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pending Edit Requests -->
+            <div class="col-lg-6">
+                <div class="table-card">
+                    <h5 class="table-title">
+                        <i class="fas fa-edit me-2 text-info"></i>Pending Edit Requests
+                        <span class="badge bg-info float-end">{{ pending_edit_requests.count }}</span>
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Account</th>
+                                    <th>Requested By</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in pending_edit_requests %}
+                                <tr>
+                                    <td>{{ request.client.account_number }}</td>
+                                    <td>{{ request.requested_by.username }}</td>
+                                    <td>{{ request.created_at|date:"M d, H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'accounts:edit_request_detail' request.pk %}" class="btn btn-sm btn-outline-primary">Review</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No pending edit requests</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="mt-5 pt-3 border-top text-center text-muted">
+            <p>Haliqua Loan & Savings Management System v1.0 © {% now "Y" %}</p>
+        </footer>
     </div>
-
-</div>
-
-
-<!-- PENDING LOANS TABLE -->
-<h4 class="mb-3">Pending Loans</h4>
-<div class="table-responsive">
-    <table class="table table-striped table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>Client</th>
-                <th>Amount</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for loan in pending_loans %}
-                <tr>
-                    <td>{{ loan.client_account }}</td>
-                    <td>{{ loan.amount }}</td>
-                    <td>{{ loan.status }}</td>
-                </tr>
-            {% empty %}
-                <tr><td colspan="3" class="text-center">No pending loans</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-{% endblock %}
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Add current date and time
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit' };
+            
+            // Set current date and time if not already set by Django
+            if (!document.querySelector('[data-date]')) {
+                const dateElement = document.createElement('span');
+                dateElement.textContent = now.toLocaleDateString('en-US', dateOptions);
+                document.querySelector('.dashboard-header p:nth-child(1)').innerHTML = 
+                    `<i class="fas fa-calendar-alt me-2"></i> ${dateElement.textContent}`;
+                
+                const timeElement = document.createElement('span');
+                timeElement.textContent = now.toLocaleTimeString('en-US', timeOptions);
+                document.querySelector('.dashboard-header p:nth-child(2)').innerHTML = 
+                    `<i class="fas fa-clock me-2"></i> ${timeElement.textContent}`;
+            }
+        });
+    </script>
+</body>
+</html>

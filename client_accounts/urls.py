@@ -31,21 +31,51 @@ urlpatterns = [
     path('accounts/<int:pk>/', views.account_detail, name='account_detail'),
     path('accounts/<int:pk>/edit/', views.account_edit, name='account_edit'),
     path('accounts/<int:pk>/delete/', views.account_delete, name='account_delete'),
-    path('accounts/export/csv/', views.export_accounts_csv, name='export_accounts_csv'),
-
+    
     # Admin-only approvals
     path('accounts/<int:pk>/approve/', views.account_approve, name='account_approve'),
     path('accounts/<int:pk>/reject/', views.account_reject, name='account_reject'),
+    path('accounts/<int:pk>/status/', views.account_change_status, name='account_change_status'),
+
+
+    # ----------------------------
+    # EDIT REQUESTS (NEW)
+    # ----------------------------
+    path('edit-requests/', views.edit_request_list, name='edit_request_list'),
+    path('edit-requests/<int:pk>/', views.edit_request_detail, name='edit_request_detail'),
+    path('edit-requests/<int:pk>/approve/', views.edit_request_approve, name='edit_request_approve'),
+    path('edit-requests/<int:pk>/reject/', views.edit_request_reject, name='edit_request_reject'),
 
 
     # ----------------------------
     # SAVINGS TRANSACTIONS
     # ----------------------------
     path('savings/', views.savings_list, name='savings_list'),
-    path('savings/deposit/<int:account_id>/', views.savings_deposit, name='savings_deposit'),
-    path('savings/withdrawal/<int:account_id>/', views.savings_withdrawal, name='savings_withdrawal'),
+    path('savings/deposit/', views.savings_deposit, name='savings_deposit'),  # Updated: without account_id
+    path('savings/deposit/<int:account_id>/', views.savings_deposit, name='savings_deposit_account'),
+    path('savings/withdrawal/', views.savings_withdrawal, name='savings_withdrawal'),  # Updated: without account_id
+    path('savings/withdrawal/<int:account_id>/', views.savings_withdrawal, name='savings_withdrawal_account'),
+    path('savings/transaction/<int:pk>/reverse/', views.transaction_reverse, name='transaction_reverse'),  # NEW
     path('savings/transactions/', views.savings_transactions, name='savings_transactions'),
-    path('savings/account/<int:account_id>/', views.account_savings, name='account_savings'),
+    path('accounts/<int:account_id>/savings/', views.account_savings, name='account_savings'),
+
+
+    # ----------------------------
+    # REPORTS & EXPORTS
+    # ----------------------------
+    path('reports/', views.reports_dashboard, name='reports_dashboard'),  # NEW
+    path('reports/transactions/csv/', views.export_transactions_csv, name='export_transactions_csv'),
+    path('reports/transactions/csv/<int:account_id>/', views.export_transactions_csv, name='export_transactions_csv_account'),
+    
+    # Keep these if you want PDF exports (need to add views for them)
+    path('reports/accounts/pdf/', views.export_accounts_pdf, name='export_accounts_pdf'),
+    path('reports/transactions/pdf/', views.export_transactions_pdf, name='export_transactions_pdf'),
+
+
+    # ----------------------------
+    # AUDIT LOGS (NEW)
+    # ----------------------------
+    path('audit-logs/', views.audit_logs, name='audit_logs'),
 
 
     # ----------------------------
@@ -54,13 +84,14 @@ urlpatterns = [
     path('api/accounts/', views.api_account_list, name='api_account_list'),
     path('api/account/<int:pk>/', views.api_account_detail, name='api_account_detail'),
     path('api/savings/balance/<int:account_id>/', views.api_savings_balance, name='api_savings_balance'),
+    path('api/search/', views.search_accounts, name='search_accounts'),  # NEW
 
 
     # ----------------------------
-    # EXPORTS (CSV & PDF)
+    # LOAN ACTIONS (if you have loans app)
     # ----------------------------
-    path('transactions/export/csv/<int:account_id>/', views.export_transactions_csv, name='export_transactions_csv'),
-    path('transactions/export/pdf/<int:account_id>/', views.export_transactions_pdf, name='export_transactions_pdf'),
-    path('transactions/export/csv/', views.export_transactions_csv, name='export_transactions_csv'),
-    path('transactions/export/pdf/', views.export_transactions_pdf, name='export_transactions_pdf'),
+    path('loans/<int:pk>/approve/', views.approve_loan, name='approve_loan'),
+    path('loans/<int:pk>/reject/', views.reject_loan, name='reject_loan'),
+    path('loans/<int:pk>/disburse/', views.disburse_loan, name='disburse_loan'),
+    
 ]

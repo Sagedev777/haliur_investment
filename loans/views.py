@@ -47,14 +47,59 @@ def loan_applications_list(request):
     applications = LoanApplication.objects.all().order_by('-application_date')
     return render(request, 'loans/loan_applications_list.html', {'applications': applications})
 
+
+
+# views.py - update loan_application_create function
 @login_required
 def loan_application_create(request):
-    form = LoanApplicationForm(request.POST or None, request.FILES or None)
+    if request.method == 'POST':
+        form = LoanApplicationForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Save the form but don't commit to database yet
+            loan_app = form.save(commit=False)
+            
+            # Set auto-generated/auto-filled fields
+            loan_app.loan_officer = request.user  # Person applying
+            loan_app.status = 'PENDING'  # Always start as pending
+            loan_app.application_date = timezone.now()  # Current date/time
+            
+            # Application number will be auto-generated in save() method
+            
+            # Save to database
+            loan_app.save()
+            
+            # Redirect to success page or list
+            return redirect('loan_applications_list')
+    else:
+        form = LoanApplicationForm()
+    
+    # Pass context data for dropdowns if needed
+    context = {
+        'form': form,
+        'clients': ClientAccount.objects.all(),
+        'products': LoanProduct.objects.filter(is_active=True),
+        'guarantors': Guarantor.objects.all(),
+    }
+    
+    return render(request, 'loans/loan_application_form.html', context)
+
+
+@login_required
+def loan_application_edit(request, pk):
+    application = get_object_or_404(LoanApplication, pk=pk)
+    
+    # Use different forms based on user role
+    if request.user.is_staff:  # Admin uses full form
+        form_class = AdminLoanApplicationForm
+    else:  # Regular users use limited form
+        form_class = LoanApplicationForm
+    
+    form = form_class(request.POST or None, request.FILES or None, instance=application)
+    
     if request.method == 'POST' and form.is_valid():
-        loan_app = form.save(commit=False)
-        loan_app.loan_officer = request.user
-        loan_app.save()
+        form.save()
         return redirect('loan_applications_list')
+    
     return render(request, 'loans/loan_application_form.html', {'form': form})
 
 @login_required
@@ -63,14 +108,6 @@ def loan_application_detail(request, pk):
     payments = application.loanpayment_set.all()
     return render(request, 'loans/loan_application_detail.html', {'application': application, 'payments': payments})
 
-@login_required
-def loan_application_edit(request, pk):
-    application = get_object_or_404(LoanApplication, pk=pk)
-    form = LoanApplicationForm(request.POST or None, request.FILES or None, instance=application)
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        return redirect('loan_applications_list')
-    return render(request, 'loans/loan_application_form.html', {'form': form})
 
 @login_required
 def loan_application_delete(request, pk):

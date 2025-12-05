@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError
 from client_accounts.models import ClientAccount
 from decimal import Decimal
 import datetime
+import random
+import string
 
 # -----------------------
 # Loan Products
@@ -116,7 +118,11 @@ class LoanApplication(models.Model):
     disbursed_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     transaction_reference = models.CharField(max_length=100, blank=True)
     disbursement_notes = models.TextField(blank=True)
-    
+    def generate_application_number(self):
+        """Generate application number: AN + random 4 alphanumeric characters"""
+        # Generate random 4 character alphanumeric string
+        random_chars = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+        return f"AN{random_chars}"
     # -----------------------
     # Utility Methods
     # -----------------------
