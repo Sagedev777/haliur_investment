@@ -171,6 +171,8 @@ def account_create(request):
     """Create a new client account with proper workflow"""
     user_role = get_user_role(request)
     
+    print("DEBUG: account_create called")
+    
     if request.method == 'POST':
         try:
             # Create account instance
@@ -239,6 +241,7 @@ def account_create(request):
                 'error': str(e),
                 'submitted_data': request.POST,
                 'user_role': user_role,
+                'account': ClientAccount(),
             })
         except Exception as e:
             # Handle other errors
@@ -248,16 +251,20 @@ def account_create(request):
                 'error': f"An unexpected error occurred: {str(e)}",
                 'submitted_data': request.POST,
                 'user_role': user_role,
+                'account': ClientAccount(),
             })
     
     # GET request - render form
     # Get active accounts for joint account linking
     active_accounts = ClientAccount.objects.filter(account_status=ClientAccount.STATUS_ACTIVE)
-    
+    # Create an empty account instance for the template
+    account = ClientAccount()
+    print(f"DEBUG: Created account instance: {account}")
     return render(request, 'client_accounts/account_form.html', {
         'title': 'Create Client Account',
         'active_accounts': active_accounts,
         'user_role': user_role,
+        'account': account,
     })
 
 
@@ -937,6 +944,8 @@ def audit_logs(request):
     # Apply filters
     action_filter = request.GET.get('action', '')
     account_filter = request.GET.get('account', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
     
     if action_filter:
         logs = logs.filter(action=action_filter)
@@ -944,18 +953,32 @@ def audit_logs(request):
     if account_filter:
         logs = logs.filter(client__account_number__icontains=account_filter)
     
+    if start_date:
+        logs = logs.filter(timestamp__gte=start_date)
+    
+    if end_date:
+        logs = logs.filter(timestamp__lte=end_date)
+    
+    # Calculate unique users
+    unique_users = logs.exclude(performed_by__isnull=True).values('performed_by').distinct().count()
+    
     # Pagination
     paginator = Paginator(logs, 50)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Handle CSV export
+    if request.GET.get('export') == 'csv':
+        return export_audit_logs_csv(logs)
+    
     return render(request, 'client_accounts/audit_logs.html', {
         'page_obj': page_obj,
         'action_filter': action_filter,
         'account_filter': account_filter,
-        'action_choices': ClientAuditLog.ACTION_CHOICES,
+        'start_date': start_date,
+        'end_date': end_date,
+        'unique_users': unique_users,
     })
-
 
 # -----------------------
 # Search Functions
@@ -1040,14 +1063,56 @@ def account_delete(request, pk):
     
     if request.method == 'POST':
         reason = request.POST.get('reason', 'Account closed by admin')
-        account.change_status(ClientAccount.STATUS_CLOSED, request.user, reason)
-        messages.success(request, f"Account {account.account_number} has been closed.")
-        return redirect('accounts:account_list')
+        
+        try:
+            # Check data integrity before proceeding
+            integrity_issues = []
+            
+            if not account.created_by:
+                integrity_issues.append("Account missing 'created_by' field")
+            
+            if not account.loan_officer:
+                integrity_issues.append("Account missing 'loan_officer' field")
+            
+            if integrity_issues:
+                messages.error(
+                    request, 
+                    f"Cannot close account due to data integrity issues: {', '.join(integrity_issues)}"
+                )
+                return redirect('accounts:account_detail', pk=account.pk)
+            
+            # Proceed with status change
+            account.change_status(ClientAccount.STATUS_CLOSED, request.user, reason)
+            
+            messages.success(request, f"Account {account.account_number} has been closed.")
+            return redirect('accounts:account_list')
+            
+        except ValidationError as e:
+            # Handle validation errors gracefully
+            error_message = "Validation error: "
+            for field, errors in e.message_dict.items():
+                error_message += f"{field}: {', '.join(errors)} "
+            
+            messages.error(request, error_message.strip())
+            
+            # Return to confirmation page with error
+            return render(request, 'client_accounts/account_confirm_delete.html', {
+                'account': account,
+                'error': error_message
+            })
+            
+        except Exception as e:
+            # Handle unexpected errors
+            messages.error(request, f"An unexpected error occurred: {str(e)}")
+            return render(request, 'client_accounts/account_confirm_delete.html', {
+                'account': account,
+                'error': str(e)
+            })
     
+    # GET request - show confirmation page
     return render(request, 'client_accounts/account_confirm_delete.html', {
         'account': account,
     })
-
 
 # -----------------------
 # Savings Transactions View
@@ -1163,4 +1228,34 @@ def export_transactions_pdf(request, account_id=None):
 
     p.showPage()
     p.save()
+    return response
+
+def export_audit_logs_csv(queryset):
+    """Export audit logs to CSV"""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="audit_logs_%s.csv"' % timezone.now().strftime('%Y%m%d_%H%M%S')
+    
+    writer = csv.writer(response)
+    writer.writerow([
+        'Timestamp', 'Account Number', 'Account Name', 'Action', 
+        'Performed By', 'Performed By Email', 'Changed Fields', 'Notes'
+    ])
+    
+    for log in queryset:
+        # Get changed fields
+        changed_fields = []
+        if log.changed_data:
+            changed_fields = list(log.changed_data.keys())
+        
+        writer.writerow([
+            log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            log.client.account_number if log.client else '',
+            log.client.full_account_name if log.client else '',
+            log.get_action_display(),
+            log.performed_by.get_full_name() if log.performed_by else 'System',
+            log.performed_by.email if log.performed_by else '',
+            ', '.join(changed_fields),
+            log.note or ''
+        ])
+    
     return response

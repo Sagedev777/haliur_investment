@@ -1,0 +1,335 @@
+{% extends 'client_accounts/base.html' %}
+
+{% block title %}Savings Deposit{% endblock %}
+
+{% block page_title %}Savings Deposit{% endblock %}
+{% block page_subtitle %}Record a new savings deposit{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'accounts:savings_list' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Back to Transactions
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if account %}
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Depositing to account: <strong>{{ account.account_number }}</strong> - {{ account.full_account_name }}
+                        <input type="hidden" name="account_id" value="{{ account.pk }}">
+                    </div>
+                    {% else %}
+                    <!-- Account Selection -->
+                    <div class="mb-4">
+                        <h5 class="mb-3 border-bottom pb-2">
+                            <i class="fas fa-search me-2"></i>Select Account
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="account_search" class="form-label">Search Account</label>
+                                <input type="text" class="form-control" id="account_search" 
+                                       placeholder="Type account number or client name...">
+                                <div id="search_results" class="mt-2" style="display: none;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label for="account_number" class="form-label">Or Select from List</label>
+                                <select name="account_number" id="account_number" class="form-select" required>
+                                    <option value="">Select Account</option>
+                                    {% for acc in accounts %}
+                                    <option value="{{ acc.account_number }}" 
+                                            data-balance="{{ acc.savings_balance }}"
+                                            data-name="{{ acc.full_account_name }}">
+                                        {{ acc.account_number }} - {{ acc.full_account_name }} (Balance: UGX {{ acc.savings_balance|floatformat:0 }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3" id="selected_account_info" style="display: none;">
+                            <div class="col-md-12">
+                                <div class="alert alert-success">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <strong>Selected Account:</strong><br>
+                                            <span id="selected_account_name"></span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Current Balance:</strong><br>
+                                            UGX <span id="selected_account_balance"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Deposit Details -->
+                    <div class="mb-4">
+                        <h5 class="mb-3 border-bottom pb-2">
+                            <i class="fas fa-money-bill-wave me-2"></i>Deposit Details
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="amount" class="form-label">Amount (UGX) *</label>
+                                <input type="number" class="form-control" id="amount" name="amount" 
+                                       step="0.01" min="0.01" required placeholder="0.00">
+                                <div class="form-text">Minimum deposit: 1,000 UGX</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="reference" class="form-label">Reference Number (Optional)</label>
+                                <input type="text" class="form-control" id="reference" name="reference" 
+                                       placeholder="e.g., Receipt No, Transaction ID">
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label for="notes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                          placeholder="Any additional information about this deposit..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Deposit Summary -->
+                    <div class="mb-4" id="deposit_summary" style="display: none;">
+                        <h5 class="mb-3 border-bottom pb-2">
+                            <i class="fas fa-receipt me-2"></i>Deposit Summary
+                        </h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th width="40%">Account Number</th>
+                                    <td id="summary_account_number">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Account Name</th>
+                                    <td id="summary_account_name">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Current Balance</th>
+                                    <td>UGX <span id="summary_current_balance">0</span></td>
+                                </tr>
+                                <tr>
+                                    <th>Deposit Amount</th>
+                                    <td class="text-success">UGX <span id="summary_deposit_amount">0</span></td>
+                                </tr>
+                                <tr>
+                                    <th>New Balance</th>
+                                    <td class="text-primary"><strong>UGX <span id="summary_new_balance">0</span></strong></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% if account %}{% url 'accounts:account_detail' account.pk %}{% else %}{% url 'accounts:savings_list' %}{% endif %}" 
+                           class="btn btn-secondary">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check-circle me-2"></i>Confirm Deposit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Help Information -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Instructions</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fas fa-asterisk text-danger me-2"></i>Fields marked with * are required</li>
+                    <li class="mb-2"><i class="fas fa-search me-2 text-primary"></i>You can search accounts by number or name</li>
+                    <li class="mb-2"><i class="fas fa-wallet me-2 text-success"></i>Minimum deposit amount is 1,000 UGX</li>
+                    <li class="mb-2"><i class="fas fa-receipt me-2 text-warning"></i>Reference number helps track external receipts</li>
+                    <li class="mb-2"><i class="fas fa-clipboard me-2 text-info"></i>Notes are useful for audit purposes</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Recent Deposits -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-history me-2"></i>Recent Deposits</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for deposit in recent_deposits|slice:":5" %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <small class="text-muted">{{ deposit.client_account.account_number }}</small>
+                            <small class="text-success"><strong>UGX {{ deposit.amount|floatformat:0 }}</strong></small>
+                        </div>
+                        <div class="d-flex w-100 justify-content-between">
+                            <small>{{ deposit.client_account.full_account_name|truncatechars:20 }}</small>
+                            <small class="text-muted">{{ deposit.transaction_date|date:"M d, H:i" }}</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-center text-muted py-3">
+                        No recent deposits
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const accountSelect = document.getElementById('account_number');
+    const accountSearch = document.getElementById('account_search');
+    const searchResults = document.getElementById('search_results');
+    const selectedAccountInfo = document.getElementById('selected_account_info');
+    const depositSummary = document.getElementById('deposit_summary');
+    const amountInput = document.getElementById('amount');
+    
+    // Account selection handler
+    if (accountSelect) {
+        accountSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            
+            if (selectedOption.value) {
+                // Show selected account info
+                document.getElementById('selected_account_name').textContent = 
+                    selectedOption.getAttribute('data-name');
+                document.getElementById('selected_account_balance').textContent = 
+                    parseFloat(selectedOption.getAttribute('data-balance')).toLocaleString('en-US');
+                selectedAccountInfo.style.display = 'block';
+                
+                // Update summary
+                updateDepositSummary();
+            } else {
+                selectedAccountInfo.style.display = 'none';
+                depositSummary.style.display = 'none';
+            }
+        });
+    }
+    
+    // Amount input handler
+    if (amountInput) {
+        amountInput.addEventListener('input', function() {
+            updateDepositSummary();
+        });
+    }
+    
+    // Search functionality
+    if (accountSearch) {
+        accountSearch.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            
+            // Filter accounts
+            const options = accountSelect.options;
+            let resultsHTML = '';
+            let matchCount = 0;
+            
+            for (let i = 0; i < options.length; i++) {
+                const option = options[i];
+                const text = option.text.toLowerCase();
+                
+                if (text.includes(query) && option.value) {
+                    matchCount++;
+                    resultsHTML += `
+                        <div class="search-result-item p-2 border-bottom" 
+                             data-value="${option.value}"
+                             data-name="${option.getAttribute('data-name')}"
+                             data-balance="${option.getAttribute('data-balance')}">
+                            <div class="fw-bold">${option.value}</div>
+                            <div class="small text-muted">${option.getAttribute('data-name')}</div>
+                            <div class="small">Balance: UGX ${parseFloat(option.getAttribute('data-balance')).toLocaleString('en-US')}</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            if (matchCount > 0) {
+                searchResults.innerHTML = resultsHTML;
+                searchResults.style.display = 'block';
+                
+                // Add click handlers to search results
+                document.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        accountSelect.value = this.getAttribute('data-value');
+                        accountSelect.dispatchEvent(new Event('change'));
+                        searchResults.style.display = 'none';
+                        accountSearch.value = '';
+                    });
+                });
+            } else {
+                searchResults.innerHTML = '<div class="p-2 text-muted">No accounts found</div>';
+                searchResults.style.display = 'block';
+            }
+        });
+        
+        // Hide search results when clicking elsewhere
+        document.addEventListener('click', function(e) {
+            if (!accountSearch.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+    }
+    
+    function updateDepositSummary() {
+        const selectedOption = accountSelect.options[accountSelect.selectedIndex];
+        const amount = parseFloat(amountInput.value) || 0;
+        
+        if (selectedOption && selectedOption.value && amount > 0) {
+            const currentBalance = parseFloat(selectedOption.getAttribute('data-balance'));
+            const newBalance = currentBalance + amount;
+            
+            // Update summary
+            document.getElementById('summary_account_number').textContent = selectedOption.value;
+            document.getElementById('summary_account_name').textContent = selectedOption.getAttribute('data-name');
+            document.getElementById('summary_current_balance').textContent = currentBalance.toLocaleString('en-US');
+            document.getElementById('summary_deposit_amount').textContent = amount.toLocaleString('en-US');
+            document.getElementById('summary_new_balance').textContent = newBalance.toLocaleString('en-US');
+            
+            depositSummary.style.display = 'block';
+        } else {
+            depositSummary.style.display = 'none';
+        }
+    }
+    
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const amount = parseFloat(amountInput.value);
+        
+        if (amount < 1000) {
+            e.preventDefault();
+            alert('Minimum deposit amount is 1,000 UGX');
+            amountInput.focus();
+            return false;
+        }
+        
+        if (!accountSelect.value && !document.querySelector('input[name="account_id"]')) {
+            e.preventDefault();
+            alert('Please select an account');
+            accountSelect.focus();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

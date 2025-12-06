@@ -103,7 +103,21 @@ class ClientAuditLog(models.Model):
 
     def __str__(self):
         return f"Audit: {self.client.account_number} - {self.get_action_display()} @ {self.timestamp}"
-
+    
+    def get_action_badge_color(self):
+        """Return Bootstrap badge color based on action type"""
+        color_map = {
+            'CREATE': 'success',
+            'UPDATE': 'info',
+            'EDIT_REQUEST': 'warning',
+            'APPROVE_EDIT': 'success',
+            'REJECT_EDIT': 'danger',
+            'SAVINGS_TX': 'primary',
+            'ACCOUNT_APPROVE': 'success',
+            'ACCOUNT_REJECT': 'danger',
+            'STATUS_CHANGE': 'secondary',
+        }
+        return color_map.get(self.action, 'secondary')
 
 # ------------------------
 # ClientAccount - UPDATED VERSION
@@ -194,8 +208,9 @@ class ClientAccount(models.Model):
     )
     created_by = models.ForeignKey(
         User, 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        on_delete=models.PROTECT, 
+        null=False, 
+        blank=False,
         related_name='created_accounts',
         help_text="User who created this account"
     )
@@ -248,7 +263,7 @@ class ClientAccount(models.Model):
         # Generate account number if not exists
         if not self.account_number:
             self.account_number = self.generate_account_number()
-        
+
         # Auto-fill person2 details if linked to existing client
         if self.account_type == 'JOINT' and self.person2_client and not self.person2_nin:
             self.person2_first_name = self.person2_client.person1_first_name
@@ -259,11 +274,34 @@ class ClientAccount(models.Model):
             self.person2_nin = self.person2_client.person1_nin
             self.person2_gender = self.person2_client.person1_gender
             self.person2_next_of_kin = self.person2_client.person1_next_of_kin
-        
-        # Full clean before saving
-        self.full_clean()
-        super().save(*args, **kwargs)
 
+        # VALIDATION: Ensure created_by is set for new records
+        if not self.pk and not self.created_by:
+            # For new records, created_by MUST be set
+            # This should be set in the view, but as a fallback:
+            if hasattr(self, 'loan_officer') and self.loan_officer:
+                self.created_by = self.loan_officer
+            else:
+                # This will trigger validation error
+                pass
+            
+        # For existing records missing created_by, try to infer it
+        elif self.pk and not self.created_by:
+            # Try to get from loan_officer
+            if self.loan_officer:
+                self.created_by = self.loan_officer
+
+        try:
+            self.full_clean()
+        except ValidationError as e:
+            # Log the validation error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Validation error saving ClientAccount {self.account_number}: {e}")
+            raise e
+
+        super().save(*args, **kwargs)
+                                                                            
     def clean(self):
         """Business rule validation - FIXED"""
         super().clean()
@@ -383,11 +421,38 @@ class ClientAccount(models.Model):
         """Change account status with audit logging"""
         if new_status not in dict(self.STATUS_CHOICES).keys():
             raise ValueError(f"Invalid status: {new_status}")
-        
+
         old_status = self.account_status
+
+        # Ensure created_by is set before saving
+        if not self.created_by:
+            # Try to set created_by from loan_officer or current user
+            if self.loan_officer:
+                self.created_by = self.loan_officer
+            elif changed_by_user:
+                self.created_by = changed_by_user
+            else:
+                raise ValidationError({
+                    'created_by': ['This field is required. Cannot determine who created this account.']
+                })
+
         self.account_status = new_status
-        self.save()
-        
+        self.last_edited_by = changed_by_user
+        self.last_edited_date = timezone.now()
+
+        try:
+            self.save()
+        except ValidationError as e:
+            # Log detailed error
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Validation error changing status for account {self.account_number}: {e}")
+
+            # Re-raise with user-friendly message
+            raise ValidationError({
+                'created_by': ['Account cannot be saved. Please ensure all required fields are filled.']
+            })
+
         # Create audit log
         ClientAuditLog.objects.create(
             client=self,
@@ -397,7 +462,8 @@ class ClientAccount(models.Model):
             },
             performed_by=changed_by_user,
             note=f"Account status changed. Reason: {reason}"
-        )
+        ) 
+        
 
     def __str__(self):
         if self.account_type == 'SINGLE':

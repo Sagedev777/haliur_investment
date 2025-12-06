@@ -66,7 +66,8 @@ urlpatterns = [
     path('reports/', views.reports_dashboard, name='reports_dashboard'),  # NEW
     path('reports/transactions/csv/', views.export_transactions_csv, name='export_transactions_csv'),
     path('reports/transactions/csv/<int:account_id>/', views.export_transactions_csv, name='export_transactions_csv_account'),
-    
+    path('reports/transactions/pdf/<int:account_id>/', views.export_transactions_pdf, name='export_transactions_pdf_account'),
+
     # Keep these if you want PDF exports (need to add views for them)
     path('reports/accounts/pdf/', views.export_accounts_pdf, name='export_accounts_pdf'),
     path('reports/transactions/pdf/', views.export_transactions_pdf, name='export_transactions_pdf'),

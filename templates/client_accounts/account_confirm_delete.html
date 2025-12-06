@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-body">
+            <h4>Confirm Account Closure</h4>
+            
+            {% if error %}
+                <div class="alert alert-danger">
+                    <strong>Error:</strong> {{ error }}
+                </div>
+            {% endif %}
+            
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Account Details</h5>
+                    <p class="mb-1"><strong>Account Number:</strong> {{ account.account_number }}</p>
+                    <p class="mb-1"><strong>Account Holder:</strong> {{ account.full_account_name }}</p>
+                    <p class="mb-1"><strong>Current Status:</strong> {{ account.get_account_status_display }}</p>
+                    <p class="mb-1"><strong>Current Balance:</strong> ${{ account.savings_balance }}</p>
+                    <p class="mb-0"><strong>Loan Officer:</strong> {{ account.loan_officer.get_full_name|default:account.loan_officer.username }}</p>
+                </div>
+            </div>
+            <p>Are you sure you want to close account <strong>{{ account.account_number }}</strong>?</p>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label>Reason:</label>
+                    <input type="text" name="reason" class="form-control" required>
+                </div>
+                
+                <button type="submit" class="btn btn-danger">Close Account</button>
+                <a href="{% url 'accounts:account_detail' account.pk %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.http import HttpResponse
 from .models import SystemReport, ActivityLog
 from client_accounts.models import ClientAccount, SavingsTransaction
-from loans.models import LoanApplication, LoanPayment
+from loans.models import LoanApplication, LoanTransaction  # FIXED: LoanPayment → LoanTransaction
 from django.contrib.auth.models import User
 from decimal import Decimal
 import csv

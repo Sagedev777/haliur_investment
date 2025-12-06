@@ -1,421 +1,318 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends 'client_accounts/base.html' %}
 
-{% block title %}Create Client Account{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
-{% block extra_css %}
-<style>
-    .required::after {
-        content: " *";
-        color: #dc3545;
-    }
-    .form-section {
-        margin-bottom: 25px;
-    }
-    .card-header {
-        font-weight: 600;
-    }
-    .person2-section {
-        display: none;
-        transition: all 0.3s ease;
-    }
-    .field-error {
-        border-color: #dc3545;
-    }
-    .error-message {
-        color: #dc3545;
-        font-size: 0.875em;
-        margin-top: 0.25rem;
-    }
-</style>
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_subtitle %}{{ subtitle|default:"Create or edit client account" }}{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'accounts:account_list' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Back to List
+</a>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="page-header">
-                <h1 class="h2 mb-2">Create New Client Account</h1>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="{% url 'accounts:account_list' %}">Accounts</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Create Account</li>
-                    </ol>
-                </nav>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Form -->
-    <div class="row justify-content-center">
-        <div class="col-12 col-xl-10">
-            <form method="post" class="needs-validation" id="account-form" novalidate>
-                {% csrf_token %}
-                
-                <!-- Error Messages -->
-                {% if errors %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if error %}
                     <div class="alert alert-danger">
-                        <strong>Please correct the following errors:</strong>
-                        <ul class="mb-0">
-                            {% for field, error in errors.items %}
-                                <li><strong>{{ field|title }}</strong>: {{ error }}</li>
-                            {% endfor %}
-                        </ul>
+                        <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
                     </div>
-                {% endif %}
-
-                <!-- Account Type Selection -->
-                <div class="card form-section">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>Account Type</h5>
-                    </div>
-                    <div class="card-body">
+                    {% endif %}
+                    
+                    <!-- Account Information -->
+                    <div class="mb-4">
+                        <h5 class="mb-3 border-bottom pb-2">
+                            <i class="fas fa-info-circle me-2"></i>Account Information
+                        </h5>
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="account_type" class="form-label required">Select Account Type</label>
-                                    <select id="account_type" name="account_type" class="form-control {% if errors.account_type %}field-error{% endif %}" required>
-                                        <option value="">Choose Account Type</option>
-                                        <option value="SINGLE" {% if submitted_data.account_type == 'SINGLE' %}selected{% endif %}>Single Account (One Person)</option>
-                                        <option value="JOINT" {% if submitted_data.account_type == 'JOINT' %}selected{% endif %}>Joint Account (Two Persons)</option>
-                                    </select>
-                                    {% if errors.account_type %}
-                                        <div class="error-message">{{ errors.account_type }}</div>
-                                    {% endif %}
-                                    <div class="form-text">Select "Single" for one account holder or "Joint" for two account holders.</div>
+                            <div class="col-md-6 mb-3">
+                                <label for="account_type" class="form-label">Account Type *</label>
+                                <select name="account_type" id="account_type" class="form-select" required>
+                                    <option value="">Select Type</option>
+                                    <option value="SINGLE" {% if submitted_data.account_type == 'SINGLE' or account and account.account_type == 'SINGLE' %}selected{% endif %}>Single Account</option>
+                                    <option value="JOINT" {% if submitted_data.account_type == 'JOINT' or account and account.account_type == 'JOINT' %}selected{% endif %}>Joint Account</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="business_location" class="form-label">Business Location *</label>
+                                <input type="text" class="form-control" id="business_location" name="business_location" 
+                                       value="{{ submitted_data.business_location|default:account.business_location|default:'' }}" required>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label for="business_sector" class="form-label">Business Sector *</label>
+                                <input type="text" class="form-control" id="business_sector" name="business_sector" 
+                                       value="{{ submitted_data.business_sector|default:account.business_sector|default:'' }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Primary Account Holder -->
+                    <div class="mb-4">
+                        <h5 class="mb-3 border-bottom pb-2">
+                            <i class="fas fa-user me-2"></i>Primary Account Holder Information
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="person1_first_name" class="form-label">First Name *</label>
+                                <input type="text" class="form-control" id="person1_first_name" name="person1_first_name" 
+                                       value="{{ submitted_data.person1_first_name|default:account.person1_first_name }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="person1_last_name" class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" id="person1_last_name" name="person1_last_name" 
+                                       value="{{ submitted_data.person1_last_name|default:account.person1_last_name }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="person1_gender" class="form-label">Gender *</label>
+                                <select name="person1_gender" id="person1_gender" class="form-select" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="M" {% if submitted_data.person1_gender == 'M' or account.person1_gender == 'M' %}selected{% endif %}>Male</option>
+                                    <option value="F" {% if submitted_data.person1_gender == 'F' or account.person1_gender == 'F' %}selected{% endif %}>Female</option>
+                                    <option value="O" {% if submitted_data.person1_gender == 'O' or account.person1_gender == 'O' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="person1_contact" class="form-label">Contact Number *</label>
+                                <input type="tel" class="form-control" id="person1_contact" name="person1_contact" 
+                                       value="{{ submitted_data.person1_contact|default:account.person1_contact }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="person1_nin" class="form-label">National ID (NIN) *</label>
+                                <input type="text" class="form-control" id="person1_nin" name="person1_nin" 
+                                       value="{{ submitted_data.person1_nin|default:account.person1_nin }}" required>
+                                {% if errors.person1_nin %}
+                                <div class="text-danger small mt-1">{{ errors.person1_nin }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="person1_next_of_kin" class="form-label">Next of Kin *</label>
+                                <input type="text" class="form-control" id="person1_next_of_kin" name="person1_next_of_kin" 
+                                       value="{{ submitted_data.person1_next_of_kin|default:account.person1_next_of_kin }}" required>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label for="person1_address" class="form-label">Address *</label>
+                                <textarea class="form-control" id="person1_address" name="person1_address" rows="2" required>{{ submitted_data.person1_address|default:account.person1_address }}</textarea>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="person1_area_code" class="form-label">Area Code</label>
+                                <input type="text" class="form-control" id="person1_area_code" name="person1_area_code" 
+                                       value="{{ submitted_data.person1_area_code|default:account.person1_area_code }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Joint Account Holder (Conditional) -->
+                    <div class="mb-4" id="joint-account-section" style="display: none;">
+                        <h5 class="mb-3 border-bottom pb-2">
+                            <i class="fas fa-users me-2"></i>Secondary Account Holder (Joint Account)
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="link_existing_client" name="link_existing_client">
+                                    <label class="form-check-label" for="link_existing_client">
+                                        Link to existing client
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-12 mb-3" id="existing-client-select" style="display: none;">
+                                <label for="person2_client" class="form-label">Select Existing Client</label>
+                                <select name="person2_client" id="person2_client" class="form-select">
+                                    <option value="">Select Client</option>
+                                    {% for client in active_accounts %}
+                                    <option value="{{ client.id }}" {% if submitted_data.person2_client == client.id|stringformat:"i" or account.person2_client_id == client.id %}selected{% endif %}>
+                                        {{ client.account_number }} - {{ client.full_account_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div id="manual-entry-fields">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="person2_first_name" class="form-label">First Name</label>
+                                        <input type="text" class="form-control" id="person2_first_name" name="person2_first_name" 
+                                               value="{{ submitted_data.person2_first_name|default:account.person2_first_name }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="person2_last_name" class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" id="person2_last_name" name="person2_last_name" 
+                                               value="{{ submitted_data.person2_last_name|default:account.person2_last_name }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="person2_gender" class="form-label">Gender</label>
+                                        <select name="person2_gender" id="person2_gender" class="form-select">
+                                            <option value="">Select Gender</option>
+                                            <option value="M" {% if submitted_data.person2_gender == 'M' or account.person2_gender == 'M' %}selected{% endif %}>Male</option>
+                                            <option value="F" {% if submitted_data.person2_gender == 'F' or account.person2_gender == 'F' %}selected{% endif %}>Female</option>
+                                            <option value="O" {% if submitted_data.person2_gender == 'O' or account.person2_gender == 'O' %}selected{% endif %}>Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="person2_contact" class="form-label">Contact Number</label>
+                                        <input type="tel" class="form-control" id="person2_contact" name="person2_contact" 
+                                               value="{{ submitted_data.person2_contact|default:account.person2_contact }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="person2_nin" class="form-label">National ID (NIN)</label>
+                                        <input type="text" class="form-control" id="person2_nin" name="person2_nin" 
+                                               value="{{ submitted_data.person2_nin|default:account.person2_nin }}">
+                                        {% if errors.person2_nin %}
+                                        <div class="text-danger small mt-1">{{ errors.person2_nin }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="person2_next_of_kin" class="form-label">Next of Kin</label>
+                                        <input type="text" class="form-control" id="person2_next_of_kin" name="person2_next_of_kin" 
+                                               value="{{ submitted_data.person2_next_of_kin|default:account.person2_next_of_kin }}">
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label for="person2_address" class="form-label">Address</label>
+                                        <textarea class="form-control" id="person2_address" name="person2_address" rows="2">{{ submitted_data.person2_address|default:account.person2_address }}</textarea>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="person2_area_code" class="form-label">Area Code</label>
+                                        <input type="text" class="form-control" id="person2_area_code" name="person2_area_code" 
+                                               value="{{ submitted_data.person2_area_code|default:account.person2_area_code }}">
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Primary Account Holder -->
-                <div class="card form-section">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0"><i class="fas fa-user me-2"></i>Primary Account Holder Information</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <!-- Personal Details -->
-                            <div class="col-md-6">
-                                <label for="person1_first_name" class="form-label required">First Name</label>
-                                <input type="text" id="person1_first_name" name="person1_first_name" 
-                                       class="form-control {% if errors.person1_first_name %}field-error{% endif %}" 
-                                       value="{{ submitted_data.person1_first_name|default:'' }}" 
-                                       required placeholder="Enter first name">
-                                {% if errors.person1_first_name %}
-                                    <div class="error-message">{{ errors.person1_first_name }}</div>
-                                {% endif %}
+                    
+                    <!-- Documents -->
+                    <div class="mb-4">
+                        <h5 class="mb-3 border-bottom pb-2">
+                            <i class="fas fa-file-upload me-2"></i>Documents (Optional)
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="person1_photo" class="form-label">Primary Holder Photo</label>
+                                <input type="file" class="form-control" id="person1_photo" name="person1_photo" accept="image/*">
                             </div>
-
-                            <div class="col-md-6">
-                                <label for="person1_last_name" class="form-label required">Last Name</label>
-                                <input type="text" id="person1_last_name" name="person1_last_name" 
-                                       class="form-control {% if errors.person1_last_name %}field-error{% endif %}" 
-                                       value="{{ submitted_data.person1_last_name|default:'' }}" 
-                                       required placeholder="Enter last name">
-                                {% if errors.person1_last_name %}
-                                    <div class="error-message">{{ errors.person1_last_name }}</div>
-                                {% endif %}
+                            <div class="col-md-6 mb-3">
+                                <label for="person1_signature" class="form-label">Primary Holder Signature</label>
+                                <input type="file" class="form-control" id="person1_signature" name="person1_signature" accept="image/*">
                             </div>
-
-                            <div class="col-md-6">
-                                <label for="person1_nin" class="form-label required">National ID (NIN)</label>
-                                <input type="text" id="person1_nin" name="person1_nin" 
-                                       class="form-control {% if errors.person1_nin %}field-error{% endif %}" 
-                                       value="{{ submitted_data.person1_nin|default:'' }}" 
-                                       required placeholder="Enter NIN number">
-                                {% if errors.person1_nin %}
-                                    <div class="error-message">{{ errors.person1_nin }}</div>
-                                {% endif %}
+                        </div>
+                        <div class="row" id="joint-docs" style="display: none;">
+                            <div class="col-md-6 mb-3">
+                                <label for="person2_photo" class="form-label">Secondary Holder Photo</label>
+                                <input type="file" class="form-control" id="person2_photo" name="person2_photo" accept="image/*">
                             </div>
-
-                            <div class="col-md-6">
-                                <label for="person1_gender" class="form-label required">Gender</label>
-                                <select id="person1_gender" name="person1_gender" 
-                                        class="form-control {% if errors.person1_gender %}field-error{% endif %}" required>
-                                    <option value="">Select Gender</option>
-                                    <option value="M" {% if submitted_data.person1_gender == 'M' %}selected{% endif %}>Male</option>
-                                    <option value="F" {% if submitted_data.person1_gender == 'F' %}selected{% endif %}>Female</option>
-                                    <option value="O" {% if submitted_data.person1_gender == 'O' %}selected{% endif %}>Other</option>
-                                </select>
-                                {% if errors.person1_gender %}
-                                    <div class="error-message">{{ errors.person1_gender }}</div>
-                                {% endif %}
-                            </div>
-
-                            <!-- Contact Information -->
-                            <div class="col-md-6">
-                                <label for="person1_contact" class="form-label required">Phone Number</label>
-                                <input type="tel" id="person1_contact" name="person1_contact" 
-                                       class="form-control {% if errors.person1_contact %}field-error{% endif %}" 
-                                       value="{{ submitted_data.person1_contact|default:'' }}" 
-                                       required placeholder="Enter phone number">
-                                {% if errors.person1_contact %}
-                                    <div class="error-message">{{ errors.person1_contact }}</div>
-                                {% endif %}
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="person1_area_code" class="form-label required">Area Code</label>
-                                <input type="text" id="person1_area_code" name="person1_area_code" 
-                                       class="form-control {% if errors.person1_area_code %}field-error{% endif %}" 
-                                       value="{{ submitted_data.person1_area_code|default:'' }}" 
-                                       required placeholder="Enter area code">
-                                {% if errors.person1_area_code %}
-                                    <div class="error-message">{{ errors.person1_area_code }}</div>
-                                {% endif %}
-                            </div>
-
-                            <div class="col-12">
-                                <label for="person1_address" class="form-label required">Residential Address</label>
-                                <textarea id="person1_address" name="person1_address" 
-                                          class="form-control {% if errors.person1_address %}field-error{% endif %}" 
-                                          rows="3" required placeholder="Enter complete address">{{ submitted_data.person1_address|default:'' }}</textarea>
-                                {% if errors.person1_address %}
-                                    <div class="error-message">{{ errors.person1_address }}</div>
-                                {% endif %}
-                            </div>
-
-                            <!-- Next of Kin -->
-                            <div class="col-md-6">
-                                <label for="person1_next_of_kin" class="form-label required">Next of Kin</label>
-                                <input type="text" id="person1_next_of_kin" name="person1_next_of_kin" 
-                                       class="form-control {% if errors.person1_next_of_kin %}field-error{% endif %}" 
-                                       value="{{ submitted_data.person1_next_of_kin|default:'' }}" 
-                                       required placeholder="Enter next of kin name">
-                                {% if errors.person1_next_of_kin %}
-                                    <div class="error-message">{{ errors.person1_next_of_kin }}</div>
-                                {% endif %}
+                            <div class="col-md-6 mb-3">
+                                <label for="person2_signature" class="form-label">Secondary Holder Signature</label>
+                                <input type="file" class="form-control" id="person2_signature" name="person2_signature" accept="image/*">
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Secondary Account Holder (Joint Accounts) -->
-                <div class="card form-section person2-section" id="person2-section">
-                    <div class="card-header bg-warning text-dark">
-                        <h5 class="mb-0"><i class="fas fa-users me-2"></i>Secondary Account Holder Information</h5>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'accounts:account_list' %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            {% if account.pk %}Update Account{% else %}Create Account{% endif %}
+                        </button>
                     </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <!-- Personal Details -->
-                            <div class="col-md-6">
-                                <label for="person2_first_name" class="form-label">First Name</label>
-                                <input type="text" id="person2_first_name" name="person2_first_name" 
-                                       class="form-control person2-field {% if errors.person2_first_name %}field-error{% endif %}" 
-                                       value="{{ submitted_data.person2_first_name|default:'' }}" 
-                                       placeholder="Enter first name">
-                                {% if errors.person2_first_name %}
-                                    <div class="error-message">{{ errors.person2_first_name }}</div>
-                                {% endif %}
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="person2_last_name" class="form-label">Last Name</label>
-                                <input type="text" id="person2_last_name" name="person2_last_name" 
-                                       class="form-control person2-field {% if errors.person2_last_name %}field-error{% endif %}" 
-                                       value="{{ submitted_data.person2_last_name|default:'' }}" 
-                                       placeholder="Enter last name">
-                                {% if errors.person2_last_name %}
-                                    <div class="error-message">{{ errors.person2_last_name }}</div>
-                                {% endif %}
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="person2_nin" class="form-label">National ID (NIN)</label>
-                                <input type="text" id="person2_nin" name="person2_nin" 
-                                       class="form-control person2-field {% if errors.person2_nin %}field-error{% endif %}" 
-                                       value="{{ submitted_data.person2_nin|default:'' }}" 
-                                       placeholder="Enter NIN number">
-                                {% if errors.person2_nin %}
-                                    <div class="error-message">{{ errors.person2_nin }}</div>
-                                {% endif %}
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="person2_gender" class="form-label">Gender</label>
-                                <select id="person2_gender" name="person2_gender" 
-                                        class="form-control person2-field {% if errors.person2_gender %}field-error{% endif %}">
-                                    <option value="">Select Gender</option>
-                                    <option value="M" {% if submitted_data.person2_gender == 'M' %}selected{% endif %}>Male</option>
-                                    <option value="F" {% if submitted_data.person2_gender == 'F' %}selected{% endif %}>Female</option>
-                                    <option value="O" {% if submitted_data.person2_gender == 'O' %}selected{% endif %}>Other</option>
-                                </select>
-                                {% if errors.person2_gender %}
-                                    <div class="error-message">{{ errors.person2_gender }}</div>
-                                {% endif %}
-                            </div>
-
-                            <!-- Contact Information -->
-                            <div class="col-md-6">
-                                <label for="person2_contact" class="form-label">Phone Number</label>
-                                <input type="tel" id="person2_contact" name="person2_contact" 
-                                       class="form-control person2-field {% if errors.person2_contact %}field-error{% endif %}" 
-                                       value="{{ submitted_data.person2_contact|default:'' }}" 
-                                       placeholder="Enter phone number">
-                                {% if errors.person2_contact %}
-                                    <div class="error-message">{{ errors.person2_contact }}</div>
-                                {% endif %}
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="person2_area_code" class="form-label">Area Code</label>
-                                <input type="text" id="person2_area_code" name="person2_area_code" 
-                                       class="form-control person2-field {% if errors.person2_area_code %}field-error{% endif %}" 
-                                       value="{{ submitted_data.person2_area_code|default:'' }}" 
-                                       placeholder="Enter area code">
-                                {% if errors.person2_area_code %}
-                                    <div class="error-message">{{ errors.person2_area_code }}</div>
-                                {% endif %}
-                            </div>
-
-                            <div class="col-12">
-                                <label for="person2_address" class="form-label">Residential Address</label>
-                                <textarea id="person2_address" name="person2_address" 
-                                          class="form-control person2-field {% if errors.person2_address %}field-error{% endif %}" 
-                                          rows="3" placeholder="Enter complete address">{{ submitted_data.person2_address|default:'' }}</textarea>
-                                {% if errors.person2_address %}
-                                    <div class="error-message">{{ errors.person2_address }}</div>
-                                {% endif %}
-                            </div>
-
-                            <!-- Next of Kin -->
-                            <div class="col-md-6">
-                                <label for="person2_next_of_kin" class="form-label">Next of Kin</label>
-                                <input type="text" id="person2_next_of_kin" name="person2_next_of_kin" 
-                                       class="form-control person2-field {% if errors.person2_next_of_kin %}field-error{% endif %}" 
-                                       value="{{ submitted_data.person2_next_of_kin|default:'' }}" 
-                                       placeholder="Enter next of kin name">
-                                {% if errors.person2_next_of_kin %}
-                                    <div class="error-message">{{ errors.person2_next_of_kin }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Business Information -->
-                <div class="card form-section">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0"><i class="fas fa-building me-2"></i>Business Information</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="business_location" class="form-label required">Business Location</label>
-                                <input type="text" id="business_location" name="business_location" 
-                                       class="form-control {% if errors.business_location %}field-error{% endif %}" 
-                                       value="{{ submitted_data.business_location|default:'' }}" 
-                                       required placeholder="Enter business location">
-                                {% if errors.business_location %}
-                                    <div class="error-message">{{ errors.business_location }}</div>
-                                {% endif %}
-                                <div class="form-text">Physical location of the business</div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="business_sector" class="form-label required">Business Sector</label>
-                                <input type="text" id="business_sector" name="business_sector" 
-                                       class="form-control {% if errors.business_sector %}field-error{% endif %}" 
-                                       value="{{ submitted_data.business_sector|default:'' }}" 
-                                       required placeholder="Enter business sector">
-                                {% if errors.business_sector %}
-                                    <div class="error-message">{{ errors.business_sector }}</div>
-                                {% endif %}
-                                <div class="form-text">e.g., Retail, Agriculture, Manufacturing, Services</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <a href="{% url 'accounts:account_list' %}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-arrow-left me-2"></i>Back to Accounts
-                                </a>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <button type="reset" class="btn btn-outline-danger">
-                                    <i class="fas fa-redo me-2"></i>Reset Form
-                                </button>
-                                <button type="submit" class="btn btn-success btn-lg">
-                                    <i class="fas fa-save me-2"></i>Create Account
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    function toggleAccountType() {
-        const accountType = document.getElementById('account_type').value;
-        const person2Section = document.getElementById('person2-section');
-        const person2Fields = document.querySelectorAll('.person2-field');
-        const person2Labels = document.querySelectorAll('#person2-section .form-label');
+    
+    <!-- Help Information -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Instructions</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fas fa-asterisk text-danger me-2"></i>Fields marked with * are required</li>
+                    <li class="mb-2"><i class="fas fa-user me-2 text-primary"></i>For single accounts, fill only primary holder details</li>
+                    <li class="mb-2"><i class="fas fa-users me-2 text-primary"></i>For joint accounts, fill both holders' details</li>
+                    <li class="mb-2"><i class="fas fa-id-card me-2 text-warning"></i>NIN must be unique for each person</li>
+                    <li class="mb-2"><i class="fas fa-camera me-2 text-success"></i>Photos and signatures are optional but recommended</li>
+                </ul>
+            </div>
+        </div>
         
-        if (accountType === 'JOINT') {
-            // Show person2 section with animation
-            person2Section.style.display = 'block';
-            setTimeout(() => {
-                person2Section.style.opacity = '1';
-            }, 10);
-            
-            // Make person2 fields required
-            person2Fields.forEach(field => {
-                field.required = true;
-            });
-            
-            // Add required indicator to labels
-            person2Labels.forEach(label => {
-                if (!label.classList.contains('required')) {
-                    label.classList.add('required');
-                }
-            });
-            
+        {% if account.pk %}
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-history me-2"></i>Account History</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-1"><strong>Created:</strong> {{ account.registration_date|date:"M d, Y" }}</li>
+                    {% if account.created_by %}
+                    <li class="mb-1"><strong>Created by:</strong> {{ account.created_by.username }}</li>
+                    {% endif %}
+                    {% if account.approved_by %}
+                    <li class="mb-1"><strong>Approved by:</strong> {{ account.approved_by.username }}</li>
+                    {% endif %}
+                    {% if account.last_edited_by %}
+                    <li class="mb-1"><strong>Last edited:</strong> {{ account.last_edited_date|date:"M d, Y" }}</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const accountTypeSelect = document.getElementById('account_type');
+    const jointAccountSection = document.getElementById('joint-account-section');
+    const jointDocsSection = document.getElementById('joint-docs');
+    const linkExistingCheckbox = document.getElementById('link_existing_client');
+    const existingClientSelect = document.getElementById('existing-client-select');
+    const manualEntryFields = document.getElementById('manual-entry-fields');
+    
+    // Toggle joint account section
+    function toggleJointAccount() {
+        if (accountTypeSelect.value === 'JOINT') {
+            jointAccountSection.style.display = 'block';
+            jointDocsSection.style.display = 'block';
         } else {
-            // Hide person2 section
-            person2Section.style.opacity = '0';
-            setTimeout(() => {
-                person2Section.style.display = 'none';
-            }, 300);
-            
-            // Remove required from person2 fields and clear values
-            person2Fields.forEach(field => {
-                field.required = false;
-                if (!field.hasAttribute('data-keep-value')) {
-                    field.value = '';
-                }
-            });
-            
-            // Remove required indicator from labels
-            person2Labels.forEach(label => {
-                label.classList.remove('required');
-            });
+            jointAccountSection.style.display = 'none';
+            jointDocsSection.style.display = 'none';
         }
     }
-
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        // Set initial state based on current account type
-        const accountType = document.getElementById('account_type');
-        if (accountType.value === 'JOINT') {
-            toggleAccountType();
+    
+    // Toggle between existing client and manual entry
+    function toggleEntryMethod() {
+        if (linkExistingCheckbox.checked) {
+            existingClientSelect.style.display = 'block';
+            manualEntryFields.style.display = 'none';
+        } else {
+            existingClientSelect.style.display = 'none';
+            manualEntryFields.style.display = 'block';
         }
-        
-        // Add event listeners
-        accountType.addEventListener('change', toggleAccountType);
-    });
+    }
+    
+    // Set initial state
+    toggleJointAccount();
+    if (linkExistingCheckbox) {
+        toggleEntryMethod();
+    }
+    
+    // Add event listeners
+    accountTypeSelect.addEventListener('change', toggleJointAccount);
+    if (linkExistingCheckbox) {
+        linkExistingCheckbox.addEventListener('change', toggleEntryMethod);
+    }
+    
+    // If editing and account type is JOINT, show joint section
+    {% if account.pk and account.account_type == 'JOINT' %}
+    jointAccountSection.style.display = 'block';
+    jointDocsSection.style.display = 'block';
+    {% endif %}
+});
 </script>
 {% endblock %}
