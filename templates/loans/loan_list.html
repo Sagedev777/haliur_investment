@@ -1,0 +1,347 @@
+<!-- templates/loans/loan_list.html -->
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Loan Portfolio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'loans:dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Loan Portfolio</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1 class="h2 mb-0">Loan Portfolio</h1>
+            <p class="text-muted mb-0">Manage active loans and collections</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'loans:quick_payment' %}" class="btn btn-success">
+                <i class="fas fa-money-bill-wave me-1"></i>Quick Payment
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Portfolio Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-top-primary">
+            <div class="card-body text-center">
+                <h3 class="text-primary">{{ total_loans }}</h3>
+                <p class="text-muted mb-0">Total Loans</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-top-success">
+            <div class="card-body text-center">
+                <h3 class="text-success">UGX {{ total_portfolio|floatformat:0|intcomma }}</h3>
+                <p class="text-muted mb-0">Total Portfolio</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-top-warning">
+            <div class="card-body text-center">
+                <h3 class="text-warning">{{ overdue_loans_count }}</h3>
+                <p class="text-muted mb-0">Overdue Loans</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-top-danger">
+            <div class="card-body text-center">
+                <h3 class="text-danger">UGX {{ overdue_amount|floatformat:0|intcomma }}</h3>
+                <p class="text-muted mb-0">Overdue Amount</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Tabs -->
+<div class="card mb-4">
+    <div class="card-body">
+        <ul class="nav nav-tabs" id="loanStatusTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if not request.GET.status %}active{% endif %}" 
+                        onclick="window.location.href='{% url 'loans:loan_list' %}'">
+                    All <span class="badge bg-secondary">{{ total_loans }}</span>
+                </button>
+            </li>
+            {% for status, count in status_counts.items %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if request.GET.status == status %}active{% endif %}" 
+                        onclick="window.location.href='{% url 'loans:loan_list' %}?status={{ status }}'">
+                    {{ status|title }} 
+                    <span class="badge bg-{% if status == 'ACTIVE' %}success{% elif status == 'OVERDUE' %}danger{% elif status == 'CLOSED' %}secondary{% else %}warning{% endif %}">
+                        {{ count }}
+                    </span>
+                </button>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Search</label>
+                <input type="text" class="form-control" name="search" placeholder="Loan #, client name, phone..." 
+                       value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Min Amount</label>
+                <input type="number" class="form-control" name="min_amount" placeholder="Min" 
+                       value="{{ request.GET.min_amount }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Max Amount</label>
+                <input type="number" class="form-control" name="max_amount" placeholder="Max" 
+                       value="{{ request.GET.max_amount }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Product</label>
+                <select class="form-select" name="product">
+                    <option value="">All Products</option>
+                    {% for product in products %}
+                    <option value="{{ product.pk }}" {% if request.GET.product == product.pk|stringformat:"s" %}selected{% endif %}>
+                        {{ product.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Date Range</label>
+                <div class="input-group">
+                    <input type="date" class="form-control datepicker" name="date_from" 
+                           value="{{ request.GET.date_from }}">
+                    <span class="input-group-text">to</span>
+                    <input type="date" class="form-control datepicker" name="date_to" 
+                           value="{{ request.GET.date_to }}">
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="show_overdue" id="showOverdue" 
+                           value="true" {% if request.GET.show_overdue %}checked{% endif %}>
+                    <label class="form-check-label" for="showOverdue">
+                        Show Overdue Only
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary float-end">
+                    <i class="fas fa-search me-1"></i>Filter
+                </button>
+                <a href="{% url 'loans:loan_list' %}" class="btn btn-outline-secondary float-end me-2">
+                    Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Loans Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Loans List</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover data-table">
+                <thead>
+                    <tr>
+                        <th>Loan #</th>
+                        <th>Client</th>
+                        <th>Product</th>
+                        <th>Principal</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                        <th>Next Payment</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loan in loans %}
+                    <tr>
+                        <td>
+                            <strong>{{ loan.loan_number }}</strong>
+                            <br>
+                            <small class="text-muted">{{ loan.disbursement_date|date:"M d, Y" }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ loan.client.full_account_name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ loan.client.phone_number|default:"No phone" }}</small>
+                        </td>
+                        <td>
+                            {{ loan.loan_product.name }}
+                            <br>
+                            <small class="text-muted">{{ loan.interest_rate }}%</small>
+                        </td>
+                        <td>
+                            <strong>UGX {{ loan.principal_amount|floatformat:0|intcomma }}</strong>
+                        </td>
+                        <td>
+                            <strong>UGX {{ loan.remaining_balance|floatformat:0|intcomma }}</strong>
+                            <br>
+                            <small class="text-muted">{{ loan.remaining_percent|floatformat:1 }}% paid</small>
+                        </td>
+                        <td>
+                            {% if loan.status == 'ACTIVE' %}
+                            <span class="badge badge-status-active">Active</span>
+                            {% elif loan.status == 'OVERDUE' %}
+                            <span class="badge badge-status-overdue">Overdue</span>
+                            <br>
+                            <small class="text-danger">{{ loan.days_overdue }} days</small>
+                            {% elif loan.status == 'CLOSED' %}
+                            <span class="badge badge-status-closed">Closed</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if loan.next_payment_date %}
+                            {{ loan.next_payment_date|date:"M d, Y" }}
+                            <br>
+                            <small class="text-muted">
+                                {% if loan.days_until_next %}
+                                    {{ loan.days_until_next }} days left
+                                {% endif %}
+                            </small>
+                            {% else %}
+                            <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'loans:loan_detail' loan.pk %}" 
+                                   class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'loans:process_payment' loan.pk %}" 
+                                   class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Pay">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </a>
+                                <a href="{% url 'loans:loan_statement' loan.pk %}" 
+                                   class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Statement">
+                                    <i class="fas fa-file-invoice"></i>
+                                </a>
+                                {% if loan.status == 'ACTIVE' or loan.status == 'OVERDUE' %}
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                            type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'loans:loan_reschedule' loan.pk %}">
+                                                <i class="fas fa-calendar-alt me-2"></i>Reschedule
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'loans:loan_statement' loan.pk %}?format=pdf">
+                                                <i class="fas fa-print me-2"></i>Print Statement
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-hand-holding-usd fa-2x mb-3"></i>
+                                <h5>No loans found</h5>
+                                <p>No loans match your search criteria</p>
+                                <a href="{% url 'loans:loan_list' %}" class="btn btn-primary">
+                                    View All Loans
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        First
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        Previous
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        Next
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        Last
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Bulk Actions -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Bulk Actions</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <a href="{% url 'loans:bulk_payment_processing' %}" class="btn btn-outline-success w-100">
+                    <i class="fas fa-users me-2"></i>Bulk Payment Processing
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'loans:bulk_loan_disbursement' %}" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>Bulk Loan Disbursement
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'loans:bulk_status_update' %}" class="btn btn-outline-warning w-100">
+                    <i class="fas fa-sync-alt me-2"></i>Bulk Status Update
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -14,6 +14,9 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
 import json
 import csv
 import xlwt
@@ -129,6 +132,7 @@ class LoanDashboardView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
         
         # Loan Officer Performance
         if self.request.user.is_superuser:
+            # Make sure User is imported
             context['officer_performance'] = User.objects.filter(
                 groups__name='Loan Officers'
             ).annotate(
@@ -346,8 +350,8 @@ class LoanApplicationCreateView(LoginRequiredMixin, LoanOfficerRequiredMixin, Cr
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['clients'] = ClientAccount.objects.filter(is_active=True).order_by('full_account_name')
-        context['products'] = LoanProduct.objects.filter(is_active=True)
+        context['clients'] = ClientAccount.objects.all().order_by('person1_first_name')
+        context['products'] = LoanProduct.objects.all()
         context['guarantors'] = Guarantor.objects.filter(is_active=True, verified=True)
         return context
     
@@ -359,21 +363,31 @@ class LoanApplicationCreateView(LoginRequiredMixin, LoanOfficerRequiredMixin, Cr
             application.status = 'SUBMITTED'
             application.submitted_date = timezone.now()
             
-            # Calculate credit score
-            application.credit_score = application.calculate_credit_score()
+            # Calculate credit score (if the method exists)
+            if hasattr(application, 'calculate_credit_score'):
+                application.credit_score = application.calculate_credit_score()
             
-            # Set risk rating
-            if application.credit_score >= 80:
-                application.risk_rating = 'A'
-            elif application.credit_score >= 60:
-                application.risk_rating = 'B'
-            elif application.credit_score >= 40:
-                application.risk_rating = 'C'
-            else:
-                application.risk_rating = 'D'
+                # Set risk rating
+                if application.credit_score >= 80:
+                    application.risk_rating = 'A'
+                elif application.credit_score >= 60:
+                    application.risk_rating = 'B'
+                elif application.credit_score >= 40:
+                    application.risk_rating = 'C'
+                else:
+                    application.risk_rating = 'D'
             
+            # SAVE FIRST before setting relationships
             application.save()
-            form.save_m2m()  # Save guarantors
+            
+            # NOW you can set many-to-many relationships
+            form.save_m2m()  # This saves guarantors from the form
+            
+            # Handle collateral documents if they exist in the form
+            if 'collateral_documents' in form.cleaned_data:
+                collateral_docs = form.cleaned_data.get('collateral_documents')
+                if collateral_docs:
+                    application.collateral_documents.set(collateral_docs)
             
             # Handle uploaded documents
             documents = self.request.FILES.getlist('documents')
@@ -389,7 +403,8 @@ class LoanApplicationCreateView(LoginRequiredMixin, LoanOfficerRequiredMixin, Cr
             )
         
         return redirect('loans:loan_application_detail', pk=application.pk)
-
+    
+    
 class LoanApplicationDetailView(LoginRequiredMixin, LoanOfficerRequiredMixin, DetailView):
     """View loan application details"""
     model = LoanApplication

@@ -219,7 +219,7 @@
         </div>
         
         <nav class="nav flex-column mt-4">
-            <a class="nav-link active" href="#">
+            <a class="nav-link active" href="{% url 'core:admin_dashboard' %}">
                 <i class="fas fa-tachometer-alt"></i> Dashboard
             </a>
             <a class="nav-link" href="{% url 'accounts:account_list' %}">
@@ -228,7 +228,7 @@
             <a class="nav-link" href="{% url 'accounts:savings_list' %}">
                 <i class="fas fa-piggy-bank"></i> Savings
             </a>
-            <a class="nav-link" href="#">
+            <a class="nav-link" href="{% url 'loans:dashboard' %}">
                 <i class="fas fa-hand-holding-usd"></i> Loans
             </a>
             <a class="nav-link" href="{% url 'accounts:reports_dashboard' %}">
@@ -267,12 +267,12 @@
                 <h4 class="mb-0">Admin Dashboard</h4>
                 <div class="d-flex align-items-center">
                     <div class="quick-actions">
-                        <button class="btn-action">
+                        <a href="{% url 'accounts:account_create' %}" class="btn-action">
                             <i class="fas fa-plus"></i> New Account
-                        </button>
-                        <button class="btn-action">
-                            <i class="fas fa-file-export"></i> Export
-                        </button>
+                        </a>
+                        <a href="{% url 'loans:loan_application_create' %}" class="btn-action">
+                            <i class="fas fa-hand-holding-usd"></i> New Loan
+                        </a>
                         <a href="{% url 'core:login' %}" class="btn-action">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </a>
@@ -293,6 +293,27 @@
                     <p class="text-muted"><i class="fas fa-clock me-2"></i> {{ current_time|time:"H:i" }}</p>
                 </div>
             </div>
+            
+            <div class="row mb-4">  
+                <div class="col-md-4">  
+                    <a href="{% url 'loans:dashboard' %}" class="btn btn-primary w-100 py-3">   
+                        <i class="fas fa-hand-holding-usd fa-2x mb-2"></i><br>  
+                        Loan Management 
+                    </a>    
+                </div>  
+                <div class="col-md-4">  
+                    <a href="{% url 'accounts:dashboard' %}" class="btn btn-success w-100 py-3">    
+                        <i class="fas fa-users fa-2x mb-2"></i><br> 
+                        Client Accounts 
+                    </a>    
+                </div>  
+                <div class="col-md-4">  
+                    <a href="#" class="btn btn-info w-100 py-3">    
+                        <i class="fas fa-chart-bar fa-2x mb-2"></i><br> 
+                        Reports & Analytics 
+                    </a>    
+                </div>  
+            </div>  
         </div>
         
         <!-- Statistics Cards -->
@@ -480,11 +501,14 @@
                             <tbody>
                                 {% for loan in pending_loans_list %}
                                 <tr>
-                                    <td>{{ loan.client_account.full_account_name|truncatechars:20 }}</td>
-                                    <td><strong>UGX {{ loan.loan_amount|floatformat:0 }}</strong></td>
+                                    <!-- FIXED: Changed loan.client_account to loan.client -->
+                                    <td>{{ loan.client.full_account_name|truncatechars:20 }}</td>
+                                    <!-- FIXED: Changed loan.loan_amount to loan.requested_amount -->
+                                    <td><strong>UGX {{ loan.requested_amount|floatformat:0 }}</strong></td>
                                     <td>{{ loan.application_date|date:"M d, Y" }}</td>
                                     <td>
-                                        <a href="#" class="btn btn-sm btn-outline-success">Review</a>
+                                        <!-- FIXED: Added correct URL for loan application review -->
+                                        <a href="{% url 'loans:loan_application_review' loan.pk %}" class="btn btn-sm btn-outline-success">Review</a>
                                     </td>
                                 </tr>
                                 {% empty %}

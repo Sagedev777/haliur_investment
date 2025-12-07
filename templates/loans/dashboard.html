@@ -1,0 +1,400 @@
+<!-- templates/loans/dashboard.html -->
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Dashboard - Loan Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Dashboard</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1 class="h2 mb-0">Loan Dashboard</h1>
+            <p class="text-muted mb-0">Overview of loan portfolio and performance</p>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                    <i class="fas fa-print me-1"></i>Print
+                </button>
+                <a href="{% url 'loans:loan_portfolio_report' %}?export=csv" class="btn btn-outline-success">
+                    <i class="fas fa-file-export me-1"></i>Export
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics -->
+<div class="row">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card border-top-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total Portfolio</h6>
+                        <h3 class="mb-0">UGX {{ total_portfolio|floatformat:0|intcomma }}</h3>
+                        <small class="text-muted">
+                            <i class="fas fa-arrow-up text-success me-1"></i>
+                            {{ active_loans }} active loans
+                        </small>
+                    </div>
+                    <div class="stat-icon text-primary">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card border-top-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total Disbursed</h6>
+                        <h3 class="mb-0">UGX {{ total_disbursed|floatformat:0|intcomma }}</h3>
+                        <small class="text-muted">Total loans disbursed</small>
+                    </div>
+                    <div class="stat-icon text-success">
+                        <i class="fas fa-hand-holding-usd"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card border-top-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Overdue Amount</h6>
+                        <h3 class="mb-0">UGX {{ overdue_loans_amount|floatformat:0|intcomma }}</h3>
+                        <small class="text-muted">
+                            <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                            {{ overdue_loans }} overdue loans
+                        </small>
+                    </div>
+                    <div class="stat-icon text-warning">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card border-top-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Pending Applications</h6>
+                        <h3 class="mb-0">{{ pending_applications }}</h3>
+                        <small class="text-muted">Awaiting review</small>
+                    </div>
+                    <div class="stat-icon text-info">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Tables -->
+<div class="row">
+    <!-- Recent Applications -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-contract me-2"></i>Recent Loan Applications
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>App #</th>
+                                <th>Client</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for app in recent_applications %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'loans:loan_application_detail' app.pk %}" class="text-decoration-none">
+                                        {{ app.application_number|truncatechars:8 }}
+                                    </a>
+                                </td>
+                                <td>{{ app.client.full_account_name|truncatechars:20 }}</td>
+                                <td>UGX {{ app.requested_amount|floatformat:0|intcomma }}</td>
+                                <td>
+                                    {% if app.status == 'SUBMITTED' %}
+                                    <span class="badge badge-status-pending">Pending</span>
+                                    {% elif app.status == 'APPROVED' %}
+                                    <span class="badge badge-status-approved">Approved</span>
+                                    {% elif app.status == 'REJECTED' %}
+                                    <span class="badge badge-status-rejected">Rejected</span>
+                                    {% else %}
+                                    <span class="badge badge-secondary">{{ app.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ app.application_date|date:"M d" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    No recent applications
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-end">
+                    <a href="{% url 'loans:loan_application_list' %}" class="btn btn-sm btn-outline-primary">
+                        View All Applications
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upcoming Payments -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-check me-2"></i>Upcoming Payments (Next 7 Days)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Loan #</th>
+                                <th>Client</th>
+                                <th>Due Date</th>
+                                <th>Amount</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in upcoming_payments %}
+                            <tr>
+                                <td>{{ payment.loan.loan_number|truncatechars:8 }}</td>
+                                <td>{{ payment.loan.client.full_account_name|truncatechars:20 }}</td>
+                                <td>{{ payment.due_date|date:"M d, Y" }}</td>
+                                <td>UGX {{ payment.total_amount|floatformat:0|intcomma }}</td>
+                                <td>
+                                    <a href="{% url 'loans:process_payment' payment.loan.pk %}" class="btn btn-sm btn-outline-primary btn-sm">
+                                        Pay
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    No upcoming payments in next 7 days
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-end">
+                    <a href="{% url 'loans:loan_list' %}?status=ACTIVE" class="btn btn-sm btn-outline-primary">
+                        View Active Loans
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Second Row -->
+<div class="row">
+    <!-- Overdue Loans -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-warning bg-opacity-10">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Overdue Loans
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Loan #</th>
+                                <th>Client</th>
+                                <th>Days Overdue</th>
+                                <th>Amount Due</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loan in overdue_list %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'loans:loan_detail' loan.pk %}" class="text-decoration-none">
+                                        {{ loan.loan_number|truncatechars:8 }}
+                                    </a>
+                                </td>
+                                <td>{{ loan.client.full_account_name|truncatechars:20 }}</td>
+                                <td>
+                                    <span class="badge bg-danger">{{ loan.days_overdue }} days</span>
+                                </td>
+                                <td>UGX {{ loan.overdue_amount|floatformat:0|intcomma }}</td>
+                                <td>
+                                    <a href="{% url 'loans:process_payment' loan.pk %}" class="btn btn-sm btn-outline-warning btn-sm">
+                                        Collect
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    No overdue loans
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-end">
+                    <a href="{% url 'loans:overdue_loans_report' %}" class="btn btn-sm btn-outline-warning">
+                        View Overdue Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Today's Stats -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Today's Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="p-3">
+                            <h3 class="text-primary">{{ applications_today }}</h3>
+                            <small class="text-muted">Applications</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3">
+                            <h3 class="text-success">UGX {{ disbursements_today|floatformat:0|intcomma }}</h3>
+                            <small class="text-muted">Disbursed</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3">
+                            <h3 class="text-info">UGX {{ payments_today|floatformat:0|intcomma }}</h3>
+                            <small class="text-muted">Collections</small>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <!-- Quick Actions -->
+                <div class="text-center">
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'loans:loan_application_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>New Application
+                        </a>
+                        <a href="{% url 'loans:quick_payment' %}" class="btn btn-success">
+                            <i class="fas fa-money-bill-wave me-1"></i>Quick Payment
+                        </a>
+                        <a href="{% url 'loans:loan_calculator' %}" class="btn btn-info">
+                            <i class="fas fa-calculator me-1"></i>Calculator
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Chart (Placeholder) -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Monthly Performance
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="performanceChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Performance Chart
+    var ctx = document.getElementById('performanceChart').getContext('2d');
+    var chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+            datasets: [{
+                label: 'Disbursements',
+                data: [12000000, 19000000, 15000000, 25000000, 22000000, 30000000, 28000000],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }, {
+                label: 'Collections',
+                data: [8000000, 12000000, 10000000, 18000000, 15000000, 22000000, 20000000],
+                borderColor: 'rgb(255, 159, 64)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return formatCurrency(context.raw);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'UGX ' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

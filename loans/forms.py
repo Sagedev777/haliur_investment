@@ -16,6 +16,15 @@ from .models import (
     LoanRepaymentSchedule  # New model
 )
 from client_accounts.models import ClientAccount
+
+class MultipleFileInput(FileInput):
+    """Custom widget to support multiple file uploads"""
+    def __init__(self, attrs=None):
+        default_attrs = {'multiple': 'multiple'}
+        if attrs:
+            default_attrs.update(attrs)
+        super().__init__(default_attrs)
+
 # -------------------------
 # LOAN PRODUCT FORMS
 # -------------------------
@@ -151,7 +160,7 @@ class LoanApplicationForm(forms.ModelForm):
         })
     )
 
-    loan_amount = forms.DecimalField(
+    requested_amount = forms.DecimalField(  # CHANGED from loan_amount
         max_digits=15,
         decimal_places=2,
         widget=forms.NumberInput(attrs={
@@ -172,7 +181,7 @@ class LoanApplicationForm(forms.ModelForm):
             'hx-get': '/loans/api/calculate-repayment/',
             'hx-trigger': 'change',
             'hx-target': '#calculation-results',
-            'hx-include': '[name="loan_product"], [name="loan_amount"]'
+            'hx-include': '[name="loan_product"], [name="requested_amount"]'  # CHANGED from loan_amount
         })
     )
 
@@ -184,14 +193,24 @@ class LoanApplicationForm(forms.ModelForm):
             'data-placeholder': 'Select guarantors...'
         })
     )
+    
+    # Add a file field for uploading collateral documents
+    collateral_files = forms.FileField(
+        required=False,
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            #'multiple': True
+        }),
+        help_text='Upload collateral documents (multiple files allowed)'
+    )
 
     class Meta:
         model = LoanApplication
         fields = [
             'client', 'loan_product',
-            'loan_amount', 'requested_term_days', 'purpose',
+            'requested_amount', 'requested_term_days', 'purpose',  # CHANGED from loan_amount
             'collateral_description', 'collateral_value',
-            'collateral_documents',
+            # REMOVED 'collateral_documents' - it's a reverse relationship
             'guarantors'
         ]
         widgets = {
@@ -216,10 +235,6 @@ class LoanApplicationForm(forms.ModelForm):
                 'class': 'form-control',
                 'step': '1000'
             }),
-            'collateral_documents': MultipleFileInput(attrs={
-                'class': 'form-control',
-                'multiple': True
-            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -227,15 +242,14 @@ class LoanApplicationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         # Filter active loan products
-        self.fields['loan_product'].queryset = LoanProduct.objects.filter(is_active=True)
+        self.fields['loan_product'].queryset = LoanProduct.objects.all()
 
         # Filter active clients (at least 30 days old)
         if user and user.is_staff:
             thirty_days_ago = timezone.now() - datetime.timedelta(days=30)
             self.fields['client'].queryset = ClientAccount.objects.filter(
-                is_active=True,
-                created_at__lte=thirty_days_ago
-            ).order_by('full_account_name')
+                registration_date__lte=thirty_days_ago
+            ).order_by('person1_first_name')
         else:
             self.fields['client'].queryset = ClientAccount.objects.none()
 
@@ -243,17 +257,17 @@ class LoanApplicationForm(forms.ModelForm):
         cleaned_data = super().clean()
         client = cleaned_data.get('client')
         loan_product = cleaned_data.get('loan_product')
-        loan_amount = cleaned_data.get('loan_amount')
+        loan_amount = cleaned_data.get('requested_amount')  # CHANGED from loan_amount
         requested_term = cleaned_data.get('requested_term_days')
         collateral_value = cleaned_data.get('collateral_value')
 
         if all([client, loan_product, loan_amount, requested_term]):
             # Check loan amount range
             if loan_amount < loan_product.min_loan_amount:
-                self.add_error('loan_amount',
+                self.add_error('requested_amount',  # CHANGED from loan_amount
                     f'Minimum loan amount for {loan_product.name} is {loan_product.min_loan_amount}')
             if loan_amount > loan_product.max_loan_amount:
-                self.add_error('loan_amount',
+                self.add_error('requested_amount',  # CHANGED from loan_amount
                     f'Maximum loan amount for {loan_product.name} is {loan_product.max_loan_amount}')
 
             # Check term range
@@ -270,18 +284,19 @@ class LoanApplicationForm(forms.ModelForm):
                     'Collateral value must be at least 120% of the loan amount')
 
             # Client eligibility
-            client_age_days = (timezone.now().date() - client.created_at.date()).days
+            client_age_days = (timezone.now().date() - client.registration_date).days
             if client_age_days < loan_product.min_client_age_days:
                 self.add_error('client',
                     f'Client must have been active for at least {loan_product.min_client_age_days} days')
 
             required_savings = loan_amount * loan_product.min_savings_balance_percent / Decimal('100')
-            if client.current_balance < required_savings:
-                self.add_error('loan_amount',
+            if client.savings_balance < required_savings:
+                self.add_error('requested_amount',  # CHANGED from loan_amount
                     f'Client needs at least {required_savings} in savings for this loan amount')
 
         return cleaned_data
-
+    
+    
 # -------------------------
 # LOAN APPROVAL FORM (Staff Only)
 # -------------------------

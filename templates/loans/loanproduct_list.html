@@ -1,0 +1,257 @@
+<!-- templates/loans/loanproduct_list.html -->
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Loan Products{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'loans:dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Loan Products</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1 class="h2 mb-0">Loan Products</h1>
+            <p class="text-muted mb-0">Manage loan products and their terms</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'loans:loan_product_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Add Product
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card border-top-primary">
+            <div class="card-body text-center">
+                <h3 class="text-primary">{{ total_products }}</h3>
+                <p class="text-muted mb-0">Total Products</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-top-success">
+            <div class="card-body text-center">
+                <h3 class="text-success">{{ active_count }}</h3>
+                <p class="text-muted mb-0">Active Products</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-top-warning">
+            <div class="card-body text-center">
+                <h3 class="text-warning">{{ inactive_count }}</h3>
+                <p class="text-muted mb-0">Inactive Products</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Search</label>
+                <input type="text" class="form-control" name="search" placeholder="Search by name or code..." 
+                       value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" name="is_active">
+                    <option value="">All Status</option>
+                    <option value="true" {% if request.GET.is_active == 'true' %}selected{% endif %}>Active</option>
+                    <option value="false" {% if request.GET.is_active == 'false' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>Filter
+                    </button>
+                    <a href="{% url 'loans:loan_product_list' %}" class="btn btn-outline-secondary">
+                        Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Products Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Loan Products List</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover data-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Product Name</th>
+                        <th>Interest Rate</th>
+                        <th>Loan Range</th>
+                        <th>Term Range</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>
+                            <strong>{{ product.code }}</strong>
+                        </td>
+                        <td>
+                            <h6 class="mb-1">{{ product.name }}</h6>
+                            <small class="text-muted">{{ product.description|truncatechars:50 }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ product.annual_interest_rate }}% p.a.</span>
+                            <br>
+                            <small class="text-muted">{{ product.get_interest_calculation_method_display }}</small>
+                        </td>
+                        <td>
+                            UGX {{ product.min_loan_amount|floatformat:0|intcomma }}
+                            <br>
+                            <small class="text-muted">to</small>
+                            <br>
+                            UGX {{ product.max_loan_amount|floatformat:0|intcomma }}
+                        </td>
+                        <td>
+                            {{ product.min_loan_term_days }} - {{ product.max_loan_term_days }} days
+                            <br>
+                            <small class="text-muted">{{ product.get_loan_term_unit_display }}</small>
+                        </td>
+                        <td>
+                            {% if product.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'loans:loan_product_update' product.pk %}" 
+                                   class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if product.is_active %}
+                                <a href="{% url 'loans:loan_product_toggle_status' product.pk %}" 
+                                   class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Deactivate">
+                                    <i class="fas fa-ban"></i>
+                                </a>
+                                {% else %}
+                                <a href="{% url 'loans:loan_product_toggle_status' product.pk %}" 
+                                   class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Activate">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                {% endif %}
+                                {% if not product.loan_set.exists %}
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        data-bs-toggle="modal" data-bs-target="#deleteModal{{ product.pk }}"
+                                        data-bs-toggle="tooltip" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Delete Modal -->
+                            <div class="modal fade" id="deleteModal{{ product.pk }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Confirm Delete</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Are you sure you want to delete <strong>{{ product.name }}</strong>?</p>
+                                            <p class="text-danger">This action cannot be undone.</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <form method="post" action="{% url 'loans:loan_product_delete' product.pk %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-box-open fa-2x mb-3"></i>
+                                <h5>No loan products found</h5>
+                                <p>Get started by creating your first loan product</p>
+                                <a href="{% url 'loans:loan_product_create' %}" class="btn btn-primary">
+                                    Create Product
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        First
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        Previous
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        Next
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        Last
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

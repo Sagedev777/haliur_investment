@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if form.instance.pk %}Edit{% else %}Create{% endif %} Loan Product - Haliqua Loans</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .form-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 15px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .card-header {
+            background-color: var(--primary);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 1rem 1.5rem;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: var(--primary);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 6px;
+            padding: 8px 12px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .required:after {
+            content: " *";
+            color: var(--danger);
+        }
+        
+        .section-title {
+            color: var(--primary);
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'loans:dashboard' %}">
+                <i class="fas fa-hand-holding-usd"></i> Haliqua Loans
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a href="{% url 'loans:dashboard' %}" class="btn btn-outline-light btn-sm me-2">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="{% url 'loans:loan_product_list' %}" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back to Products
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="form-container">
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %} me-2"></i>
+                    {% if form.instance.pk %}
+                        Edit Loan Product: {{ form.instance.name }}
+                    {% else %}
+                        Create New Loan Product
+                    {% endif %}
+                </h4>
+            </div>
+            
+            <div class="card-body">
+                <form method="post" id="loanProductForm">
+                    {% csrf_token %}
+                    
+                    <!-- Basic Information -->
+                    <div class="mb-4">
+                        <h5 class="section-title">Basic Information</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_name" class="form-label required">Product Name</label>
+                                <input type="text" name="name" class="form-control" id="id_name" 
+                                       value="{{ form.name.value|default:'' }}" 
+                                       placeholder="Enter product name" required>
+                                {% if form.name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.name.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_code" class="form-label required">Product Code</label>
+                                <input type="text" name="code" class="form-control" id="id_code" 
+                                       value="{{ form.code.value|default:'' }}" 
+                                       placeholder="e.g., LP-001" required>
+                                {% if form.code.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.code.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="id_description" class="form-label">Description</label>
+                                <textarea name="description" class="form-control" id="id_description" 
+                                          rows="3" placeholder="Product description">{{ form.description.value|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Loan Terms -->
+                    <div class="mb-4">
+                        <h5 class="section-title">Loan Terms</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_min_loan_amount" class="form-label required">Minimum Loan Amount (UGX)</label>
+                                <input type="number" name="min_loan_amount" class="form-control" id="id_min_loan_amount" 
+                                       value="{{ form.min_loan_amount.value|default:'' }}" 
+                                       placeholder="e.g., 100000" step="1000" required>
+                                {% if form.min_loan_amount.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.min_loan_amount.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_max_loan_amount" class="form-label required">Maximum Loan Amount (UGX)</label>
+                                <input type="number" name="max_loan_amount" class="form-control" id="id_max_loan_amount" 
+                                       value="{{ form.max_loan_amount.value|default:'' }}" 
+                                       placeholder="e.g., 10000000" step="1000" required>
+                                {% if form.max_loan_amount.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.max_loan_amount.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_min_loan_term_days" class="form-label required">Minimum Term (Days)</label>
+                                <input type="number" name="min_loan_term_days" class="form-control" id="id_min_loan_term_days" 
+                                       value="{{ form.min_loan_term_days.value|default:'' }}" 
+                                       placeholder="e.g., 30" min="1" required>
+                                {% if form.min_loan_term_days.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.min_loan_term_days.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_max_loan_term_days" class="form-label required">Maximum Term (Days)</label>
+                                <input type="number" name="max_loan_term_days" class="form-control" id="id_max_loan_term_days" 
+                                       value="{{ form.max_loan_term_days.value|default:'' }}" 
+                                       placeholder="e.g., 365" min="1" required>
+                                {% if form.max_loan_term_days.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.max_loan_term_days.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Interest Rates -->
+                    <div class="mb-4">
+                        <h5 class="section-title">Interest Rates & Fees</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_annual_interest_rate" class="form-label required">Annual Interest Rate (%)</label>
+                                <input type="number" name="annual_interest_rate" class="form-control" id="id_annual_interest_rate" 
+                                       value="{{ form.annual_interest_rate.value|default:'' }}" 
+                                       placeholder="e.g., 12.5" step="0.01" min="0" max="100" required>
+                                {% if form.annual_interest_rate.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.annual_interest_rate.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_processing_fee_percent" class="form-label required">Processing Fee (%)</label>
+                                <input type="number" name="processing_fee_percent" class="form-control" id="id_processing_fee_percent" 
+                                       value="{{ form.processing_fee_percent.value|default:0 }}" 
+                                       placeholder="e.g., 1.5" step="0.01" min="0" required>
+                                {% if form.processing_fee_percent.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.processing_fee_percent.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_late_payment_penalty_percent" class="form-label required">Late Payment Penalty (%)</label>
+                                <input type="number" name="late_payment_penalty_percent" class="form-control" id="id_late_payment_penalty_percent" 
+                                       value="{{ form.late_payment_penalty_percent.value|default:0 }}" 
+                                       placeholder="e.g., 5" step="0.01" min="0" required>
+                                {% if form.late_payment_penalty_percent.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.late_payment_penalty_percent.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_early_repayment_penalty_percent" class="form-label required">Early Repayment Penalty (%)</label>
+                                <input type="number" name="early_repayment_penalty_percent" class="form-control" id="id_early_repayment_penalty_percent" 
+                                       value="{{ form.early_repayment_penalty_percent.value|default:0 }}" 
+                                       placeholder="e.g., 2" step="0.01" min="0" required>
+                                {% if form.early_repayment_penalty_percent.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.early_repayment_penalty_percent.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Interest Calculation -->
+                    <div class="mb-4">
+                        <h5 class="section-title">Interest Calculation</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_interest_calculation_method" class="form-label required">Calculation Method</label>
+                                <select name="interest_calculation_method" class="form-select" id="id_interest_calculation_method" required>
+                                    <option value="">Select method...</option>
+                                    {% for value, label in form.interest_calculation_method.field.choices %}
+                                    <option value="{{ value }}" {% if form.interest_calculation_method.value == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.interest_calculation_method.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.interest_calculation_method.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_interest_type" class="form-label required">Interest Type</label>
+                                <select name="interest_type" class="form-select" id="id_interest_type" required>
+                                    <option value="">Select type...</option>
+                                    {% for value, label in form.interest_type.field.choices %}
+                                    <option value="{{ value }}" {% if form.interest_type.value == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.interest_type.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.interest_type.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_loan_term_unit" class="form-label required">Loan Term Unit</label>
+                                <select name="loan_term_unit" class="form-select" id="id_loan_term_unit" required>
+                                    <option value="">Select unit...</option>
+                                    {% for value, label in form.loan_term_unit.field.choices %}
+                                    <option value="{{ value }}" {% if form.loan_term_unit.value == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.loan_term_unit.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.loan_term_unit.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="id_required_documents" class="form-label">Required Documents</label>
+                                <textarea name="required_documents" class="form-control" id="id_required_documents" 
+                                          rows="3" placeholder="List required documents separated by commas">{{ form.required_documents.value|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Status -->
+                    <div class="mb-4">
+                        <h5 class="section-title">Status</h5>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="id_is_active" 
+                                   {% if form.is_active.value %}checked{% endif %}>
+                            <label class="form-check-label" for="id_is_active">
+                                Active Product
+                            </label>
+                            <small class="text-muted d-block">Deactivate to hide this product from new applications</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'loans:loan_product_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            {% if form.instance.pk %}Update Product{% else %}Create Product{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Form Validation Help -->
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Form Instructions</h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Fields marked with <span class="text-danger">*</span> are required</li>
+                    <li>Minimum loan amount must be less than or equal to maximum loan amount</li>
+                    <li>Minimum term must be less than or equal to maximum term</li>
+                    <li>Interest rates and fees should be entered as percentages (e.g., 12.5 for 12.5%)</li>
+                    <li>Deactivate products that should not be available for new applications</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Form Validation -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('loanProductForm');
+            const minAmount = document.getElementById('id_min_loan_amount');
+            const maxAmount = document.getElementById('id_max_loan_amount');
+            const minTerm = document.getElementById('id_min_loan_term_days');
+            const maxTerm = document.getElementById('id_max_loan_term_days');
+            
+            function validateRanges() {
+                let isValid = true;
+                
+                // Validate loan amount range
+                if (minAmount.value && maxAmount.value) {
+                    if (parseFloat(minAmount.value) > parseFloat(maxAmount.value)) {
+                        alert('Minimum loan amount cannot be greater than maximum loan amount');
+                        minAmount.focus();
+                        isValid = false;
+                    }
+                }
+                
+                // Validate term range
+                if (minTerm.value && maxTerm.value && isValid) {
+                    if (parseInt(minTerm.value) > parseInt(maxTerm.value)) {
+                        alert('Minimum term cannot be greater than maximum term');
+                        minTerm.focus();
+                        isValid = false;
+                    }
+                }
+                
+                return isValid;
+            }
+            
+            form.addEventListener('submit', function(e) {
+                if (!validateRanges()) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // Real-time validation
+            [minAmount, maxAmount].forEach(field => {
+                field.addEventListener('blur', function() {
+                    if (minAmount.value && maxAmount.value) {
+                        if (parseFloat(minAmount.value) > parseFloat(maxAmount.value)) {
+                            field.classList.add('is-invalid');
+                        } else {
+                            field.classList.remove('is-invalid');
+                        }
+                    }
+                });
+            });
+            
+            [minTerm, maxTerm].forEach(field => {
+                field.addEventListener('blur', function() {
+                    if (minTerm.value && maxTerm.value) {
+                        if (parseInt(minTerm.value) > parseInt(maxTerm.value)) {
+                            field.classList.add('is-invalid');
+                        } else {
+                            field.classList.remove('is-invalid');
+                        }
+                    }
+                });
+            });
+            
+            // Calculate button (optional feature)
+            const calculateBtn = document.createElement('button');
+            calculateBtn.type = 'button';
+            calculateBtn.className = 'btn btn-outline-info btn-sm mt-2';
+            calculateBtn.innerHTML = '<i class="fas fa-calculator me-1"></i> Calculate Sample Interest';
+            calculateBtn.onclick = function() {
+                const amount = 1000000; // 1 million UGX sample
+                const rate = parseFloat(document.getElementById('id_annual_interest_rate').value) || 12.5;
+                const term = 365; // 1 year sample
+                
+                const annualInterest = amount * (rate / 100);
+                const interest = annualInterest * (term / 365);
+                const totalRepayment = amount + interest;
+                
+                alert(`Sample Calculation:\n\n` +
+                      `Loan Amount: UGX ${amount.toLocaleString()}\n` +
+                      `Interest Rate: ${rate}% per annum\n` +
+                      `Term: ${term} days\n` +
+                      `Total Interest: UGX ${interest.toFixed(0).toLocaleString()}\n` +
+                      `Total Repayment: UGX ${totalRepayment.toFixed(0).toLocaleString()}\n\n` +
+                      `Monthly Payment: UGX ${(totalRepayment / (term / 30)).toFixed(0).toLocaleString()}`);
+            };
+            
+            // Add calculate button after interest rate field
+            const interestRateField = document.getElementById('id_annual_interest_rate');
+            if (interestRateField) {
+                interestRateField.parentNode.appendChild(calculateBtn);
+            }
+        });
+    </script>
+</body>
+</html>

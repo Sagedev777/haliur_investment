@@ -7,7 +7,7 @@ from decimal import Decimal
 
 # Import your models
 from client_accounts.models import ClientAccount, SavingsTransaction, ClientEditRequest, UserProfile
-from loans.models import LoanApplication
+from loans.models import LoanApplication, Loan
 
 # =========================
 # Custom Login View
@@ -85,7 +85,7 @@ def get_user_role(user):
 
 
 # =========================
-# Admin Dashboard - UPDATED
+# Admin Dashboard - FIXED
 # =========================
 @login_required
 def admin_dashboard(request):
@@ -101,21 +101,30 @@ def admin_dashboard(request):
     pending_accounts = ClientAccount.objects.filter(account_status=ClientAccount.STATUS_PENDING).count()
     total_savings = ClientAccount.objects.aggregate(total=Sum('savings_balance'))['total'] or Decimal('0')
 
-    # Loan statistics
-    pending_loans = LoanApplication.objects.filter(status='PENDING').count()
+    # Loan statistics - FIXED: Changed 'loan_amount' to correct field names
+    pending_loans = LoanApplication.objects.filter(status='SUBMITTED').count()  # Assuming 'SUBMITTED' is pending
     approved_loans = LoanApplication.objects.filter(status='APPROVED').count()
-    disbursed_loans = LoanApplication.objects.filter(status='DISBURSED').count()
+    disbursed_loans_count = LoanApplication.objects.filter(status='DISBURSED').count()
     rejected_loans = LoanApplication.objects.filter(status='REJECTED').count()
     
-    # Total loan amounts
-    total_approved_loans = LoanApplication.objects.filter(status='APPROVED').aggregate(total=Sum('loan_amount'))['total'] or Decimal('0')
-    total_disbursed_loans = LoanApplication.objects.filter(status='DISBURSED').aggregate(total=Sum('loan_amount'))['total'] or Decimal('0')
+    # Total loan amounts - FIXED: Using correct field names
+    total_approved_loans = LoanApplication.objects.filter(status='APPROVED').aggregate(
+        total=Sum('approved_amount')
+    )['total'] or Decimal('0')
+    
+    # For disbursed loans, we should use the Loan model for actual disbursed amounts
+    total_disbursed_loans = Loan.objects.aggregate(
+        total=Sum('principal_amount')
+    )['total'] or Decimal('0')
 
     # Recent activity
     recent_accounts = ClientAccount.objects.order_by('-registration_date')[:5]
     recent_transactions = SavingsTransaction.objects.order_by('-transaction_date')[:5]
     pending_edit_requests = ClientEditRequest.objects.filter(status=ClientEditRequest.STATUS_PENDING).order_by('-created_at')[:5]
     recent_loans = LoanApplication.objects.order_by('-application_date')[:5]
+    
+    # Pending loans list for the table
+    pending_loans_list = LoanApplication.objects.filter(status='SUBMITTED').order_by('-application_date')[:5]
 
     # Staff performance (if needed)
     staff_performance = []
@@ -138,7 +147,7 @@ def admin_dashboard(request):
         'total_savings': total_savings,
         'pending_loans': pending_loans,
         'approved_loans': approved_loans,
-        'disbursed_loans': disbursed_loans,
+        'disbursed_loans': disbursed_loans_count,  # Renamed to avoid conflict
         'rejected_loans': rejected_loans,
         'total_approved_loans': total_approved_loans,
         'total_disbursed_loans': total_disbursed_loans,
@@ -146,14 +155,25 @@ def admin_dashboard(request):
         'recent_transactions': recent_transactions,
         'pending_edit_requests': pending_edit_requests,
         'recent_loans': recent_loans,
+        'pending_loans_list': pending_loans_list,  # Added for the table
         'staff_performance': staff_performance,
     }
 
     return render(request, 'core/admin_dashboard.html', context)
 
 
+@login_required
+def switch_to_accounts(request):
+    """Redirect to accounts dashboard"""
+    return redirect('accounts:dashboard')
+
+@login_required
+def switch_to_loans(request):
+    """Redirect to loans dashboard"""
+    return redirect('loans:dashboard')
+
 # =========================
-# Staff Dashboard - UPDATED
+# Staff Dashboard - FIXED
 # =========================
 @login_required
 def staff_dashboard(request):
@@ -174,9 +194,9 @@ def staff_dashboard(request):
     active_clients_count = active_clients.count()
     total_savings = my_clients.aggregate(total=Sum('savings_balance'))['total'] or Decimal('0')
     
-    # Loans for my clients
-    my_clients_loans = LoanApplication.objects.filter(client_account__in=my_clients)
-    pending_loans = my_clients_loans.filter(status='PENDING')[:10]
+    # Loans for my clients - FIXED: Changed to correct field name
+    my_clients_loans = LoanApplication.objects.filter(client__in=my_clients)  # Changed from client_account to client
+    pending_loans = my_clients_loans.filter(status='SUBMITTED')[:10]
     
     # Recent transactions for my clients
     recent_transactions = SavingsTransaction.objects.filter(
@@ -295,8 +315,8 @@ def loan_officer_dashboard(request):
             })
     
     # My clients' loans
-    my_clients_loans = LoanApplication.objects.filter(client_account__in=my_clients)
-    pending_loans = my_clients_loans.filter(status='PENDING')
+    my_clients_loans = LoanApplication.objects.filter(client__in=my_clients)  # Changed from client_account to client
+    pending_loans = my_clients_loans.filter(status='SUBMITTED')
     active_loans = my_clients_loans.filter(status__in=['APPROVED', 'DISBURSED'])
 
     context = {
@@ -320,11 +340,13 @@ def home(request):
         return dashboard_redirect(request)
     return render(request, 'core/home.html')
 
-# Add to core/views.py or create context_processor.py
-from django.utils import timezone
 
+# =========================
+# Context Processor for current date/time
+# =========================
 def add_current_datetime(request):
+    from django.utils import timezone
     return {
-        'current_date': timezone.now(),
-        'current_time': timezone.now(),
+        'current_date': timezone.now().date(),
+        'current_time': timezone.now().time(),
     }

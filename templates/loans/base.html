@@ -1,3 +1,4 @@
+<!-- templates/base.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +10,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    
     <!-- Custom CSS -->
     <style>
         :root {
@@ -210,6 +218,23 @@
                 margin-left: 250px;
             }
         }
+        
+        /* Print Styles */
+        @media print {
+            .sidebar, .page-header .btn, .no-print {
+                display: none !important;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 0;
+            }
+            
+            .card {
+                border: 1px solid #dee2e6;
+                box-shadow: none;
+            }
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -230,7 +255,7 @@
                     <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
                        href="{% url 'loans:dashboard' %}">
                         <i class="fas fa-tachometer-alt"></i>
-                        <span>Dashboard</span>
+                        <span>Loans Dashboard</span>
                     </a>
                 </li>
                 
@@ -240,6 +265,9 @@
                        href="{% url 'loans:loan_application_list' %}">
                         <i class="fas fa-file-alt"></i>
                         <span>Applications</span>
+                        {% if pending_applications_count %}
+                        <span class="badge bg-danger ms-auto">{{ pending_applications_count }}</span>
+                        {% endif %}
                     </a>
                 </li>
                 
@@ -338,48 +366,6 @@
                     </ul>
                 </li>
                 
-                <!-- Account Links -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-users"></i>
-                        <span>Client Accounts</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="{% url 'accounts:account_list' %}">
-                                <i class="fas fa-list me-2"></i> All Clients
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'accounts:account_create' %}">
-                                <i class="fas fa-plus me-2"></i> New Client
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'accounts:savings_list' %}">
-                                <i class="fas fa-piggy-bank me-2"></i> Savings
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                
-                <!-- Admin Links -->
-                {% if request.user.is_superuser or request.user.is_staff %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'accounts:edit_request_list' %}">
-                        <i class="fas fa-edit"></i>
-                        <span>Edit Requests</span>
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'accounts:audit_logs' %}">
-                        <i class="fas fa-clipboard-list"></i>
-                        <span>Audit Logs</span>
-                    </a>
-                </li>
-                {% endif %}
-                
                 <!-- Divider -->
                 <li class="nav-item">
                     <hr class="text-light opacity-50 mx-3">
@@ -407,16 +393,13 @@
                             <small class="text-light opacity-75">
                                 {% if request.user.is_superuser %}
                                     Administrator
-                                {% elif 'Loan Officers' in request.user.groups.all|join:', ' %}
+                                {% elif request.user.groups.filter.name='Loan Officers' %}
                                     Loan Officer
-                                {% elif 'Accountant' in request.user.groups.all|join:', ' %}
-                                    Accountant
                                 {% elif request.user.is_staff %}
                                     Staff
-                                {% else %}
-                                    User
                                 {% endif %}
-                            </small>                                                                                                                                                                                                                                                        </div>
+                            </small>
+                        </div>
                         <a href="{% url 'core:login' %}" class="text-light opacity-75 ms-2">
                             <i class="fas fa-sign-out-alt"></i>
                         </a>
@@ -444,20 +427,34 @@
                     </ol>
                 </nav>
                 
-                <!-- Date and Actions -->
+                <!-- Date and Notifications -->
                 <div class="d-flex align-items-center">
                     <span class="me-3 text-muted d-none d-md-block">
                         <i class="fas fa-calendar-alt me-1"></i>
                         {% now "F j, Y" %}
                     </span>
-                    
-                    <div class="btn-group" role="group">
-                        <a href="{% url 'loans:loan_application_create' %}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus me-1"></i>New Application
-                        </a>
-                        <a href="{% url 'loans:quick_payment' %}" class="btn btn-success btn-sm">
-                            <i class="fas fa-money-bill-wave me-1"></i>Quick Payment
-                        </a>
+                    <div class="dropdown">
+                        <button class="btn btn-light position-relative" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            {% if pending_applications_count %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ pending_applications_count }}
+                            </span>
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">Notifications</h6></li>
+                            {% for app in pending_applications %}
+                            <li>
+                                <a class="dropdown-item" href="{% url 'loans:loan_application_detail' app.pk %}">
+                                    <small>New application from {{ app.client.full_account_name }}</small>
+                                </a>
+                            </li>
+                            {% endfor %}
+                            {% if not pending_applications %}
+                            <li><a class="dropdown-item text-muted" href="#">No new notifications</a></li>
+                            {% endif %}
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -502,6 +499,11 @@
     <!-- JavaScript Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Custom JavaScript -->
     <script>
@@ -511,8 +513,34 @@
             document.getElementById('mainContent').classList.toggle('active');
         });
         
-        // Initialize Tooltips
-        document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTables
+        $(document).ready(function() {
+            $('.data-table').DataTable({
+                "pageLength": 25,
+                "order": [],
+                "language": {
+                    "search": "Search:",
+                    "lengthMenu": "Show _MENU_ entries",
+                    "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+                    "paginate": {
+                        "previous": "<i class='fas fa-chevron-left'></i>",
+                        "next": "<i class='fas fa-chevron-right'></i>"
+                    }
+                }
+            });
+            
+            // Initialize Select2
+            $('.select2').select2({
+                theme: 'bootstrap-5'
+            });
+            
+            // Initialize Flatpickr
+            flatpickr(".datepicker", {
+                dateFormat: "Y-m-d",
+                allowInput: true
+            });
+            
+            // Initialize Tooltips
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
@@ -534,14 +562,24 @@
             }).format(amount);
         }
         
-        // Auto-dismiss alerts after 5 seconds
-        setTimeout(function() {
-            var alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function(alert) {
-                var bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
+        // Update dashboard stats every 60 seconds
+        {% if request.resolver_match.url_name == 'dashboard' %}
+        function updateDashboardStats() {
+            $.ajax({
+                url: "{% url 'loans:dashboard_summary_api' %}",
+                success: function(data) {
+                    // Update your dashboard stats here
+                    console.log('Dashboard updated:', data);
+                },
+                complete: function() {
+                    setTimeout(updateDashboardStats, 60000);
+                }
             });
-        }, 5000);
+        }
+        
+        // Start updating if on dashboard
+        updateDashboardStats();
+        {% endif %}
     </script>
     
     {% block extra_js %}{% endblock %}

@@ -24,4 +24,6 @@ urlpatterns = [
     path('dashboard/', dashboard_redirect, name='dashboard_redirect'),
     path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
     path('dashboard/staff/', views.staff_dashboard, name='staff_dashboard'),
+     path('switch/accounts/', views.switch_to_accounts, name='switch_to_accounts'),
+    path('switch/loans/', views.switch_to_loans, name='switch_to_loans'),
 ]

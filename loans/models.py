@@ -198,7 +198,7 @@ class LoanApplication(models.Model):
     # Collateral
     collateral_description = models.TextField(blank=True)
     collateral_value = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    collateral_documents = models.FileField(upload_to='loan_docs/', blank=True, null=True)
+    #collateral_documents = models.FileField(upload_to='loan_docs/', blank=True, null=True)
 
     # Guarantors (Can have multiple)
     guarantors = models.ManyToManyField('Guarantor', blank=True)
