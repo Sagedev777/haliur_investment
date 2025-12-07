@@ -541,13 +541,23 @@ class Guarantor(models.Model):
     # Status
     is_active = models.BooleanField(default=True)
     verified = models.BooleanField(default=False)
-    verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    verified_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='guarantors_verified'  # ADDED THIS
+    )
     verification_date = models.DateField(null=True, blank=True)
     
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT)
+    created_by = models.ForeignKey(
+        User, 
+        on_delete=models.PROTECT,
+        related_name='guarantors_created'  # ADDED THIS
+    )
     
     def save(self, *args, **kwargs):
         if not self.guarantor_id:
@@ -566,7 +576,6 @@ class Guarantor(models.Model):
         elif self.company_name:
             return f"Company: {self.company_name}"
         return f"Guarantor {self.guarantor_id}"
-
 # -----------------------
 # INTEREST CALCULATION SERVICE
 # -----------------------

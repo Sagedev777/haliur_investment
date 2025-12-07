@@ -587,9 +587,6 @@ class LoanSearchForm(forms.Form):
     """Form for searching/filtering loans"""
     
     STATUS_CHOICES = [('', 'All Statuses')] + Loan.LOAN_STATUS
-    PRODUCT_CHOICES = [('', 'All Products')] + [
-        (p.id, p.name) for p in LoanProduct.objects.filter(is_active=True)
-    ]
     
     search = forms.CharField(
         required=False,
@@ -606,7 +603,7 @@ class LoanSearchForm(forms.Form):
     )
     
     loan_product = forms.ChoiceField(
-        choices=PRODUCT_CHOICES,
+        choices=[],  # Will be populated in __init__
         required=False,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
@@ -649,6 +646,13 @@ class LoanSearchForm(forms.Form):
         })
     )
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Populate product choices when form is instantiated
+        self.fields['loan_product'].choices = [('', 'All Products')] + [
+            (p.id, p.name) for p in LoanProduct.objects.filter(is_active=True)
+        ]
+    
     def clean(self):
         cleaned_data = super().clean()
         date_from = cleaned_data.get('date_from')
@@ -665,7 +669,6 @@ class LoanSearchForm(forms.Form):
             self.add_error('max_amount', 'Maximum amount cannot be less than minimum amount')
         
         return cleaned_data
-
 # -------------------------
 # BULK ACTION FORMS
 # -------------------------
@@ -847,14 +850,14 @@ class LoanReportForm(forms.Form):
     
     # Client-specific fields (for client statement)
     client = forms.ModelChoiceField(
-        queryset=ClientAccount.objects.filter(is_active=True),
+        queryset=ClientAccount.objects.none(),  # Empty initially
         required=False,
         widget=forms.Select(attrs={'class': 'form-control select2'})
     )
     
     # Product-specific fields
     loan_product = forms.ModelChoiceField(
-        queryset=LoanProduct.objects.filter(is_active=True),
+        queryset=LoanProduct.objects.none(),  # Empty initially
         required=False,
         widget=forms.Select(attrs={'class': 'form-control select2'})
     )
@@ -865,6 +868,18 @@ class LoanReportForm(forms.Form):
         required=False,
         widget=forms.SelectMultiple(attrs={'class': 'form-control select2-multiple'})
     )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Populate querysets when form is instantiated
+        # Use all() or filter by account_status since is_active doesn't exist
+        self.fields['client'].queryset = ClientAccount.objects.all()
+        # If you want to filter by status, use account_status field:
+        # self.fields['client'].queryset = ClientAccount.objects.filter(account_status='active')
+        
+        self.fields['loan_product'].queryset = LoanProduct.objects.all()
+        # If you want only active products, add the filter after the field exists:
+        # self.fields['loan_product'].queryset = LoanProduct.objects.filter(is_active=True)
     
     def clean(self):
         cleaned_data = super().clean()
@@ -882,7 +897,8 @@ class LoanReportForm(forms.Form):
                 self.add_error('client', 'Client is required for client statement report')
         
         return cleaned_data
-
+    
+    
 # -------------------------
 # QUICK ACTION FORMS
 # -------------------------
@@ -925,10 +941,7 @@ class QuickApplicationForm(forms.Form):
     )
     
     product_id = forms.ChoiceField(
-        choices=[('', 'Select Product')] + [
-            (p.id, f"{p.name} ({p.annual_interest_rate}%)") 
-            for p in LoanProduct.objects.filter(is_active=True)
-        ],
+        choices=[],  # Empty initially
         widget=forms.Select(attrs={'class': 'form-control'})
     )
     
@@ -937,3 +950,11 @@ class QuickApplicationForm(forms.Form):
         decimal_places=2,
         widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Populate choices when form is instantiated
+        self.fields['product_id'].choices = [('', 'Select Product')] + [
+            (p.id, f"{p.name} ({p.annual_interest_rate}%)") 
+            for p in LoanProduct.objects.all()
+        ]
