@@ -1,3 +1,4 @@
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -407,7 +408,7 @@
                             <small class="text-light opacity-75">
                                 {% if request.user.is_superuser %}
                                     Administrator
-                                {% elif request.user.groups.filter.name='Loan Officers' %}
+                                {% elif request.user|has_group:"Loan Officers" %}
                                     Loan Officer
                                 {% elif request.user.is_staff %}
                                     Staff

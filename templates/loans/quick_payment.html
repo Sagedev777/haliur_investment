@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quick Payment - Haliqua Loans{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'loans:dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'loans:loan_list' %}">Loans</a></li>
+<li class="breadcrumb-item active">Quick Payment</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-money-bill-wave me-2"></i>Quick Payment Processing
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Messages -->
+                {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+                
+                <!-- Quick Payment Form -->
+                <form method="post" id="quickPaymentForm">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- Loan Number -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Loan Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                </span>
+                                <input type="text" class="form-control" name="loan_number" 
+                                       placeholder="Enter loan number (e.g., LN-001)" 
+                                       required id="loanNumberInput" autocomplete="off">
+                                <button type="button" class="btn btn-outline-secondary" id="searchLoanBtn">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Method -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Payment Method</label>
+                            <select class="form-select" name="payment_method" required>
+                                <option value="">Select method...</option>
+                                <option value="CASH">Cash</option>
+                                <option value="BANK_TRANSFER">Bank Transfer</option>
+                                <option value="MOBILE_MONEY">Mobile Money</option>
+                                <option value="CHEQUE">Cheque</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Loan Details (Hidden initially) -->
+                    <div id="loanDetailsSection" class="d-none">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>Loan Details
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Client:</strong> <span id="loanClient"></span></p>
+                                        <p class="mb-1"><strong>Principal:</strong> <span id="loanPrincipal"></span></p>
+                                        <p class="mb-1"><strong>Remaining Balance:</strong> <span id="loanBalance"></span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Status:</strong> <span id="loanStatus"></span></p>
+                                        <p class="mb-1"><strong>Next Payment:</strong> <span id="loanNextPayment"></span></p>
+                                        <p class="mb-1"><strong>Overdue Amount:</strong> <span id="loanOverdue"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Details -->
+                        <div class="row">
+                            <!-- Amount -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label required">Amount (UGX)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">UGX</span>
+                                    <input type="number" class="form-control" name="amount" 
+                                           id="paymentAmount" placeholder="Enter payment amount" 
+                                           step="100" min="100" required>
+                                </div>
+                                <small class="text-muted">Minimum payment: 100 UGX</small>
+                            </div>
+                            
+                            <!-- Payment Date -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label required">Payment Date</label>
+                                <input type="date" class="form-control" name="payment_date" 
+                                       value="{% now 'Y-m-d' %}" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Notes -->
+                        <div class="mb-3">
+                            <label class="form-label">Notes (Optional)</label>
+                            <textarea class="form-control" name="notes" rows="2" 
+                                      placeholder="Enter payment notes..."></textarea>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check-circle me-2"></i>Process Payment
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <!-- Manual Search Option -->
+                <div class="text-center mt-4">
+                    <p class="text-muted">Can't find the loan? <a href="{% url 'loans:loan_list' %}" class="text-decoration-none">Browse all loans</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Payments Sidebar -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Payments
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for payment in recent_payments|slice:":5" %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <small class="text-muted">{{ payment.loan.loan_number }}</small>
+                                <p class="mb-1 fw-semibold">UGX {{ payment.amount|floatformat:0 }}</p>
+                            </div>
+                            <small class="text-muted">{{ payment.value_date|date:"M d" }}</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-receipt fa-2x mb-2"></i>
+                        <p>No recent payments</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="text-center mt-2">
+                    <a href="{% url 'loans:collections_report' %}" class="btn btn-sm btn-outline-primary">
+                        View All Payments
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Help -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-question-circle me-2"></i>Quick Help
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-info-circle text-primary me-2"></i>
+                        <small>Enter loan number to load details</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-money-bill text-success me-2"></i>
+                        <small>Minimum payment is 100 UGX</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-calendar text-warning me-2"></i>
+                        <small>Today's date is pre-filled</small>
+                    </li>
+                    <li>
+                        <i class="fas fa-receipt text-info me-2"></i>
+                        <small>Receipt will be generated automatically</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        const loanNumberInput = $('#loanNumberInput');
+        const searchLoanBtn = $('#searchLoanBtn');
+        const loanDetailsSection = $('#loanDetailsSection');
+        const paymentSection = $('#paymentSection');
+        const paymentAmount = $('#paymentAmount');
+        
+        // Search loan by number
+        searchLoanBtn.click(function() {
+            const loanNumber = loanNumberInput.val().trim();
+            
+            if (!loanNumber) {
+                alert('Please enter a loan number');
+                return;
+            }
+            
+            // Show loading
+            searchLoanBtn.html('<i class="fas fa-spinner fa-spin"></i>');
+            
+            // AJAX request to get loan details
+            $.ajax({
+                url: '{% url "loans:api_loan_details" %}',  // You'll need to create this API endpoint
+                data: { loan_number: loanNumber },
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        // Update loan details
+                        $('#loanClient').text(response.client_name);
+                        $('#loanPrincipal').text('UGX ' + parseFloat(response.principal_amount).toLocaleString());
+                        $('#loanBalance').text('UGX ' + parseFloat(response.remaining_balance).toLocaleString());
+                        $('#loanStatus').html(getStatusBadge(response.status));
+                        $('#loanNextPayment').text(response.next_payment_date || 'N/A');
+                        $('#loanOverdue').text('UGX ' + parseFloat(response.overdue_amount || 0).toLocaleString());
+                        
+                        // Show sections
+                        loanDetailsSection.removeClass('d-none');
+                        paymentSection.removeClass('d-none');
+                        
+                        // Set suggested payment amount
+                        const suggestedAmount = Math.max(
+                            100,
+                            Math.min(response.remaining_balance, response.overdue_amount || 0)
+                        );
+                        paymentAmount.val(suggestedAmount);
+                        paymentAmount.focus();
+                        
+                    } else {
+                        alert('Loan not found: ' + response.error);
+                        loanDetailsSection.addClass('d-none');
+                        paymentSection.addClass('d-none');
+                    }
+                },
+                error: function() {
+                    alert('Error searching for loan. Please try again.');
+                },
+                complete: function() {
+                    searchLoanBtn.html('<i class="fas fa-search"></i>');
+                }
+            });
+        });
+        
+        // Auto-search on Enter key
+        loanNumberInput.keypress(function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                searchLoanBtn.click();
+            }
+        });
+        
+        // Format status badge
+        function getStatusBadge(status) {
+            const badges = {
+                'ACTIVE': '<span class="badge bg-success">Active</span>',
+                'OVERDUE': '<span class="badge bg-danger">Overdue</span>',
+                'CLOSED': '<span class="badge bg-secondary">Closed</span>',
+                'PENDING': '<span class="badge bg-warning">Pending</span>'
+            };
+            return badges[status] || '<span class="badge bg-info">' + status + '</span>';
+        }
+        
+        // Auto-complete loan numbers (if you have many loans)
+        loanNumberInput.autocomplete({
+            source: function(request, response) {
+                $.ajax({
+                    url: '{% url "loans:api_loan_search" %}',  // You'll need to create this API endpoint
+                    data: { term: request.term },
+                    success: function(data) {
+                        response(data.loans || []);
+                    }
+                });
+            },
+            minLength: 2,
+            select: function(event, ui) {
+                loanNumberInput.val(ui.item.value);
+                searchLoanBtn.click();
+            }
+        });
+        
+        // Validate form before submission
+        $('#quickPaymentForm').submit(function(e) {
+            const amount = parseFloat(paymentAmount.val());
+            const loanNumber = loanNumberInput.val().trim();
+            
+            if (!loanNumber) {
+                alert('Please enter a loan number');
+                e.preventDefault();
+                return false;
+            }
+            
+            if (!amount || amount < 100) {
+                alert('Please enter a valid amount (minimum 100 UGX)');
+                e.preventDefault();
+                return false;
+            }
+            
+            // Show loading
+            $(this).find('button[type="submit"]').html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+        });
+    });
+</script>
+
+<!-- If you don't have jQuery UI for autocomplete, add this CSS -->
+<style>
+    .ui-autocomplete {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1050;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        max-height: 200px;
+        overflow-y: auto;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .ui-menu-item {
+        padding: 8px 12px;
+        cursor: pointer;
+    }
+    
+    .ui-menu-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .ui-state-active {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .required:after {
+        content: " *";
+        color: #e74c3c;
+    }
+</style>
+{% endblock %}

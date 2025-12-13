@@ -1,89 +1,42 @@
-# loans/urls.py
 from django.urls import path, include
 from . import views
-
 app_name = 'loans'
-
 urlpatterns = [
-    # ============================================================================
-    # DASHBOARD & HOME VIEWS
-    # ============================================================================
-    path('dashboard/', views.LoanDashboardView.as_view(), name='dashboard'),
-    path('dashboard/api/summary/', views.dashboard_summary_api, name='dashboard_summary_api'),
-    
-    # ============================================================================
-    # LOAN PRODUCT VIEWS
-    # ============================================================================
-    path('products/', views.LoanProductListView.as_view(), name='loan_product_list'),
-    path('products/create/', views.LoanProductCreateView.as_view(), name='loan_product_create'),
-    path('products/<int:pk>/', views.LoanProductUpdateView.as_view(), name='loan_product_update'),
-    path('products/<int:pk>/delete/', views.LoanProductDeleteView.as_view(), name='loan_product_delete'),
-    path('products/<int:pk>/toggle-status/', views.loan_product_toggle_status, name='loan_product_toggle_status'),
-    
-    # ============================================================================
-    # LOAN APPLICATION VIEWS
-    # ============================================================================
-    path('applications/', views.LoanApplicationListView.as_view(), name='loan_application_list'),
-    path('applications/create/', views.LoanApplicationCreateView.as_view(), name='loan_application_create'),
-    path('applications/<int:pk>/', views.LoanApplicationDetailView.as_view(), name='loan_application_detail'),
-    path('applications/<int:pk>/update/', views.LoanApplicationUpdateView.as_view(), name='loan_application_update'),
-    path('applications/<int:pk>/review/', views.loan_application_review, name='loan_application_review'),
-    path('applications/<int:pk>/documents/', views.loan_application_documents, name='loan_application_documents'),
-    
-    # ============================================================================
-    # LOAN DISBURSEMENT VIEWS
-    # ============================================================================
-    path('applications/<int:application_id>/disburse/', views.loan_disbursement_create, name='loan_disbursement_create'),
-    path('disbursements/bulk/', views.bulk_loan_disbursement, name='bulk_loan_disbursement'),
-    
-    # ============================================================================
-    # LOAN MANAGEMENT VIEWS
-    # ============================================================================
-    path('loans/', views.LoanListView.as_view(), name='loan_list'),
-    path('loans/<int:pk>/', views.LoanDetailView.as_view(), name='loan_detail'),
-    path('loans/<int:pk>/statement/', views.loan_statement, name='loan_statement'),
-    path('loans/<int:pk>/reschedule/', views.loan_reschedule, name='loan_reschedule'),
-    
-    # ============================================================================
-    # PAYMENT PROCESSING VIEWS
-    # ============================================================================
-    path('loans/<int:pk>/payment/', views.process_payment, name='process_payment'),
-    path('payments/bulk/', views.bulk_payment_processing, name='bulk_payment_processing'),
-    path('payments/<str:transaction_id>/receipt/', views.payment_receipt, name='payment_receipt'),
-    
-    # ============================================================================
-    # GUARANTOR VIEWS
-    # ============================================================================
-    path('guarantors/', views.GuarantorListView.as_view(), name='guarantor_list'),
-    path('guarantors/create/', views.GuarantorCreateView.as_view(), name='guarantor_create'),
-    path('guarantors/<int:pk>/', views.GuarantorDetailView.as_view(), name='guarantor_detail'),
-    path('guarantors/<int:pk>/update/', views.GuarantorUpdateView.as_view(), name='guarantor_update'),
-    path('guarantors/<int:pk>/verify/', views.guarantor_verify, name='guarantor_verify'),
-    
-    # ============================================================================
-    # CALCULATOR & TOOLS VIEWS
-    # ============================================================================
-    path('calculator/', views.loan_calculator, name='loan_calculator'),
-    path('clients/<int:client_id>/eligibility/', views.client_eligibility_check, name='client_eligibility_check'),
-    
-    # ============================================================================
-    # API ENDPOINTS
-    # ============================================================================
-    path('api/calculate-repayment/', views.api_calculate_repayment, name='api_calculate_repayment'),
-    path('api/clients/<int:client_id>/eligibility/', views.api_client_eligibility, name='api_client_eligibility'),
-    path('api/webhook/payment/', views.api_webhook_payment, name='api_webhook_payment'),
-    
-    # ============================================================================
-    # REPORT & EXPORT VIEWS
-    # ============================================================================
-    path('reports/portfolio/', views.loan_portfolio_report, name='loan_portfolio_report'),
-    path('reports/overdue/', views.overdue_loans_report, name='overdue_loans_report'),
-    path('reports/collections/', views.collections_report, name='collections_report'),
-    
-    # ============================================================================
-    # QUICK ACTIONS
-    # ============================================================================
-    path('quick-payment/', views.quick_payment, name='quick_payment'),
+    path('dashboard/', views.LoanDashboardView.as_view(), name='dashboard'), 
+    path('dashboard/api/summary/', views.dashboard_summary_api, name='dashboard_summary_api'), 
+    path('products/', views.LoanProductListView.as_view(), name='loan_product_list'), 
+    path('products/create/', views.LoanProductCreateView.as_view(), name='loan_product_create'), 
+    path('products/<int:pk>/', views.LoanProductUpdateView.as_view(), name='loan_product_update'), 
+    path('products/<int:pk>/delete/', views.LoanProductDeleteView.as_view(), name='loan_product_delete'), 
+    path('products/<int:pk>/toggle-status/', views.loan_product_toggle_status, name='loan_product_toggle_status'), 
+    path('applications/', views.LoanApplicationListView.as_view(), name='loan_application_list'), 
+    path('applications/create/', views.LoanApplicationCreateView.as_view(), name='loan_application_create'), 
+    path('applications/<int:pk>/', views.LoanApplicationDetailView.as_view(), name='loan_application_detail'), 
+    path('applications/<int:pk>/update/', views.LoanApplicationUpdateView.as_view(), name='loan_application_update'), 
+    path('applications/<int:pk>/review/', views.loan_application_review, name='loan_application_review'), 
+    path('applications/<int:pk>/documents/', views.loan_application_documents, name='loan_application_documents'), 
+    path('applications/<int:application_id>/disburse/', views.loan_disbursement_create, name='loan_disbursement_create'), 
+    path('disbursements/bulk/', views.bulk_loan_disbursement, name='bulk_loan_disbursement'), 
+    path('loans/', views.LoanListView.as_view(), name='loan_list'), 
+    path('loans/<int:pk>/', views.LoanDetailView.as_view(), name='loan_detail'), 
+    path('loans/<int:pk>/statement/', views.loan_statement, name='loan_statement'), 
+    path('loans/<int:pk>/reschedule/', views.loan_reschedule, name='loan_reschedule'), 
+    path('loans/<int:pk>/payment/', views.process_payment, name='process_payment'), 
+    path('payments/bulk/', views.bulk_payment_processing, name='bulk_payment_processing'), 
+    path('payments/<str:transaction_id>/receipt/', views.payment_receipt, name='payment_receipt'), 
+    path('guarantors/', views.GuarantorListView.as_view(), name='guarantor_list'), 
+    path('guarantors/create/', views.GuarantorCreateView.as_view(), name='guarantor_create'), 
+    path('guarantors/<int:pk>/', views.GuarantorDetailView.as_view(), name='guarantor_detail'), 
+    path('guarantors/<int:pk>/update/', views.GuarantorUpdateView.as_view(), name='guarantor_update'), 
+    path('guarantors/<int:pk>/verify/', views.guarantor_verify, name='guarantor_verify'), 
+    path('calculator/', views.loan_calculator, name='loan_calculator'), 
+    path('clients/<int:client_id>/eligibility/', views.client_eligibility_check, name='client_eligibility_check'), 
+    path('api/calculate-repayment/', views.api_calculate_repayment, name='api_calculate_repayment'), 
+    path('api/clients/<int:client_id>/eligibility/', views.api_client_eligibility, name='api_client_eligibility'), 
+    path('api/webhook/payment/', views.api_webhook_payment, name='api_webhook_payment'), path('reports/portfolio/', views.loan_portfolio_report, name='loan_portfolio_report'), 
+    path('reports/overdue/', views.overdue_loans_report, name='overdue_loans_report'), path('reports/collections/', views.collections_report, name='collections_report'), 
+    path('quick-payment/', views.quick_payment, name='quick_payment'), 
     path('bulk-status-update/', views.bulk_status_update, name='bulk_status_update'),
-]
-
+    path('api/loan-details/', views.api_loan_details, name='api_loan_details'),
+    path('api/loan-search/', views.api_loan_search, name='api_loan_search'),
+    ]
