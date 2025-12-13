@@ -1,0 +1,300 @@
+
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Collections Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Collections Report</h2>
+        <div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="{% url 'loans:export_collections_csv' %}">
+                        <i class="fas fa-file-csv"></i> Export as CSV
+                    </a>
+                    
+    
+                    <a class="nav-link" href="{% url 'loans:collections_report' %}">
+                        <i class="fas fa-chart-line"></i> Collections Report
+                    </a>
+
+                    <a class="dropdown-item" href="#">
+                        <i class="fas fa-file-pdf"></i> Export as PDF
+                    </a>
+                </div>
+            </div>
+            
+            <div class="btn-group ms-2">
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="?period=today">Today</a>
+                    <a class="dropdown-item" href="?period=week">This Week</a>
+                    <a class="dropdown-item" href="?period=month">This Month</a>
+                    <a class="dropdown-item" href="?period=quarter">This Quarter</a>
+                    <a class="dropdown-item" href="?period=year">This Year</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Collections</h5>
+                    <h2 class="display-6">{{ total_collections|intcomma }} UGX</h2>
+                    <p class="card-text">{{ payment_count }} payments</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Today's Collections</h5>
+                    <h2 class="display-6">{{ today_collections|intcomma }} UGX</h2>
+                    <p class="card-text">{{ today_count }} payments</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">This Week</h5>
+                    <h2 class="display-6">{{ week_collections|intcomma }} UGX</h2>
+                    <p class="card-text">{{ week_count }} payments</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">This Month</h5>
+                    <h2 class="display-6">{{ month_collections|intcomma }} UGX</h2>
+                    <p class="card-text">{{ month_count }} payments</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collections Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Payment Collections</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Payment Date</th>
+                            <th>Loan Application</th>
+                            <th>Client</th>
+                            <th>Amount (UGX)</th>
+                            <th>Payment Method</th>
+                            <th>Received By</th>
+                            <th>Transaction Ref</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ payment.payment_date|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                <a href="{% url 'loan_application_detail' payment.loan_application.pk %}">
+                                    {{ payment.loan_application.application_number }}
+                                </a>
+                            </td>
+                            <td>{{ payment.loan_application.client_account.full_account_name }}</td>
+                            <td class="text-end">{{ payment.payment_amount|intcomma }}</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ payment.get_payment_method_display }}</span>
+                            </td>
+                            <td>{{ payment.received_by.get_full_name|default:payment.received_by.username }}</td>
+                            <td>
+                                {% if payment.transaction_reference %}
+                                <code>{{ payment.transaction_reference|truncatechars:10 }}</code>
+                                {% else %}
+                                <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if payment.payment_amount == payment.loan_application.loan_amount %}
+                                <span class="badge bg-success">Full Payment</span>
+                                {% else %}
+                                <span class="badge bg-info">Partial</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    No payment collections found
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-dark">
+                            <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                            <td class="text-end"><strong>{{ total_collections|intcomma }} UGX</strong></td>
+                            <td colspan="4"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if payments.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if payments.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ payments.previous_page_number }}">Previous</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in payments.paginator.page_range %}
+                    {% if payments.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if payments.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ payments.next_page_number }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Payment Method Breakdown -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Collections by Payment Method</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Payment Method</th>
+                                    <th class="text-end">Count</th>
+                                    <th class="text-end">Amount (UGX)</th>
+                                    <th class="text-end">Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for method in method_breakdown %}
+                                <tr>
+                                    <td>{{ method.payment_method }}</td>
+                                    <td class="text-end">{{ method.count }}</td>
+                                    <td class="text-end">{{ method.total|intcomma }}</td>
+                                    <td class="text-end">{{ method.percentage|floatformat:1 }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Collection Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for payment in recent_payments %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    {{ payment.loan_application.client_account.full_account_name }}
+                                </h6>
+                                <small>{{ payment.payment_date|timesince }} ago</small>
+                            </div>
+                            <p class="mb-1">
+                                <strong>{{ payment.payment_amount|intcomma }} UGX</strong> via 
+                                {{ payment.get_payment_method_display }}
+                            </p>
+                            <small class="text-muted">
+                                App: {{ payment.loan_application.application_number }}
+                                • Received by: {{ payment.received_by.username }}
+                            </small>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-3 text-muted">
+                            No recent activity
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js for visualizations -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Create payment method chart
+    const ctx = document.createElement('canvas');
+    ctx.id = 'paymentMethodChart';
+    document.querySelector('.col-md-6 .card-body').prepend(ctx);
+    
+    const methodData = {
+        labels: [{% for method in method_breakdown %}'{{ method.payment_method }}',{% endfor %}],
+        datasets: [{
+            data: [{% for method in method_breakdown %}{{ method.total }},{% endfor %}],
+            backgroundColor: [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+            ]
+        }]
+    };
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: methodData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                title: {
+                    display: true,
+                    text: 'Payment Method Distribution'
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,821 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Overdue Loans Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">Overdue Loans Report</h1>
+                    <p class="text-muted mb-0">Monitor and manage overdue loan payments and collections</p>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-success" onclick="exportReport('pdf')">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="exportReport('csv')">
+                        <i class="fas fa-file-excel"></i> Export CSV
+                    </button>
+                    <button type="button" class="btn btn-info" onclick="refreshData()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            <hr>
+        </div>
+    </div>
+
+    <!-- Report Filters -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Filter Overdue Loans</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="days_overdue" class="form-label">Days Overdue</label>
+                            <select class="form-select" id="days_overdue" name="days_overdue">
+                                <option value="">All Overdue</option>
+                                <option value="1-30" {% if days_filter == '1-30' %}selected{% endif %}>1-30 Days</option>
+                                <option value="31-60" {% if days_filter == '31-60' %}selected{% endif %}>31-60 Days</option>
+                                <option value="61-90" {% if days_filter == '61-90' %}selected{% endif %}>61-90 Days</option>
+                                <option value="90+" {% if days_filter == '90+' %}selected{% endif %}>90+ Days (NPL)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="loan_officer" class="form-label">Loan Officer</label>
+                            <select class="form-select" id="loan_officer" name="loan_officer">
+                                <option value="">All Officers</option>
+                                {% for officer in loan_officers %}
+                                <option value="{{ officer.id }}" {% if officer.id == selected_officer %}selected{% endif %}>
+                                    {{ officer.get_full_name|default:officer.username }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="risk_rating" class="form-label">Risk Rating</label>
+                            <select class="form-select" id="risk_rating" name="risk_rating">
+                                <option value="">All Ratings</option>
+                                <option value="A" {% if risk_filter == 'A' %}selected{% endif %}>A (Low Risk)</option>
+                                <option value="B" {% if risk_filter == 'B' %}selected{% endif %}>B (Medium Risk)</option>
+                                <option value="C" {% if risk_filter == 'C' %}selected{% endif %}>C (High Risk)</option>
+                                <option value="D" {% if risk_filter == 'D' %}selected{% endif %}>D (Default Risk)</option>
+                                <option value="E" {% if risk_filter == 'E' %}selected{% endif %}>E (Write-off)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="amount_range" class="form-label">Amount Range</label>
+                            <select class="form-select" id="amount_range" name="amount_range">
+                                <option value="">All Amounts</option>
+                                <option value="0-1000" {% if amount_filter == '0-1000' %}selected{% endif %}>Up to $1,000</option>
+                                <option value="1001-5000" {% if amount_filter == '1001-5000' %}selected{% endif %}>$1,001 - $5,000</option>
+                                <option value="5001-10000" {% if amount_filter == '5001-10000' %}selected{% endif %}>$5,001 - $10,000</option>
+                                <option value="10000+" {% if amount_filter == '10000+' %}selected{% endif %}>$10,000+</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                            <a href="{% url 'loans:overdue_report' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </a>
+                            <button type="button" class="btn btn-warning" onclick="sendReminders()">
+                                <i class="fas fa-bell"></i> Send Reminders
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-2 col-md-4 col-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Total Overdue</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.total_overdue|intcomma }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Total Amount</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{ summary.total_amount|intcomma|floatformat:2 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Avg Days Overdue</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.avg_days_overdue|floatformat:1 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                PAR 30 Days</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.par_30|intcomma }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-6 mb-4">
+            <div class="card border-left-secondary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                                PAR 60 Days</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.par_60|intcomma }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-hourglass-half fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-6 mb-4">
+            <div class="card border-left-dark shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-dark text-uppercase mb-1">
+                                NPL (90+ Days)</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.npl_count|intcomma }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-skull-crossbones fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Tabs -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="overdueTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="list-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#list" type="button" role="tab">
+                                <i class="fas fa-list"></i> Overdue List
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#analysis" type="button" role="tab">
+                                <i class="fas fa-chart-bar"></i> Risk Analysis
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="recovery-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#recovery" type="button" role="tab">
+                                <i class="fas fa-hand-holding-usd"></i> Recovery Actions
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="overdueTabsContent">
+                        
+                        <!-- Overdue List Tab -->
+                        <div class="tab-pane fade show active" id="list" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover" id="overdueTable">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Loan Details</th>
+                                            <th>Client Information</th>
+                                            <th>Overdue Details</th>
+                                            <th>Amount Details</th>
+                                            <th>Collection Actions</th>
+                                            <th>Risk Level</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for loan in overdue_loans %}
+                                        <tr class="{% if loan.days_overdue >= 90 %}table-danger{% elif loan.days_overdue >= 60 %}table-warning{% elif loan.days_overdue >= 30 %}table-info{% endif %}">
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>
+                                                <div class="loan-info">
+                                                    <strong>Loan #{{ loan.loan_number|default:loan.id }}</strong><br>
+                                                    <small>Type: {{ loan.get_loan_type_display }}</small><br>
+                                                    <small>Officer: {{ loan.loan_officer.get_full_name|default:loan.loan_officer.username }}</small><br>
+                                                    <small>Disbursed: {{ loan.disbursement_date|date:"Y-m-d"|default:"N/A" }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="client-info">
+                                                    <strong>
+                                                        <a href="{% url 'accounts:account_detail' loan.client_account.pk %}" 
+                                                           class="text-primary">
+                                                            {{ loan.client_account.full_account_name }}
+                                                        </a>
+                                                    </strong><br>
+                                                    <small>Phone: {{ loan.client_account.person1_contact }}</small><br>
+                                                    <small>Address: {{ loan.client_account.person1_address|truncatechars:30 }}</small><br>
+                                                    <small>NIN: {{ loan.client_account.person1_nin }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="overdue-info text-center">
+                                                    <h4 class="mb-0 {% if loan.days_overdue >= 90 %}text-danger{% elif loan.days_overdue >= 60 %}text-warning{% else %}text-info{% endif %}">
+                                                        {{ loan.days_overdue }}
+                                                    </h4>
+                                                    <small class="text-muted">Days Overdue</small><br>
+                                                    <small>Last Payment: {{ loan.last_payment_date|date:"Y-m-d"|default:"No payments" }}</small><br>
+                                                    <small>Next Due: {{ loan.next_payment_date|date:"Y-m-d"|default:"N/A" }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="amount-info">
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <small>Principal:</small><br>
+                                                            <strong>${{ loan.loan_amount|floatformat:2 }}</strong>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <small>Outstanding:</small><br>
+                                                            <strong class="text-danger">${{ loan.remaining_balance|floatformat:2 }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mt-2">
+                                                        <div class="col-12">
+                                                            <small>Overdue Amount:</small><br>
+                                                            <strong class="text-danger">${{ loan.overdue_amount|default:loan.remaining_balance|floatformat:2 }}</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="action-info">
+                                                    <div class="mb-2">
+                                                        <span class="badge bg-{{ loan.collection_status_color }}">
+                                                            {{ loan.get_collection_status_display|default:"No Action" }}
+                                                        </span>
+                                                    </div>
+                                                    {% if loan.last_collection_action %}
+                                                    <small>Last Action: {{ loan.last_collection_action|date:"Y-m-d" }}</small><br>
+                                                    {% endif %}
+                                                    {% if loan.next_action_date %}
+                                                    <small>Next Action: {{ loan.next_action_date|date:"Y-m-d" }}</small>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="text-center">
+                                                    <span class="badge bg-{{ loan.risk_badge_color }} p-2">
+                                                        {{ loan.risk_rating|default:"N/A" }}
+                                                    </span>
+                                                    <div class="progress mt-2" style="height: 5px;">
+                                                        {% if loan.days_overdue >= 90 %}
+                                                        <div class="progress-bar bg-danger" style="width: 100%;"></div>
+                                                        {% elif loan.days_overdue >= 60 %}
+                                                        <div class="progress-bar bg-warning" style="width: 75%;"></div>
+                                                        {% elif loan.days_overdue >= 30 %}
+                                                        <div class="progress-bar bg-info" style="width: 50%;"></div>
+                                                        {% else %}
+                                                        <div class="progress-bar bg-success" style="width: 25%;"></div>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group-vertical" role="group">
+                                                    <a href="{% url 'loans:loan_detail' loan.pk %}" 
+                                                       class="btn btn-sm btn-outline-info mb-1" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{% url 'loans:record_payment' loan.pk %}" 
+                                                       class="btn btn-sm btn-outline-success mb-1" title="Record Payment">
+                                                        <i class="fas fa-money-bill"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-warning mb-1" 
+                                                            data-bs-toggle="modal" data-bs-target="#contactModal{{ loan.id }}"
+                                                            title="Contact Client">
+                                                        <i class="fas fa-phone"></i>
+                                                    </button>
+                                                    {% if user_role == 'ADMIN' or user_role == 'MANAGER' %}
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            data-bs-toggle="modal" data-bs-target="#escalateModal{{ loan.id }}"
+                                                            title="Escalate Case">
+                                                        <i class="fas fa-exclamation-circle"></i>
+                                                    </button>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Contact Modal -->
+                                        <div class="modal fade" id="contactModal{{ loan.id }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-warning text-white">
+                                                        <h5 class="modal-title">Contact Client</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <form action="{% url 'loans:record_contact' loan.pk %}" method="post">
+                                                        {% csrf_token %}
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Contact Method</label>
+                                                                <select class="form-select" name="contact_method" required>
+                                                                    <option value="">Select method</option>
+                                                                    <option value="PHONE">Phone Call</option>
+                                                                    <option value="SMS">SMS</option>
+                                                                    <option value="EMAIL">Email</option>
+                                                                    <option value="VISIT">Visit</option>
+                                                                    <option value="LETTER">Letter</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Contact Details</label>
+                                                                <input type="text" class="form-control" value="{{ loan.client_account.person1_contact }}" readonly>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Notes</label>
+                                                                <textarea class="form-control" name="notes" rows="3" 
+                                                                          placeholder="Enter conversation details or message..." required></textarea>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Next Action Date</label>
+                                                                <input type="date" class="form-control" name="next_action_date" 
+                                                                       min="{% now 'Y-m-d' %}" required>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-warning">Record Contact</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Escalate Modal -->
+                                        {% if user_role == 'ADMIN' or user_role == 'MANAGER' %}
+                                        <div class="modal fade" id="escalateModal{{ loan.id }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-danger text-white">
+                                                        <h5 class="modal-title">Escalate Overdue Loan</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <form action="{% url 'loans:escalate_loan' loan.pk %}" method="post">
+                                                        {% csrf_token %}
+                                                        <div class="modal-body">
+                                                            <div class="alert alert-warning">
+                                                                <i class="fas fa-exclamation-triangle"></i>
+                                                                <strong>Warning:</strong> This will escalate the loan to legal/collections department.
+                                                            </div>
+                                                            
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Escalation Reason</label>
+                                                                <select class="form-select" name="escalation_reason" required>
+                                                                    <option value="">Select reason</option>
+                                                                    <option value="NO_CONTACT">No Contact Possible</option>
+                                                                    <option value="REFUSAL">Refusal to Pay</option>
+                                                                    <option value="LEGAL">Legal Action Required</option>
+                                                                    <option value="WRITEOFF">Consider for Write-off</option>
+                                                                    <option value="OTHER">Other</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Detailed Notes</label>
+                                                                <textarea class="form-control" name="notes" rows="3" 
+                                                                          placeholder="Enter details for escalation..." required></textarea>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Assign To</label>
+                                                                <select class="form-select" name="assigned_to" required>
+                                                                    <option value="">Select officer</option>
+                                                                    {% for officer in collection_officers %}
+                                                                    <option value="{{ officer.id }}">{{ officer.get_full_name|default:officer.username }}</option>
+                                                                    {% endfor %}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-danger">Escalate Loan</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            {% if overdue_loans.has_other_pages %}
+                            <nav aria-label="Overdue loans pagination">
+                                <ul class="pagination justify-content-center">
+                                    {% if overdue_loans.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=1{% if days_filter %}&days_overdue={{ days_filter }}{% endif %}{% if selected_officer %}&loan_officer={{ selected_officer }}{% endif %}{% if risk_filter %}&risk_rating={{ risk_filter }}{% endif %}{% if amount_filter %}&amount_range={{ amount_filter }}{% endif %}">
+                                                <i class="fas fa-angle-double-left"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ overdue_loans.previous_page_number }}{% if days_filter %}&days_overdue={{ days_filter }}{% endif %}{% if selected_officer %}&loan_officer={{ selected_officer }}{% endif %}{% if risk_filter %}&risk_rating={{ risk_filter }}{% endif %}{% if amount_filter %}&amount_range={{ amount_filter }}{% endif %}">
+                                                <i class="fas fa-angle-left"></i>
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
+                                        </li>
+                                        <li class="page-item disabled">
+                                            <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for num in overdue_loans.paginator.page_range %}
+                                        {% if overdue_loans.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > overdue_loans.number|add:'-3' and num < overdue_loans.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}{% if days_filter %}&days_overdue={{ days_filter }}{% endif %}{% if selected_officer %}&loan_officer={{ selected_officer }}{% endif %}{% if risk_filter %}&risk_rating={{ risk_filter }}{% endif %}{% if amount_filter %}&amount_range={{ amount_filter }}{% endif %}">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if overdue_loans.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ overdue_loans.next_page_number }}{% if days_filter %}&days_overdue={{ days_filter }}{% endif %}{% if selected_officer %}&loan_officer={{ selected_officer }}{% endif %}{% if risk_filter %}&risk_rating={{ risk_filter }}{% endif %}{% if amount_filter %}&amount_range={{ amount_filter }}{% endif %}">
+                                                <i class="fas fa-angle-right"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ overdue_loans.paginator.num_pages }}{% if days_filter %}&days_overdue={{ days_filter }}{% endif %}{% if selected_officer %}&loan_officer={{ selected_officer }}{% endif %}{% if risk_filter %}&risk_rating={{ risk_filter }}{% endif %}{% if amount_filter %}&amount_range={{ amount_filter }}{% endif %}">
+                                                <i class="fas fa-angle-double-right"></i>
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                                        </li>
+                                        <li class="page-item disabled">
+                                            <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
+                        </div>
+
+                        <!-- Risk Analysis Tab -->
+                        <div class="tab-pane fade" id="analysis" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Overdue Distribution by Days</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="chart-container" style="position: relative; height:300px;">
+                                                <canvas id="overdueDistributionChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Overdue by Loan Officer</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>Officer</th>
+                                                            <th>Overdue Loans</th>
+                                                            <th>Total Amount</th>
+                                                            <th>Avg Days</th>
+                                                            <th>Risk Score</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for officer in officer_analysis %}
+                                                        <tr>
+                                                            <td>{{ officer.name }}</td>
+                                                            <td>{{ officer.count }}</td>
+                                                            <td>${{ officer.amount|floatformat:2 }}</td>
+                                                            <td>{{ officer.avg_days|floatformat:1 }}</td>
+                                                            <td>
+                                                                <span class="badge bg-{% if officer.risk_score >= 80 %}danger{% elif officer.risk_score >= 60 %}warning{% else %}info{% endif %}">
+                                                                    {{ officer.risk_score|floatformat:1 }}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recovery Actions Tab -->
+                        <div class="tab-pane fade" id="recovery" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h5 class="card-title">Recovery Strategy & Actions</h5>
+                                    
+                                    <div class="row mb-4">
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <h6>Immediate Action</h6>
+                                                    <h3 class="text-danger">{{ recovery_stats.immediate|default:"0" }}</h3>
+                                                    <p class="text-muted mb-0">Loans 60+ days overdue</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <h6>Follow-up Required</h6>
+                                                    <h3 class="text-warning">{{ recovery_stats.followup|default:"0" }}</h3>
+                                                    <p class="text-muted mb-0">Loans 30-59 days overdue</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <h6>Contact Attempts</h6>
+                                                    <h3 class="text-info">{{ recovery_stats.contact_attempts|default:"0" }}</h3>
+                                                    <p class="text-muted mb-0">Total this month</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Recommended Actions</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>Action</th>
+                                                            <th>Description</th>
+                                                            <th>Priority</th>
+                                                            <th>Timeline</th>
+                                                            <th>Responsible</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>Phone Calls</td>
+                                                            <td>Contact all clients with 30+ days overdue</td>
+                                                            <td><span class="badge bg-danger">High</span></td>
+                                                            <td>Within 48 hours</td>
+                                                            <td>Loan Officers</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>SMS Reminders</td>
+                                                            <td>Send automated payment reminders</td>
+                                                            <td><span class="badge bg-warning">Medium</span></td>
+                                                            <td>Weekly</td>
+                                                            <td>System</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Field Visits</td>
+                                                            <td>Visit clients with 60+ days overdue</td>
+                                                            <td><span class="badge bg-danger">High</span></td>
+                                                            <td>Within 7 days</td>
+                                                            <td>Collection Team</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Legal Notices</td>
+                                                            <td>Send formal demand letters</td>
+                                                            <td><span class="badge bg-info">Low</span></td>
+                                                            <td>Within 14 days</td>
+                                                            <td>Legal Department</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Restructure Options</td>
+                                                            <td>Offer payment plans for long-term overdue</td>
+                                                            <td><span class="badge bg-warning">Medium</span></td>
+                                                            <td>Within 30 days</td>
+                                                            <td>Credit Committee</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Footer -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Report Generated</h6>
+                            <p class="mb-0">{{ generated_at|date:"F d, Y H:i:s" }}</p>
+                            <small class="text-muted">By: {{ request.user.get_full_name|default:request.user.username }}</small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <h6>Collection Performance</h6>
+                            <p class="mb-0">Total Overdue: {{ summary.total_overdue|intcomma }} loans</p>
+                            <p class="mb-0">Total Amount: ${{ summary.total_amount|intcomma|floatformat:2 }}</p>
+                            <p class="mb-0">Recovery Rate: {{ summary.recovery_rate|default:"0"|floatformat:2 }}%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize date pickers
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    const today = new Date().toISOString().split('T')[0];
+    dateInputs.forEach(input => {
+        if (input) input.max = today;
+    });
+    
+    // Overdue Distribution Chart
+    const distributionCtx = document.getElementById('overdueDistributionChart').getContext('2d');
+    const distributionChart = new Chart(distributionCtx, {
+        type: 'bar',
+        data: {
+            labels: ['1-30 Days', '31-60 Days', '61-90 Days', '90+ Days'],
+            datasets: [{
+                label: 'Number of Loans',
+                data: {{ distribution_data|safe }},
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(255, 159, 64, 0.7)',
+                    'rgba(255, 99, 132, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(255, 99, 132, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false,
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+});
+
+function exportReport(format) {
+    const params = new URLSearchParams(window.location.search);
+    
+    if (format === 'pdf') {
+        params.set('export', 'pdf');
+        window.location.href = window.location.pathname + '?' + params.toString();
+    } else if (format === 'csv') {
+        params.set('export', 'csv');
+        window.location.href = window.location.pathname + '?' + params.toString();
+    }
+}
+
+function refreshData() {
+    window.location.reload();
+}
+
+function sendReminders() {
+    if (confirm('Send payment reminders to all overdue clients? This will send SMS/email notifications.')) {
+        // Add AJAX call here to send reminders
+        alert('Reminders sent successfully!');
+    }
+}
+
+// Auto-refresh every 2 minutes (optional)
+// setInterval(refreshData, 120000);
+</script>
+
+<style>
+.card {
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+}
+.border-left-primary { border-left: 4px solid #4e73df !important; }
+.border-left-success { border-left: 4px solid #1cc88a !important; }
+.border-left-info { border-left: 4px solid #36b9cc !important; }
+.border-left-warning { border-left: 4px solid #f6c23e !important; }
+.border-left-danger { border-left: 4px solid #e74a3b !important; }
+.border-left-secondary { border-left: 4px solid #858796 !important; }
+.border-left-dark { border-left: 4px solid #5a5c69 !important; }
+
+.table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+.nav-tabs .nav-link {
+    border-radius: 0;
+    border: none;
+    color: #6c757d;
+}
+.nav-tabs .nav-link.active {
+    color: #4e73df;
+    border-bottom: 3px solid #4e73df;
+    background-color: transparent;
+}
+.btn-group-vertical .btn {
+    margin-bottom: 2px;
+}
+</style>
+
+{% endblock %}

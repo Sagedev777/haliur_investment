@@ -28,6 +28,41 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from .models import Loan
+from django.db.models import Sum, Count
+from django.utils import timezone
+from datetime import timedelta, datetime
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from functools import wraps
+from django.shortcuts import redirect
+from django.contrib import messages
+from client_accounts.models import UserProfile
+from datetime import datetime, timedelta, date
+
+# Copy the decorator functions
+def role_required(allowed_roles):
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            if request.user.is_superuser:
+                return view_func(request, *args, **kwargs)
+            try:
+                profile = request.user.profile
+                if profile.role in allowed_roles:
+                    return view_func(request, *args, **kwargs)
+            except UserProfile.DoesNotExist:
+                pass
+            messages.error(request, "You do not have permission to access this page.")
+            return redirect('accounts:dashboard')
+        return _wrapped_view
+    return decorator
+
+def get_user_role(request):
+    if request.user.is_superuser:
+        return 'ADMIN'
+    try:
+        return request.user.profile.role
+    except UserProfile.DoesNotExist:
+        return None
 
 @login_required
 @require_http_methods(["GET"])
@@ -898,34 +933,6 @@ def overdue_loans_report(request):
     return render(request, 'loans/overdue_report.html', context)
 
 @login_required
-@staff_required
-def collections_report(request):
-    start_date = request.GET.get('start_date', (timezone.now() - timedelta(days=30)).date().isoformat())
-    end_date = request.GET.get('end_date', timezone.now().date().isoformat())
-    payments = LoanTransaction.objects.filter(transaction_type__in=['PRINCIPAL_PAYMENT', 'INTEREST_PAYMENT', 'LATE_FEE_PAYMENT'], value_date__range=[start_date, end_date]).select_related('loan', 'loan__client', 'recorded_by')
-    total_collected = payments.aggregate(total=Sum('amount'))['total'] or Decimal('0')
-    by_method = payments.values('payment_method').annotate(total=Sum('amount'), count=Count('id')).order_by('-total')
-    by_officer = payments.values('recorded_by__username').annotate(total=Sum('amount'), count=Count('id')).order_by('-total')
-    daily_totals = {}
-    current_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-    end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
-    while current_date <= end_date_obj:
-        daily_total = payments.filter(value_date=current_date).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-        daily_totals[current_date.isoformat()] = float(daily_total)
-        current_date += timedelta(days=1)
-    export_format = request.GET.get('export')
-    if export_format == 'csv':
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="collections_{start_date}_to_{end_date}.csv"'
-        writer = csv.writer(response)
-        writer.writerow(['Date', 'Loan Number', 'Client', 'Payment Method', 'Amount', 'Type', 'Recorded By'])
-        for payment in payments:
-            writer.writerow([payment.value_date, payment.loan.loan_number, payment.loan.client.full_account_name, payment.payment_method, payment.amount, payment.transaction_type, payment.recorded_by.username])
-        return response
-    context = {'payments': payments, 'start_date': start_date, 'end_date': end_date, 'total_collected': total_collected, 'by_method': by_method, 'by_officer': by_officer, 'daily_totals': daily_totals, 'average_daily': total_collected / ((end_date_obj - datetime.strptime(start_date, '%Y-%m-%d').date()).days + 1)}
-    return render(request, 'loans/collections_report.html', context)
-
-@login_required
 @loan_officer_required
 def quick_payment(request):
     if request.method == 'POST':
@@ -1016,3 +1023,1249 @@ def handler403(request, exception):
 
 def handler400(request, exception):
     return render(request, 'loans/400.html', status=400)
+
+@login_required
+@require_http_methods(["POST"])
+def guarantor_delete(request, pk):
+    """Delete a guarantor"""
+    guarantor = get_object_or_404(Guarantor, pk=pk)
+    
+    # Check if user has permission (superuser or admin)
+    if not (request.user.is_superuser or hasattr(request.user, 'profile') and request.user.profile.role == 'ADMIN'):
+        messages.error(request, 'You do not have permission to delete guarantors.')
+        return redirect('loans:guarantor_list')
+    
+    guarantor_name = guarantor.name
+    guarantor.delete()
+    
+    messages.success(request, f'Guarantor "{guarantor_name}" has been deleted successfully.')
+    return redirect('loans:guarantor_list')
+
+@login_required
+@role_required(['ADMIN', 'MANAGER', 'LOAN_OFFICER'])
+def portfolio_report(request):
+    """Generate comprehensive loan portfolio report"""
+    
+    # Get filters from request
+    start_date = request.GET.get('start_date', (timezone.now() - timedelta(days=365)).strftime('%Y-%m-%d'))
+    end_date = request.GET.get('end_date', timezone.now().strftime('%Y-%m-%d'))
+    loan_officer_id = request.GET.get('loan_officer')
+    loan_type = request.GET.get('loan_type')
+    
+    # Convert dates
+    try:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    except ValueError:
+        start_date = (timezone.now() - timedelta(days=365)).date()
+        end_date = timezone.now().date()
+    
+    # Base queryset
+    loans = LoanApplication.objects.filter(
+        application_date__range=[start_date, end_date]
+    ).select_related('client_account', 'loan_officer')
+    
+    # Apply filters
+    if loan_officer_id:
+        loans = loans.filter(loan_officer_id=loan_officer_id)
+    
+    if loan_type:
+        loans = loans.filter(loan_type=loan_type)
+    
+    # Calculate summary statistics
+    total_loans = loans.count()
+    active_loans = loans.filter(status__in=['ACTIVE', 'APPROVED', 'DISBURSED']).count()
+    total_portfolio = loans.aggregate(total=Sum('loan_amount'))['total'] or Decimal('0.00')
+    total_outstanding = loans.aggregate(total=Sum('remaining_balance'))['total'] or Decimal('0.00')
+    
+    # Calculate NPL ratio (Non-Performing Loans > 90 days)
+    npl_amount = loans.filter(
+        status='ACTIVE',
+        days_overdue__gt=90
+    ).aggregate(total=Sum('remaining_balance'))['total'] or Decimal('0.00')
+    
+    npl_ratio = (npl_amount / total_outstanding * 100) if total_outstanding > 0 else Decimal('0.00')
+    
+    # Calculate collection rate
+    total_repayments = LoanRepayment.objects.filter(
+        loan__in=loans,
+        payment_date__range=[start_date, end_date]
+    ).aggregate(total=Sum('amount_paid'))['total'] or Decimal('0.00')
+    
+    total_due = loans.filter(status='ACTIVE').aggregate(
+        total=Sum('remaining_balance') + Sum('total_interest')
+    )['total'] or Decimal('0.00')
+    
+    collection_rate = (total_repayments / total_due * 100) if total_due > 0 else Decimal('0.00')
+    
+    # Status distribution
+    status_distribution = []
+    for status_code, status_name in LoanApplication.STATUS_CHOICES:
+        status_loans = loans.filter(status=status_code)
+        count = status_loans.count()
+        total_amount = status_loans.aggregate(total=Sum('loan_amount'))['total'] or Decimal('0.00')
+        
+        if count > 0:
+            percentage = (total_amount / total_portfolio * 100) if total_portfolio > 0 else Decimal('0.00')
+            avg_size = total_amount / count
+            
+            status_distribution.append({
+                'status': status_code,
+                'status_display': status_name,
+                'count': count,
+                'total_amount': total_amount,
+                'percentage': percentage,
+                'avg_size': avg_size,
+                'badge_color': {
+                    'PENDING': 'secondary',
+                    'APPROVED': 'info',
+                    'DISBURSED': 'primary',
+                    'ACTIVE': 'success',
+                    'COMPLETED': 'success',
+                    'DEFAULTED': 'danger',
+                    'WRITTEN_OFF': 'dark',
+                }.get(status_code, 'secondary')
+            })
+    
+    # Performance metrics
+    par_30 = loans.filter(
+        status='ACTIVE',
+        days_overdue__gt=30,
+        days_overdue__lte=60
+    ).aggregate(total=Sum('remaining_balance'))['total'] or Decimal('0.00')
+    
+    par_60 = loans.filter(
+        status='ACTIVE',
+        days_overdue__gt=60
+    ).aggregate(total=Sum('remaining_balance'))['total'] or Decimal('0.00')
+    
+    write_offs = loans.filter(
+        status='WRITTEN_OFF',
+        application_date__range=[start_date, end_date]
+    ).aggregate(total=Sum('loan_amount'))['total'] or Decimal('0.00')
+    
+    # Prepare chart data
+    status_labels = [s['status_display'] for s in status_distribution]
+    status_data = [float(s['total_amount']) for s in status_distribution]
+    status_colors = [f'#{hash(s["status_display"]) % 0xFFFFFF:06x}' for s in status_distribution]
+    
+    # Disbursement trend (last 12 months)
+    disbursement_months = []
+    disbursement_amounts = []
+    for i in range(11, -1, -1):
+        month_date = (timezone.now() - timedelta(days=30*i)).replace(day=1)
+        month_start = month_date.replace(day=1)
+        month_end = (month_date + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        
+        month_amount = loans.filter(
+            disbursement_date__range=[month_start, month_end]
+        ).aggregate(total=Sum('loan_amount'))['total'] or Decimal('0.00')
+        
+        disbursement_months.append(month_date.strftime('%b %Y'))
+        disbursement_amounts.append(float(month_amount))
+    
+    # Loan type distribution
+    loan_types_data = loans.values('loan_type').annotate(
+        count=Count('id'),
+        total=Sum('loan_amount')
+    ).order_by('-total')
+    
+    loan_type_labels = [dict(LoanApplication.LOAN_TYPE_CHOICES).get(item['loan_type'], item['loan_type']) 
+                        for item in loan_types_data]
+    loan_type_data = [float(item['total']) for item in loan_types_data]
+    
+    # Risk ratings (if available)
+    risk_ratings = []
+    # Add your risk rating logic here
+    
+    # Officer performance
+    officer_performance = []
+    officers = User.objects.filter(loan_applications__in=loans).distinct()
+    for officer in officers:
+        officer_loans = loans.filter(loan_officer=officer)
+        officer_portfolio = officer_loans.aggregate(total=Sum('loan_amount'))['total'] or Decimal('0.00')
+        officer_npl = officer_loans.filter(status='ACTIVE', days_overdue__gt=90).aggregate(
+            total=Sum('remaining_balance'))['total'] or Decimal('0.00')
+        officer_npl_ratio = (officer_npl / officer_portfolio * 100) if officer_portfolio > 0 else Decimal('0.00')
+        
+        officer_performance.append({
+            'name': officer.get_full_name() or officer.username,
+            'loan_count': officer_loans.count(),
+            'portfolio': officer_portfolio,
+            'npl_ratio': officer_npl_ratio,
+            'collection_rate': Decimal('95.5')  # Replace with actual calculation
+        })
+    
+    context = {
+        'start_date': start_date,
+        'end_date': end_date,
+        'selected_officer': int(loan_officer_id) if loan_officer_id else None,
+        'selected_type': loan_type,
+        'loan_officers': User.objects.filter(groups__name='Loan Officer').distinct(),
+        'loan_types': LoanApplication.LOAN_TYPE_CHOICES,
+        
+        'summary': {
+            'total_loans': total_loans,
+            'active_loans': active_loans,
+            'total_portfolio': total_portfolio,
+            'total_outstanding': total_outstanding,
+            'npl_ratio': npl_ratio,
+            'collection_rate': collection_rate,
+            'avg_loan_size': total_portfolio / total_loans if total_loans > 0 else Decimal('0.00'),
+        },
+        
+        'status_distribution': status_distribution,
+        'performance': {
+            'par_30': par_30,
+            'par_30_percentage': (par_30 / total_outstanding * 100) if total_outstanding > 0 else Decimal('0.00'),
+            'par_60': par_60,
+            'par_60_percentage': (par_60 / total_outstanding * 100) if total_outstanding > 0 else Decimal('0.00'),
+            'write_offs': write_offs,
+            'write_offs_percentage': (write_offs / total_portfolio * 100) if total_portfolio > 0 else Decimal('0.00'),
+        },
+        
+        'status_labels': status_labels,
+        'status_data': status_data,
+        'status_colors': status_colors,
+        'disbursement_months': disbursement_months,
+        'disbursement_amounts': disbursement_amounts,
+        'loan_type_labels': loan_type_labels,
+        'loan_type_data': loan_type_data,
+        
+        'risk_ratings': risk_ratings,
+        'officer_performance': officer_performance,
+        
+        'loans': loans[:100],  # Limit to 100 for performance
+        'generated_at': timezone.now(),
+    }
+    
+    # Handle exports
+    if request.GET.get('export') == 'csv':
+        return export_portfolio_csv(loans, context)
+    elif request.GET.get('export') == 'pdf':
+        return export_portfolio_pdf(context)
+    
+    return render(request, 'loans/portfolio_report.html', context)
+
+
+def export_portfolio_csv(queryset, context):
+    """Export portfolio report to CSV"""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="portfolio_report_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+    
+    writer = csv.writer(response)
+    
+    # Write summary section
+    writer.writerow(['LOAN PORTFOLIO REPORT'])
+    writer.writerow([f'Period: {context["start_date"]} to {context["end_date"]}'])
+    writer.writerow([f'Generated: {context["generated_at"].strftime("%Y-%m-%d %H:%M:%S")}'])
+    writer.writerow([])
+    
+    writer.writerow(['SUMMARY STATISTICS'])
+    writer.writerow(['Metric', 'Value'])
+    writer.writerow(['Total Loans', context['summary']['total_loans']])
+    writer.writerow(['Active Loans', context['summary']['active_loans']])
+    writer.writerow(['Total Portfolio', f"${context['summary']['total_portfolio']:.2f}"])
+    writer.writerow(['Total Outstanding', f"${context['summary']['total_outstanding']:.2f}"])
+    writer.writerow(['NPL Ratio', f"{context['summary']['npl_ratio']:.2f}%"])
+    writer.writerow(['Collection Rate', f"{context['summary']['collection_rate']:.2f}%"])
+    writer.writerow([])
+    
+    # Write status distribution
+    writer.writerow(['STATUS DISTRIBUTION'])
+    writer.writerow(['Status', 'Count', 'Amount', '% of Portfolio', 'Avg Size'])
+    for status in context['status_distribution']:
+        writer.writerow([
+            status['status_display'],
+            status['count'],
+            f"${status['total_amount']:.2f}",
+            f"{status['percentage']:.2f}%",
+            f"${status['avg_size']:.2f}"
+        ])
+    writer.writerow([])
+    
+    # Write loan details
+    writer.writerow(['LOAN DETAILS'])
+    writer.writerow([
+        'Loan ID', 'Client', 'Loan Officer', 'Type', 'Disbursed',
+        'Principal', 'Outstanding', 'Status', 'Days Overdue'
+    ])
+    
+    for loan in queryset:
+        writer.writerow([
+            loan.id,
+            loan.client_account.full_account_name,
+            loan.loan_officer.get_full_name() or loan.loan_officer.username,
+            loan.get_loan_type_display(),
+            loan.disbursement_date.strftime('%Y-%m-%d') if loan.disbursement_date else '',
+            f"${loan.loan_amount:.2f}",
+            f"${loan.remaining_balance:.2f}",
+            loan.get_status_display(),
+            loan.days_overdue or 0
+        ])
+    
+    return response
+
+@login_required
+@role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_MANAGER, UserProfile.ROLE_LOAN_OFFICER, UserProfile.ROLE_ACCOUNTANT])
+def overdue_report(request):
+    """Generate overdue loans report"""
+    
+    # Get filters from request
+    days_filter = request.GET.get('days_overdue', '')
+    loan_officer_id = request.GET.get('loan_officer')
+    risk_filter = request.GET.get('risk_rating')
+    amount_filter = request.GET.get('amount_range')
+    
+    # Base queryset - get active loans with overdue payments
+    loans = LoanApplication.objects.filter(
+        status='ACTIVE',
+        remaining_balance__gt=0
+    ).select_related('client_account', 'loan_officer')
+    
+    # Calculate days overdue for each loan (you need to implement this logic)
+    # This is a simplified version - adjust based on your model structure
+    for loan in loans:
+        # Calculate days overdue based on your payment schedule
+        # This is placeholder logic
+        loan.days_overdue = getattr(loan, 'days_overdue', 0) or 0
+    
+    # Apply filters
+    if days_filter:
+        if days_filter == '1-30':
+            loans = [l for l in loans if 1 <= l.days_overdue <= 30]
+        elif days_filter == '31-60':
+            loans = [l for l in loans if 31 <= l.days_overdue <= 60]
+        elif days_filter == '61-90':
+            loans = [l for l in loans if 61 <= l.days_overdue <= 90]
+        elif days_filter == '90+':
+            loans = [l for l in loans if l.days_overdue >= 90]
+    
+    if loan_officer_id:
+        loans = [l for l in loans if l.loan_officer_id == int(loan_officer_id)]
+    
+    if risk_filter:
+        loans = [l for l in loans if l.risk_rating == risk_filter]
+    
+    # Apply amount filter (simplified)
+    if amount_filter:
+        if amount_filter == '0-1000':
+            loans = [l for l in loans if l.remaining_balance <= 1000]
+        elif amount_filter == '1001-5000':
+            loans = [l for l in loans if 1001 <= l.remaining_balance <= 5000]
+        elif amount_filter == '5001-10000':
+            loans = [l for l in loans if 5001 <= l.remaining_balance <= 10000]
+        elif amount_filter == '10000+':
+            loans = [l for l in loans if l.remaining_balance >= 10000]
+    
+    # Convert back to queryset for pagination
+    loan_ids = [loan.id for loan in loans]
+    overdue_loans = LoanApplication.objects.filter(id__in=loan_ids).order_by('-days_overdue')
+    
+    # Calculate summary statistics
+    total_overdue = len(loans)
+    total_amount = sum(loan.remaining_balance for loan in loans)
+    avg_days_overdue = sum(loan.days_overdue for loan in loans) / total_overdue if total_overdue > 0 else 0
+    
+    # Calculate PAR (Portfolio at Risk) by days
+    par_30 = len([l for l in loans if l.days_overdue > 30])
+    par_60 = len([l for l in loans if l.days_overdue > 60])
+    npl_count = len([l for l in loans if l.days_overdue > 90])
+    
+    # Distribution data for chart
+    distribution_data = [
+        len([l for l in loans if 1 <= l.days_overdue <= 30]),
+        len([l for l in loans if 31 <= l.days_overdue <= 60]),
+        len([l for l in loans if 61 <= l.days_overdue <= 90]),
+        len([l for l in loans if l.days_overdue > 90])
+    ]
+    
+    # Officer analysis
+    officer_analysis = []
+    officers = User.objects.filter(loan_applications__in=overdue_loans).distinct()
+    for officer in officers:
+        officer_loans = [l for l in loans if l.loan_officer_id == officer.id]
+        if officer_loans:
+            officer_analysis.append({
+                'name': officer.get_full_name() or officer.username,
+                'count': len(officer_loans),
+                'amount': sum(l.remaining_balance for l in officer_loans),
+                'avg_days': sum(l.days_overdue for l in officer_loans) / len(officer_loans),
+                'risk_score': min(100, sum(l.days_overdue for l in officer_loans) / len(officer_loans) * 10)
+            })
+    
+    # Recovery stats
+    recovery_stats = {
+        'immediate': len([l for l in loans if l.days_overdue >= 60]),
+        'followup': len([l for l in loans if 30 <= l.days_overdue < 60]),
+        'contact_attempts': 0  # You need to implement contact tracking
+    }
+    
+    # Pagination
+    paginator = Paginator(overdue_loans, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'overdue_loans': page_obj,
+        'summary': {
+            'total_overdue': total_overdue,
+            'total_amount': total_amount,
+            'avg_days_overdue': avg_days_overdue,
+            'par_30': par_30,
+            'par_60': par_60,
+            'npl_count': npl_count,
+            'recovery_rate': 0,  # Implement based on your recovery logic
+        },
+        'days_filter': days_filter,
+        'selected_officer': int(loan_officer_id) if loan_officer_id else None,
+        'risk_filter': risk_filter,
+        'amount_filter': amount_filter,
+        'loan_officers': User.objects.filter(groups__name='Loan Officer').distinct(),
+        'collection_officers': User.objects.filter(groups__name='Collection Officer').distinct(),
+        'distribution_data': distribution_data,
+        'officer_analysis': officer_analysis,
+        'recovery_stats': recovery_stats,
+        'user_role': get_user_role(request),
+        'generated_at': timezone.now(),
+    }
+    
+    return render(request, 'loans/overdue_report.html', context)
+
+
+@login_required
+@staff_required
+def collections_report(request):
+    """View for collections/payments report"""
+    
+    # Get date range from request or use defaults
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    period = request.GET.get('period', '')
+    
+    today = timezone.now().date()
+    
+    # Set date range based on period or custom dates
+    if period == 'today':
+        start_date = today
+        end_date = today
+    elif period == 'week':
+        start_date = today - timedelta(days=today.weekday())
+        end_date = today
+    elif period == 'month':
+        start_date = today.replace(day=1)
+        end_date = today
+    elif period == 'quarter':
+        quarter = (today.month - 1) // 3 + 1
+        start_date = today.replace(month=3 * quarter - 2, day=1)
+        end_date = today
+    elif period == 'year':
+        start_date = today.replace(month=1, day=1)
+        end_date = today
+    else:
+        # Use custom dates or defaults
+        if not start_date:
+            start_date = (today - timedelta(days=30)).isoformat()
+        if not end_date:
+            end_date = today.isoformat()
+        
+        # Convert to date objects
+        if isinstance(start_date, str):
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        if isinstance(end_date, str):
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    
+    # Get payments using LoanTransaction (your actual model)
+    payments = LoanTransaction.objects.filter(
+        transaction_type__in=['PRINCIPAL_PAYMENT', 'INTEREST_PAYMENT', 'LATE_FEE_PAYMENT'],
+        value_date__range=[start_date, end_date]
+    ).select_related('loan', 'loan__client', 'recorded_by').order_by('-value_date')
+    
+    # Calculate statistics - using 'amount' field (correct field name)
+    total_collections = payments.aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    # Today's collections
+    today_collections = LoanTransaction.objects.filter(
+        transaction_type__in=['PRINCIPAL_PAYMENT', 'INTEREST_PAYMENT', 'LATE_FEE_PAYMENT'],
+        value_date=today
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    # This week collections
+    week_start = today - timedelta(days=today.weekday())
+    week_collections = LoanTransaction.objects.filter(
+        transaction_type__in=['PRINCIPAL_PAYMENT', 'INTEREST_PAYMENT', 'LATE_FEE_PAYMENT'],
+        value_date__gte=week_start
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    # This month collections
+    month_collections = LoanTransaction.objects.filter(
+        transaction_type__in=['PRINCIPAL_PAYMENT', 'INTEREST_PAYMENT', 'LATE_FEE_PAYMENT'],
+        value_date__month=today.month,
+        value_date__year=today.year
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+    
+    # Payment method breakdown
+    by_method = payments.values('payment_method').annotate(
+        total=Sum('amount'),
+        count=Count('id')
+    ).order_by('-total')
+    
+    # Calculate percentages for payment methods
+    for method in by_method:
+        if total_collections > 0:
+            method['percentage'] = (method['total'] / total_collections) * 100
+        else:
+            method['percentage'] = 0
+    
+    # By officer breakdown
+    by_officer = payments.values('recorded_by__username').annotate(
+        total=Sum('amount'),
+        count=Count('id')
+    ).order_by('-total')
+    
+    # Daily totals for chart
+    daily_totals = {}
+    current_date = start_date
+    while current_date <= end_date:
+        daily_total = payments.filter(value_date=current_date).aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0')
+        daily_totals[current_date.isoformat()] = float(daily_total)
+        current_date += timedelta(days=1)
+    
+    # Calculate average daily collection
+    days_in_period = (end_date - start_date).days + 1
+    average_daily = total_collections / days_in_period if days_in_period > 0 else Decimal('0')
+    
+    # Pagination
+    page = request.GET.get('page', 1)
+    paginator = Paginator(payments, 50)  # 50 items per page
+    
+    try:
+        payments_page = paginator.page(page)
+    except PageNotAnInteger:
+        payments_page = paginator.page(1)
+    except EmptyPage:
+        payments_page = paginator.page(paginator.num_pages)
+    
+    # Recent payments for activity feed
+    recent_payments = LoanTransaction.objects.filter(
+        transaction_type__in=['PRINCIPAL_PAYMENT', 'INTEREST_PAYMENT', 'LATE_FEE_PAYMENT']
+    ).order_by('-value_date')[:10]
+    
+    # Handle CSV export
+    export_format = request.GET.get('export')
+    if export_format == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="collections_{start_date}_to_{end_date}.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Date', 'Loan Number', 'Client', 'Payment Method', 'Amount', 'Type', 'Recorded By'])
+        
+        for payment in payments:
+            writer.writerow([
+                payment.value_date,
+                payment.loan.loan_number,
+                payment.loan.client.full_account_name,
+                payment.payment_method,
+                payment.amount,
+                payment.transaction_type,
+                payment.recorded_by.username if payment.recorded_by else 'N/A'
+            ])
+        
+        return response
+    
+    # Prepare context
+    context = {
+        'payments': payments_page,
+        'start_date': start_date.isoformat() if isinstance(start_date, date) else start_date,
+        'end_date': end_date.isoformat() if isinstance(end_date, date) else end_date,
+        'period': period,
+        'total_collections': total_collections,
+        'today_collections': today_collections,
+        'week_collections': week_collections,
+        'month_collections': month_collections,
+        'payment_count': payments.count(),
+        'today_count': LoanTransaction.objects.filter(
+            transaction_type__in=['PRINCIPAL_PAYMENT', 'INTEREST_PAYMENT', 'LATE_FEE_PAYMENT'],
+            value_date=today
+        ).count(),
+        'week_count': LoanTransaction.objects.filter(
+            transaction_type__in=['PRINCIPAL_PAYMENT', 'INTEREST_PAYMENT', 'LATE_FEE_PAYMENT'],
+            value_date__gte=week_start
+        ).count(),
+        'month_count': LoanTransaction.objects.filter(
+            transaction_type__in=['PRINCIPAL_PAYMENT', 'INTEREST_PAYMENT', 'LATE_FEE_PAYMENT'],
+            value_date__month=today.month,
+            value_date__year=today.year
+        ).count(),
+        'by_method': by_method,
+        'method_breakdown': by_method,  # Alias for template compatibility
+        'by_officer': by_officer,
+        'daily_totals': daily_totals,
+        'average_daily': average_daily,
+        'recent_payments': recent_payments,
+    }
+    
+    return render(request, 'loans/collections_report.html', context)
+
+@login_required
+def export_collections_csv(request):
+    """Export collections report as CSV"""
+    from django.http import HttpResponse
+    import csv
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="collections_report.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow([
+        'Payment Date', 'Application Number', 'Client Name', 
+        'Amount (UGX)', 'Payment Method', 'Received By', 
+        'Transaction Reference', 'Notes'
+    ])
+    
+    payments = LoanPayment.objects.all().order_by('-payment_date')
+    
+    for payment in payments:
+        writer.writerow([
+            payment.payment_date.strftime('%Y-%m-%d %H:%M'),
+            payment.loan_application.application_number,
+            payment.loan_application.client_account.full_account_name,
+            payment.payment_amount,
+            payment.get_payment_method_display(),
+            payment.received_by.get_full_name() or payment.received_by.username,
+            payment.transaction_reference,
+            payment.notes[:100] if payment.notes else ''
+        ])
+    
+    return response
+
+@login_required
+def bulk_payment(request):
+    """View for bulk payment processing"""
+    # Get active loans for dropdown
+    active_loans = LoanApplication.objects.filter(
+        status='DISBURSED'
+    ).select_related('client_account')
+    
+    # Prepare loan data for JavaScript
+    loans_data = []
+    for loan in active_loans:
+        loans_data.append({
+            'id': loan.id,
+            'number': loan.application_number,
+            'client': loan.client_account.full_account_name,
+            'balance': float(loan.get_balance_remaining()),
+            'balance_formatted': f"{loan.get_balance_remaining():,.2f} UGX"
+        })
+    
+    context = {
+        'active_loans': active_loans,
+        'active_loans_json': json.dumps(loans_data),
+        'today': timezone.now().date(),
+    }
+    return render(request, 'loans/bulk_payment.html', context)
+
+@login_required
+@transaction.atomic
+def process_bulk_payments(request):
+    """Process uploaded CSV file for bulk payments"""
+    if request.method == 'POST' and request.FILES.get('csv_file'):
+        csv_file = request.FILES['csv_file']
+        
+        # Read CSV file
+        try:
+            # Try different encodings
+            content = csv_file.read().decode('utf-8')
+        except UnicodeDecodeError:
+            try:
+                content = csv_file.read().decode('latin-1')
+            except UnicodeDecodeError:
+                content = csv_file.read().decode('cp1252')
+        
+        io_string = io.StringIO(content)
+        
+        # Parse CSV
+        reader = csv.DictReader(io_string)
+        required_columns = ['loan_application_number', 'payment_amount']
+        
+        # Validate columns
+        if not all(col in reader.fieldnames for col in required_columns):
+            messages.error(request, f'CSV must contain columns: {", ".join(required_columns)}')
+            return redirect('bulk_payment')
+        
+        # Process rows
+        success_count = 0
+        error_rows = []
+        
+        for i, row in enumerate(reader, start=2):  # start=2 for Excel row numbers
+            try:
+                # Get loan application
+                app_number = row['loan_application_number'].strip()
+                loan_app = LoanApplication.objects.get(application_number=app_number)
+                
+                # Validate loan status
+                if loan_app.status != 'DISBURSED':
+                    error_rows.append(f"Row {i}: Loan {app_number} is not active")
+                    continue
+                
+                # Get payment amount
+                payment_amount = Decimal(row['payment_amount'].replace(',', ''))
+                
+                # Check if payment exceeds balance
+                balance = loan_app.get_balance_remaining()
+                if payment_amount > balance:
+                    error_rows.append(f"Row {i}: Payment {payment_amount} exceeds balance {balance}")
+                    continue
+                
+                # Get optional fields
+                transaction_ref = row.get('transaction_reference', '').strip()
+                notes = row.get('notes', '').strip()
+                payment_method = request.POST.get('default_payment_method', 'CASH')
+                payment_date_str = request.POST.get('payment_date')
+                
+                # Create payment
+                payment = LoanPayment(
+                    loan_application=loan_app,
+                    payment_amount=payment_amount,
+                    payment_method=payment_method,
+                    received_by=request.user,
+                    transaction_reference=transaction_ref,
+                    notes=notes
+                )
+                
+                # Set custom payment date if provided
+                if payment_date_str:
+                    payment_date = timezone.datetime.strptime(payment_date_str, '%Y-%m-%d').date()
+                    payment.payment_date = timezone.make_aware(
+                        timezone.datetime.combine(payment_date, timezone.datetime.min.time())
+                    )
+                
+                # Save payment
+                payment.full_clean()
+                payment.save()
+                success_count += 1
+                
+            except LoanApplication.DoesNotExist:
+                error_rows.append(f"Row {i}: Loan application {row['loan_application_number']} not found")
+            except ValidationError as e:
+                error_rows.append(f"Row {i}: Validation error - {e}")
+            except (ValueError, KeyError) as e:
+                error_rows.append(f"Row {i}: Data error - {e}")
+        
+        # Show results
+        if success_count > 0:
+            messages.success(request, f'Successfully processed {success_count} payments')
+        
+        if error_rows:
+            messages.warning(request, f'{len(error_rows)} rows had errors. See details below.')
+            for error in error_rows[:10]:  # Show first 10 errors
+                messages.info(request, error)
+            if len(error_rows) > 10:
+                messages.info(request, f'... and {len(error_rows) - 10} more errors')
+        
+        return redirect('payments_list')
+    
+    return redirect('bulk_payment')
+
+@login_required
+@transaction.atomic
+def save_bulk_payments(request):
+    """Save multiple payments from manual entry form"""
+    if request.method == 'POST':
+        payment_date_str = request.POST.get('payment_date')
+        payment_method = request.POST.get('payment_method', 'CASH')
+        
+        success_count = 0
+        errors = []
+        
+        # Find all payment entries
+        i = 1
+        while True:
+            loan_key = f'loan_application_{i}'
+            if loan_key not in request.POST:
+                break
+            
+            loan_id = request.POST.get(loan_key)
+            if not loan_id:
+                i += 1
+                continue
+            
+            try:
+                loan_app = LoanApplication.objects.get(id=loan_id)
+                
+                # Get payment data
+                amount_key = f'payment_amount_{i}'
+                ref_key = f'transaction_ref_{i}'
+                notes_key = f'notes_{i}'
+                
+                payment_amount = Decimal(request.POST.get(amount_key, 0))
+                
+                if payment_amount <= 0:
+                    i += 1
+                    continue
+                
+                # Create payment
+                payment = LoanPayment(
+                    loan_application=loan_app,
+                    payment_amount=payment_amount,
+                    payment_method=payment_method,
+                    received_by=request.user,
+                    transaction_reference=request.POST.get(ref_key, ''),
+                    notes=request.POST.get(notes_key, '')
+                )
+                
+                # Set custom payment date
+                if payment_date_str:
+                    payment_date = timezone.datetime.strptime(payment_date_str, '%Y-m-%d').date()
+                    payment.payment_date = timezone.make_aware(
+                        timezone.datetime.combine(payment_date, timezone.datetime.min.time())
+                    )
+                
+                payment.full_clean()
+                payment.save()
+                success_count += 1
+                
+            except LoanApplication.DoesNotExist:
+                errors.append(f"Entry {i}: Loan not found")
+            except ValidationError as e:
+                errors.append(f"Entry {i}: {e}")
+            except (ValueError, KeyError) as e:
+                errors.append(f"Entry {i}: Data error - {e}")
+            
+            i += 1
+        
+        # Show results
+        if success_count > 0:
+            messages.success(request, f'Successfully saved {success_count} payments')
+        
+        if errors:
+            messages.warning(request, f'{len(errors)} entries had errors')
+            for error in errors[:5]:
+                messages.info(request, error)
+        
+        return redirect('payments_list')
+    
+    return redirect('bulk_payment')
+
+@login_required
+def download_bulk_template(request):
+    """Download CSV template for bulk payments"""
+    template_type = request.GET.get('type', 'simple')
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="bulk_payment_template.csv"'
+    
+    writer = csv.writer(response)
+    
+    if template_type == 'simple':
+        writer.writerow(['loan_application_number', 'payment_amount', 'transaction_reference'])
+        writer.writerow(['AN1234', '150000', 'TRX001'])
+        writer.writerow(['AN5678', '75000', 'TRX002'])
+        writer.writerow(['AN9012', '200000', ''])
+    
+    elif template_type == 'detailed':
+        writer.writerow([
+            'loan_application_number',
+            'payment_amount',
+            'payment_method',
+            'transaction_reference',
+            'notes',
+            'payment_date'
+        ])
+        writer.writerow([
+            'AN1234',
+            '150000',
+            'CASH',
+            'TRX001',
+            'Monthly installment',
+            '2024-01-15'
+        ])
+    
+    elif template_type == 'sample':
+        # Add sample data for existing loans
+        writer.writerow(['loan_application_number', 'payment_amount', 'transaction_reference'])
+        
+        # Get some real loan numbers for sample
+        loans = LoanApplication.objects.filter(status='DISBURSED')[:3]
+        for loan in loans:
+            writer.writerow([
+                loan.application_number,
+                '50000',
+                f'SMP{loan.id}'
+            ])
+    
+    return response
+
+
+@login_required
+@require_http_methods(["POST"])
+def process_bulk_payments(request):
+    """Process bulk payments from CSV file"""
+    
+    if 'csv_file' not in request.FILES:
+        messages.error(request, 'Please upload a CSV file.')
+        return redirect('loans:bulk_payment')
+    
+    csv_file = request.FILES['csv_file']
+    
+    # Check file extension
+    if not csv_file.name.endswith('.csv'):
+        messages.error(request, 'File must be in CSV format.')
+        return redirect('loans:bulk_payment')
+    
+    try:
+        # Read CSV file
+        decoded_file = csv_file.read().decode('utf-8')
+        io_string = io.StringIO(decoded_file)
+        reader = csv.DictReader(io_string)
+        
+        success_count = 0
+        error_count = 0
+        errors = []
+        
+        # Process each row
+        with transaction.atomic():
+            for row_num, row in enumerate(reader, start=2):  # Start at 2 (after header)
+                try:
+                    # Get loan by loan number
+                    loan_number = row.get('loan_number', '').strip()
+                    amount = row.get('amount', '').strip()
+                    payment_method = row.get('payment_method', 'CASH').strip().upper()
+                    payment_date = row.get('payment_date', '').strip()
+                    
+                    # Validate required fields
+                    if not loan_number or not amount:
+                        errors.append(f"Row {row_num}: Missing required fields")
+                        error_count += 1
+                        continue
+                    
+                    # Get loan
+                    try:
+                        loan = Loan.objects.get(loan_number=loan_number)
+                    except Loan.DoesNotExist:
+                        errors.append(f"Row {row_num}: Loan {loan_number} not found")
+                        error_count += 1
+                        continue
+                    
+                    # Convert amount
+                    try:
+                        payment_amount = Decimal(amount)
+                    except:
+                        errors.append(f"Row {row_num}: Invalid amount format")
+                        error_count += 1
+                        continue
+                    
+                    # Parse date
+                    if payment_date:
+                        try:
+                            from datetime import datetime
+                            payment_date_obj = datetime.strptime(payment_date, '%Y-%m-%d').date()
+                        except:
+                            payment_date_obj = timezone.now().date()
+                    else:
+                        payment_date_obj = timezone.now().date()
+                    
+                    # Create transaction
+                    LoanTransaction.objects.create(
+                        loan=loan,
+                        transaction_type='PRINCIPAL_PAYMENT',
+                        amount=payment_amount,
+                        payment_method=payment_method,
+                        value_date=payment_date_obj,
+                        recorded_by=request.user,
+                        description=f'Bulk payment import - Row {row_num}'
+                    )
+                    
+                    success_count += 1
+                    
+                except Exception as e:
+                    errors.append(f"Row {row_num}: {str(e)}")
+                    error_count += 1
+        
+        # Show results
+        if success_count > 0:
+            messages.success(request, f'Successfully processed {success_count} payment(s).')
+        
+        if error_count > 0:
+            error_message = f'{error_count} payment(s) failed:<br>'
+            error_message += '<br>'.join(errors[:10])  # Show first 10 errors
+            if len(errors) > 10:
+                error_message += f'<br>...and {len(errors) - 10} more errors'
+            messages.warning(request, error_message)
+        
+    except Exception as e:
+        messages.error(request, f'Error processing file: {str(e)}')
+    
+    return redirect('loans:bulk_payment')
+
+
+
+
+@login_required
+def bulk_disbursement(request):
+    """View for bulk loan disbursement"""
+    # Get approved loans ready for disbursement
+    approved_loans = LoanApplication.objects.filter(
+        status='APPROVED'
+    ).select_related('client_account', 'loan_product').order_by('application_date')
+    
+    # Get recent disbursements for reference
+    recent_disbursements = LoanApplication.objects.filter(
+        status='DISBURSED'
+    ).select_related('client_account').order_by('-disbursement_date')[:10]
+    
+    # Prepare loan data for calculations
+    loans_data = []
+    for loan in approved_loans:
+        loans_data.append({
+            'id': loan.id,
+            'number': loan.application_number,
+            'client': loan.client_account.full_account_name,
+            'amount': float(loan.loan_amount),
+            'interest': float(loan.interest_amount),
+            'total': float(loan.total_amount)
+        })
+    
+    context = {
+        'approved_loans': approved_loans,
+        'recent_disbursements': recent_disbursements,
+        'approved_loans_json': json.dumps(loans_data),
+        'today': timezone.now().date(),
+    }
+    return render(request, 'loans/bulk_disbursement.html', context)
+
+@login_required
+@transaction.atomic
+def process_bulk_disbursement(request):
+    """Process multiple loan disbursements"""
+    if request.method == 'POST':
+        loan_ids = request.POST.getlist('loan_ids')
+        disbursement_date_str = request.POST.get('disbursement_date')
+        disbursement_method = request.POST.get('disbursement_method', 'CASH')
+        transaction_prefix = request.POST.get('transaction_prefix', 'DISB-')
+        disbursement_notes = request.POST.get('disbursement_notes', '')
+        
+        if not loan_ids:
+            messages.error(request, 'Please select at least one loan to disburse.')
+            return redirect('bulk_disbursement')
+        
+        success_count = 0
+        errors = []
+        
+        # Parse disbursement date
+        try:
+            disbursement_date = datetime.strptime(disbursement_date_str, '%Y-%m-%d').date()
+            disbursement_datetime = timezone.make_aware(
+                datetime.combine(disbursement_date, datetime.min.time())
+            )
+        except (ValueError, TypeError):
+            disbursement_datetime = timezone.now()
+        
+        for i, loan_id in enumerate(loan_ids):
+            try:
+                loan = LoanApplication.objects.get(id=loan_id)
+                
+                # Validate loan is approved
+                if loan.status != 'APPROVED':
+                    errors.append(f"Loan {loan.application_number} is not approved (status: {loan.status})")
+                    continue
+                
+                # Check if already disbursed
+                if loan.disbursement_date:
+                    errors.append(f"Loan {loan.application_number} was already disbursed on {loan.disbursement_date.date()}")
+                    continue
+                
+                # Generate transaction reference
+                transaction_ref = f"{transaction_prefix}{loan.application_number}"
+                
+                # Update loan for disbursement
+                loan.status = 'DISBURSED'
+                loan.disbursement_date = disbursement_datetime
+                loan.disbursed_by = request.user
+                loan.disbursed_amount = loan.loan_amount
+                loan.transaction_reference = transaction_ref
+                loan.disbursement_notes = disbursement_notes
+                
+                # Set due date based on loan period
+                loan.due_date = loan.calculate_due_date()
+                
+                # Save the loan
+                loan.save()
+                success_count += 1
+                
+                # Log the action
+                messages.info(request, f"✓ Disbursed {loan.application_number}: {loan.loan_amount} UGX to {loan.client_account.full_account_name}")
+                
+            except LoanApplication.DoesNotExist:
+                errors.append(f"Loan with ID {loan_id} not found")
+            except ValidationError as e:
+                errors.append(f"Loan {loan_id}: {e}")
+            except Exception as e:
+                errors.append(f"Error processing loan {loan_id}: {str(e)}")
+        
+        # Show results
+        if success_count > 0:
+            messages.success(request, f'Successfully disbursed {success_count} loans')
+        
+        if errors:
+            messages.warning(request, f'{len(errors)} errors occurred')
+            for error in errors[:5]:  # Show first 5 errors
+                messages.error(request, error)
+            if len(errors) > 5:
+                messages.info(request, f'... and {len(errors) - 5} more errors')
+        
+        return redirect('loan_applications_list')
+    
+    return redirect('bulk_disbursement')
+
+@login_required
+@transaction.atomic
+def upload_bulk_disbursement(request):
+    """Process CSV upload for bulk disbursement"""
+    if request.method == 'POST' and request.FILES.get('csv_file'):
+        csv_file = request.FILES['csv_file']
+        
+        # Read CSV file
+        try:
+            content = csv_file.read().decode('utf-8')
+        except UnicodeDecodeError:
+            try:
+                content = csv_file.read().decode('latin-1')
+            except UnicodeDecodeError:
+                content = csv_file.read().decode('cp1252')
+        
+        io_string = io.StringIO(content)
+        
+        # Parse CSV
+        reader = csv.DictReader(io_string)
+        required_columns = ['loan_application_number']
+        
+        # Validate columns
+        if not all(col in reader.fieldnames for col in required_columns):
+            messages.error(request, f'CSV must contain column: {", ".join(required_columns)}')
+            return redirect('bulk_disbursement')
+        
+        # Get form data
+        disbursement_date_str = request.POST.get('disbursement_date')
+        disbursement_method = request.POST.get('disbursement_method', 'CASH')
+        transaction_prefix = request.POST.get('transaction_prefix', 'DISB-')
+        validate_only = request.POST.get('validate_only') == 'on'
+        
+        # Parse disbursement date
+        try:
+            disbursement_date = datetime.strptime(disbursement_date_str, '%Y-%m-%d').date()
+            disbursement_datetime = timezone.make_aware(
+                datetime.combine(disbursement_date, datetime.min.time())
+            )
+        except (ValueError, TypeError):
+            disbursement_datetime = timezone.now()
+        
+        # Process rows
+        success_count = 0
+        error_rows = []
+        
+        for i, row in enumerate(reader, start=2):  # start=2 for Excel row numbers
+            try:
+                # Get loan application
+                app_number = row['loan_application_number'].strip()
+                loan = LoanApplication.objects.get(application_number=app_number)
+                
+                # Validate loan
+                if loan.status != 'APPROVED':
+                    error_rows.append(f"Row {i}: Loan {app_number} is not approved (status: {loan.status})")
+                    continue
+                
+                if loan.disbursement_date:
+                    error_rows.append(f"Row {i}: Loan {app_number} already disbursed")
+                    continue
+                
+                # Get transaction reference from CSV or generate
+                transaction_ref = row.get('transaction_reference', '').strip()
+                if not transaction_ref:
+                    transaction_ref = f"{transaction_prefix}{app_number}"
+                
+                # Get specific notes for this loan
+                specific_notes = row.get('disbursement_notes', '').strip()
+                
+                if not validate_only:
+                    # Update loan for disbursement
+                    loan.status = 'DISBURSED'
+                    loan.disbursement_date = disbursement_datetime
+                    loan.disbursed_by = request.user
+                    loan.disbursed_amount = loan.loan_amount
+                    loan.transaction_reference = transaction_ref
+                    loan.disbursement_notes = specific_notes or request.POST.get('general_notes', '')
+                    
+                    # Set due date
+                    loan.due_date = loan.calculate_due_date()
+                    
+                    # Save the loan
+                    loan.save()
+                
+                success_count += 1
+                
+            except LoanApplication.DoesNotExist:
+                error_rows.append(f"Row {i}: Loan application {app_number} not found")
+            except ValidationError as e:
+                error_rows.append(f"Row {i}: Validation error - {e}")
+            except Exception as e:
+                error_rows.append(f"Row {i}: Error - {str(e)}")
+        
+        # Show results
+        if validate_only:
+            if success_count > 0:
+                messages.info(request, f'Validation passed for {success_count} loans')
+            if error_rows:
+                messages.warning(request, f'{len(error_rows)} validation errors found')
+                for error in error_rows[:10]:
+                    messages.info(request, error)
+        else:
+            if success_count > 0:
+                messages.success(request, f'Successfully disbursed {success_count} loans')
+            if error_rows:
+                messages.warning(request, f'{len(error_rows)} errors occurred')
+                for error in error_rows[:5]:
+                    messages.error(request, error)
+        
+        return redirect('loan_applications_list')
+    
+    return redirect('bulk_disbursement')
+
+@login_required
+def download_disbursement_template(request):
+    """Download CSV template for bulk disbursement"""
+    template_type = request.GET.get('type', 'simple')
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="bulk_disbursement_template.csv"'
+    
+    writer = csv.writer(response)
+    
+    if template_type == 'simple':
+        writer.writerow(['loan_application_number'])
+        # Get some approved loans for example
+        approved_loans = LoanApplication.objects.filter(status='APPROVED')[:3]
+        for loan in approved_loans:
+            writer.writerow([loan.application_number])
+    
+    elif template_type == 'detailed':
+        writer.writerow([
+            'loan_application_number',
+            'transaction_reference',
+            'disbursement_notes'
+        ])
+        writer.writerow([
+            'AN1234',
+            'DISB-001',
+            'First disbursement of the month'
+        ])
+    
+    elif template_type == 'sample':
+        writer.writerow(['loan_application_number', 'transaction_reference', 'disbursement_notes'])
+        writer.writerow(['AN1234', 'DISB-2024-001', 'Emergency loan disbursement'])
+        writer.writerow(['AN5678', 'DISB-2024-002', 'Business expansion loan'])
+        writer.writerow(['AN9012', '', 'Agricultural loan - seasonal'])
+    
+    return response

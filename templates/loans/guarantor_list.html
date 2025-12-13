@@ -1,0 +1,578 @@
+{% extends 'base.html' %}
+
+{% block title %}Guarantors Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">Guarantors Management</h1>
+                    <p class="text-muted mb-0">Manage all loan guarantors and their details</p>
+                </div>
+                <div>
+                    <a href="{% url 'loans:guarantor_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle"></i> Add New Guarantor
+                    </a>
+                    <a href="{% url 'loans:dashboard' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Loans
+                    </a>
+                </div>
+            </div>
+            <hr>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Guarantors</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ page_obj.paginator.count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Active Guarantors</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_count|default:"0" }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Guarantees Count</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_guarantees|default:"0" }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-handshake fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Available for New</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ available_count|default:"0" }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-plus fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Card -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Filter Guarantors</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="search" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   value="{{ search_query }}" placeholder="Name, NIN, Phone...">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All Status</option>
+                                <option value="ACTIVE" {% if status_filter == 'ACTIVE' %}selected{% endif %}>Active</option>
+                                <option value="INACTIVE" {% if status_filter == 'INACTIVE' %}selected{% endif %}>Inactive</option>
+                                <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="min_guarantees" class="form-label">Min Guarantees</label>
+                            <input type="number" class="form-control" id="min_guarantees" name="min_guarantees" 
+                                   value="{{ min_guarantees }}" placeholder="Minimum guarantees">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="max_guarantees" class="form-label">Max Guarantees</label>
+                            <input type="number" class="form-control" id="max_guarantees" name="max_guarantees" 
+                                   value="{{ max_guarantees }}" placeholder="Maximum guarantees">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                            <a href="{% url 'loans:guarantor_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </a>
+                            <button type="button" class="btn btn-success" onclick="exportGuarantors()">
+                                <i class="fas fa-file-export"></i> Export Data
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guarantors Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Guarantors List</h5>
+                    <span class="badge bg-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </div>
+                <div class="card-body">
+                    {% if page_obj %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover" id="guarantorsTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Guarantor Details</th>
+                                        <th>Contact Information</th>
+                                        <th>Status</th>
+                                        <th>Guarantees</th>
+                                        <th>Total Guaranteed</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for guarantor in page_obj %}
+                                    <tr>
+                                        <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-shrink-0">
+                                                    {% if guarantor.photo %}
+                                                        <img src="{{ guarantor.photo.url }}" alt="{{ guarantor.full_name }}" 
+                                                             class="rounded-circle" width="40" height="40">
+                                                    {% else %}
+                                                        <div class="avatar-placeholder rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                                                             style="width: 40px; height: 40px;">
+                                                            {{ guarantor.full_name|slice:":1"|upper }}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <h6 class="mb-0">{{ guarantor.full_name }}</h6>
+                                                    <small class="text-muted">NIN: {{ guarantor.nin }}</small><br>
+                                                    <small class="text-muted">Added: {{ guarantor.created_at|date:"Y-m-d" }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="contact-info">
+                                                <div><i class="fas fa-phone text-primary me-2"></i> {{ guarantor.phone }}</div>
+                                                <div><i class="fas fa-envelope text-info me-2"></i> {{ guarantor.email|default:"No email" }}</div>
+                                                <div><i class="fas fa-map-marker-alt text-success me-2"></i> {{ guarantor.address|truncatechars:30 }}</div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if guarantor.status == 'ACTIVE' %}success{% elif guarantor.status == 'INACTIVE' %}danger{% else %}warning{% endif %}">
+                                                {{ guarantor.get_status_display }}
+                                            </span>
+                                            {% if guarantor.is_available %}
+                                            <br>
+                                            <span class="badge bg-success mt-1">Available</span>
+                                            {% else %}
+                                            <br>
+                                            <span class="badge bg-secondary mt-1">Fully Committed</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="text-center">
+                                                <h4 class="mb-0">{{ guarantor.active_guarantees_count|default:"0" }}</h4>
+                                                <small class="text-muted">Active</small>
+                                            </div>
+                                            <div class="progress mt-2" style="height: 5px;">
+                                                {% with max_guarantees=5 %}
+                                                {% widthratio guarantor.active_guarantees_count max_guarantees 100 as percentage %}
+                                                <div class="progress-bar bg-{% if guarantor.active_guarantees_count >= max_guarantees %}danger{% else %}success{% endif %}" 
+                                                     role="progressbar" style="width: {{ percentage }}%;" 
+                                                     aria-valuenow="{{ guarantor.active_guarantees_count }}" 
+                                                     aria-valuemin="0" aria-valuemax="{{ max_guarantees }}">
+                                                </div>
+                                                {% endwith %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="text-center">
+                                                <h5 class="mb-0 text-primary">${{ guarantor.total_guaranteed_amount|default:"0"|floatformat:2 }}</h5>
+                                                <small class="text-muted">Total Guaranteed</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'loans:guarantor_detail' guarantor.pk %}" 
+                                                   class="btn btn-sm btn-outline-info" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'loans:guarantor_update' guarantor.pk %}" 
+                                                   class="btn btn-sm btn-outline-warning" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                {% if user.is_superuser or user_role == 'ADMIN' %}
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        data-bs-toggle="modal" data-bs-target="#deleteModal{{ guarantor.id }}"
+                                                        title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Delete Modal -->
+                                    {% if user.is_superuser or user_role == 'ADMIN' %}
+                                    <div class="modal fade" id="deleteModal{{ guarantor.id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-danger text-white">
+                                                    <h5 class="modal-title">Delete Guarantor</h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form action="{% url 'loans:guarantor_delete' guarantor.pk %}" method="post">
+                                                    {% csrf_token %}
+                                                    <div class="modal-body">
+                                                        <div class="alert alert-warning">
+                                                            <i class="fas fa-exclamation-triangle"></i>
+                                                            <strong>Warning:</strong> This action cannot be undone.
+                                                        </div>
+                                                        
+                                                        <div class="card mb-3">
+                                                            <div class="card-body">
+                                                                <h6>Guarantor Details</h6>
+                                                                <p class="mb-1"><strong>Name:</strong> {{ guarantor.full_name }}</p>
+                                                                <p class="mb-1"><strong>NIN:</strong> {{ guarantor.nin }}</p>
+                                                                <p class="mb-1"><strong>Phone:</strong> {{ guarantor.phone }}</p>
+                                                                <p class="mb-1"><strong>Active Guarantees:</strong> {{ guarantor.active_guarantees_count|default:"0" }}</p>
+                                                                {% if guarantor.active_guarantees_count > 0 %}
+                                                                <div class="alert alert-danger mt-2">
+                                                                    <i class="fas fa-exclamation-circle"></i>
+                                                                    Cannot delete guarantor with active guarantees. Please reassign or close the guarantees first.
+                                                                </div>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+
+                                                        {% if guarantor.active_guarantees_count == 0 %}
+                                                        <div class="mb-3">
+                                                            <label for="reason" class="form-label">Reason for Deletion *</label>
+                                                            <textarea class="form-control" id="reason" name="reason" rows="3" 
+                                                                      placeholder="Enter reason for deleting this guarantor..." required></textarea>
+                                                            <div class="form-text">This reason will be recorded in the audit log.</div>
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        {% if guarantor.active_guarantees_count == 0 %}
+                                                        <button type="submit" class="btn btn-danger">Delete Guarantor</button>
+                                                        {% else %}
+                                                        <button type="button" class="btn btn-danger disabled">Cannot Delete</button>
+                                                        {% endif %}
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <nav aria-label="Guarantor pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if min_guarantees %}&min_guarantees={{ min_guarantees }}{% endif %}{% if max_guarantees %}&max_guarantees={{ max_guarantees }}{% endif %}">
+                                            <i class="fas fa-angle-double-left"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if min_guarantees %}&min_guarantees={{ min_guarantees }}{% endif %}{% if max_guarantees %}&max_guarantees={{ max_guarantees }}{% endif %}">
+                                            <i class="fas fa-angle-left"></i>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                                    </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if min_guarantees %}&min_guarantees={{ min_guarantees }}{% endif %}{% if max_guarantees %}&max_guarantees={{ max_guarantees }}{% endif %}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if min_guarantees %}&min_guarantees={{ min_guarantees }}{% endif %}{% if max_guarantees %}&max_guarantees={{ max_guarantees }}{% endif %}">
+                                            <i class="fas fa-angle-right"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if min_guarantees %}&min_guarantees={{ min_guarantees }}{% endif %}{% if max_guarantees %}&max_guarantees={{ max_guarantees }}{% endif %}">
+                                            <i class="fas fa-angle-double-right"></i>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} guarantors
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-outline-success" onclick="exportGuarantors()">
+                                        <i class="fas fa-file-excel"></i> Export to CSV
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="printTable()">
+                                        <i class="fas fa-print"></i> Print List
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            No guarantors found matching your criteria.
+                            <a href="{% url 'loans:guarantor_create' %}" class="alert-link">Add your first guarantor</a>.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Guarantor Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6>Top Guarantor</h6>
+                                    <h4 class="text-success">{{ top_guarantor.name|default:"None" }}</h4>
+                                    <p class="text-muted mb-0">{{ top_guarantor.count|default:"0" }} guarantees</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6>Average Guarantees</h6>
+                                    <h4 class="text-info">{{ avg_guarantees|default:"0"|floatformat:1 }}</h4>
+                                    <p class="text-muted mb-0">per guarantor</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6>New This Month</h6>
+                                    <h4 class="text-primary">{{ new_this_month|default:"0" }}</h4>
+                                    <p class="text-muted mb-0">guarantors added</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Validate number inputs
+    const minGuarantees = document.getElementById('min_guarantees');
+    const maxGuarantees = document.getElementById('max_guarantees');
+    
+    function validateGuarantees() {
+        if (minGuarantees.value && maxGuarantees.value) {
+            if (parseInt(minGuarantees.value) > parseInt(maxGuarantees.value)) {
+                alert('Minimum guarantees cannot be greater than maximum.');
+                minGuarantees.value = '';
+                maxGuarantees.value = '';
+            }
+        }
+    }
+    
+    if (minGuarantees) minGuarantees.addEventListener('change', validateGuarantees);
+    if (maxGuarantees) maxGuarantees.addEventListener('change', validateGuarantees);
+});
+
+function exportGuarantors() {
+    // Get current filters
+    let url = window.location.pathname + '?export=csv';
+    const params = [];
+    
+    if (document.getElementById('search')?.value) {
+        params.push('search=' + document.getElementById('search').value);
+    }
+    
+    if (document.getElementById('status')?.value) {
+        params.push('status=' + document.getElementById('status').value);
+    }
+    
+    if (document.getElementById('min_guarantees')?.value) {
+        params.push('min_guarantees=' + document.getElementById('min_guarantees').value);
+    }
+    
+    if (document.getElementById('max_guarantees')?.value) {
+        params.push('max_guarantees=' + document.getElementById('max_guarantees').value);
+    }
+    
+    if (params.length > 0) {
+        url += '&' + params.join('&');
+    }
+    
+    window.location.href = url;
+}
+
+function printTable() {
+    const printContent = document.getElementById('guarantorsTable').outerHTML;
+    const originalContent = document.body.innerHTML;
+    
+    document.body.innerHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Guarantors List - Print</title>
+            <style>
+                body { font-family: Arial, sans-serif; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; }
+                .no-print { display: none; }
+                @media print {
+                    @page { size: landscape; }
+                }
+            </style>
+        </head>
+        <body>
+            <h2>Guarantors List</h2>
+            <p>Generated on: ${new Date().toLocaleDateString()}</p>
+            ${printContent}
+            <script>
+                window.onload = function() {
+                    window.print();
+                    setTimeout(function() {
+                        window.close();
+                    }, 500);
+                }
+            <\/script>
+        </body>
+        </html>
+    `;
+}
+
+// Auto-refresh every 2 minutes (optional)
+// setInterval(function() {
+//     window.location.reload();
+// }, 120000);
+</script>
+
+<style>
+.table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+    cursor: pointer;
+}
+.card {
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+}
+.border-left-primary {
+    border-left: 4px solid #4e73df !important;
+}
+.border-left-success {
+    border-left: 4px solid #1cc88a !important;
+}
+.border-left-warning {
+    border-left: 4px solid #f6c23e !important;
+}
+.border-left-info {
+    border-left: 4px solid #36b9cc !important;
+}
+.avatar-placeholder {
+    font-weight: bold;
+    font-size: 18px;
+}
+.contact-info div {
+    margin-bottom: 5px;
+}
+.progress {
+    border-radius: 10px;
+}
+</style>
+
+{% endblock %}
