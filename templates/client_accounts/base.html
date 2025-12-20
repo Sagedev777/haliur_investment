@@ -1,231 +1,263 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Haliqua Loan & Savings Management System{% endblock %}</title>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block app_css %}
+<style>
+    /* Accounts-specific styles */
+    .accounts-layout {
+        display: flex;
+        min-height: 100vh;
+    }
     
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    /* Accounts Sidebar */
+    .accounts-sidebar {
+        width: 250px;
+        background: linear-gradient(180deg, var(--primary) 0%, #2d3748 100%);
+        color: white;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+        z-index: 1000;
+    }
     
-    <style>
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --success-color: #27ae60;
-            --warning-color: #f39c12;
-            --danger-color: #e74c3c;
-            --light-bg: #f8f9fa;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fa;
-            padding-top: 20px;
-            padding-bottom: 40px;
-        }
-        
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color) 0%, #1a2530 100%);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
-        
-        .navbar-brand span {
-            color: var(--secondary-color);
-        }
-        
-        .card {
-            border-radius: 10px;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        .card-header {
-            background-color: white;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            font-weight: 600;
-            border-radius: 10px 10px 0 0 !important;
-        }
-        
-        .btn-primary {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-        
-        .btn-success {
-            background-color: var(--success-color);
-            border-color: var(--success-color);
-        }
-        
-        .btn-warning {
-            background-color: var(--warning-color);
-            border-color: var(--warning-color);
-        }
-        
-        .btn-danger {
-            background-color: var(--danger-color);
-            border-color: var(--danger-color);
-        }
-        
-        .badge-status {
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-weight: 500;
-        }
-        
-        .badge-active {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        
-        .badge-pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        
-        .badge-inactive {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        
-        .stat-card {
-            transition: transform 0.3s;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .sidebar {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-        
-        .sidebar .nav-link {
-            color: #495057;
-            padding: 10px 15px;
-            border-radius: 5px;
-            margin-bottom: 5px;
-        }
-        
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            background-color: var(--light-bg);
-            color: var(--primary-color);
-        }
-        
-        .footer {
-            margin-top: 40px;
-            padding: 20px 0;
-            border-top: 1px solid #dee2e6;
-            color: #6c757d;
-            text-align: center;
-        }
-        
-        .alert {
-            border-radius: 10px;
-            border: none;
-        }
-        
-        .table th {
-            background-color: var(--light-bg);
-            font-weight: 600;
-            border-bottom: 2px solid #dee2e6;
-        }
-    </style>
+    .accounts-sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
     
-    {% block extra_css %}{% endblock %}
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'core:admin_dashboard' %}">
-                <i class="fas fa-university me-2"></i>HALI<span>QUA</span>
+    .accounts-brand {
+        color: white;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1.3rem;
+    }
+    
+    .accounts-brand span {
+        color: var(--secondary);
+    }
+    
+    .accounts-nav {
+        padding: 1rem 0;
+    }
+    
+    .accounts-nav-link {
+        color: rgba(255,255,255,0.85);
+        padding: 0.75rem 1.5rem;
+        text-decoration: none;
+        display: block;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+    }
+    
+    .accounts-nav-link:hover, .accounts-nav-link.active {
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border-left-color: var(--secondary);
+    }
+    
+    .accounts-nav-link i {
+        width: 20px;
+        margin-right: 12px;
+    }
+    
+    /* Main Content */
+    .accounts-content {
+        flex: 1;
+        margin-left: 250px;
+    }
+    
+    .accounts-topbar {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    /* Client Quick Stats */
+    .client-stat-card {
+        border-top: 4px solid;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .client-stat-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .accounts-sidebar {
+            transform: translateX(-100%);
+        }
+        
+        .accounts-sidebar.active {
+            transform: translateX(0);
+        }
+        
+        .accounts-content {
+            margin-left: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block app_layout %}
+<div class="accounts-layout">
+    <!-- Sidebar -->
+    <div class="accounts-sidebar" id="accountsSidebar">
+        <!-- Header -->
+        <div class="accounts-sidebar-header">
+            <a href="{% url 'accounts:dashboard' %}" class="accounts-brand">
+                <i class="fas fa-user-friends me-2"></i>
+                Hali<span>QUA</span> Accounts
+            </a>
+        </div>
+        
+        <!-- Navigation -->
+        <nav class="accounts-nav">
+            {% with active_app=request.resolver_match.app_name %}
+            <a href="{% url 'accounts:dashboard' %}" 
+               class="accounts-nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
             </a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <a href="{% url 'accounts:account_list' %}" 
+               class="accounts-nav-link {% if 'account' in request.resolver_match.url_name and 'edit' not in request.resolver_match.url_name and 'create' not in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                All Clients
+            </a>
             
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'accounts:dashboard' %}">
-                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if 'account' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'accounts:account_list' %}">
-                            <i class="fas fa-users me-1"></i>Client Accounts
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if 'savings' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'accounts:savings_list' %}">
-                            <i class="fas fa-piggy-bank me-1"></i>Savings
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if 'reports' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'accounts:reports_dashboard' %}">
-                            <i class="fas fa-chart-bar me-1"></i>Reports
-                        </a>
-                    </li>
+            <a href="{% url 'accounts:account_create' %}" 
+               class="accounts-nav-link {% if request.resolver_match.url_name == 'account_create' %}active{% endif %}">
+                <i class="fas fa-user-plus"></i>
+                New Client
+            </a>
+            
+            <a href="{% url 'accounts:savings_list' %}" 
+               class="accounts-nav-link {% if 'savings' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-piggy-bank"></i>
+                Savings Accounts
+            </a>
+            
+            <!-- Reports Dropdown -->
+            <div class="dropdown">
+                <a class="accounts-nav-link dropdown-toggle {% if 'reports' in request.resolver_match.url_name or 'audit' in request.resolver_match.url_name %}active{% endif %}" 
+                   href="#" role="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-chart-bar"></i>
+                    Reports & Analytics
+                </a>
+                <div class="dropdown-menu bg-dark border-0">
+                    <a href="{% url 'accounts:reports_dashboard' %}" class="dropdown-item text-white">
+                        <i class="fas fa-chart-pie me-2"></i> Reports Dashboard
+                    </a>
+                    <a href="{% url 'accounts:audit_logs' %}" class="dropdown-item text-white">
+                        <i class="fas fa-clipboard-list me-2"></i> Audit Logs
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Quick Actions Dropdown -->
+            <div class="dropdown">
+                <a class="accounts-nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-bolt"></i>
+                    Quick Actions
+                </a>
+                <div class="dropdown-menu bg-dark border-0">
+                    <a href="{% url 'accounts:savings_deposit' %}" class="dropdown-item text-white">
+                        <i class="fas fa-money-bill-wave me-2"></i> Quick Deposit
+                    </a>
+                    <a href="{% url 'accounts:savings_withdrawal' %}" class="dropdown-item text-white">
+                        <i class="fas fa-hand-holding-usd me-2"></i> Quick Withdrawal
+                    </a>
+                    <a href="{% url 'accounts:edit_request_list' %}" class="dropdown-item text-white">
+                        <i class="fas fa-edit me-2"></i> Edit Requests
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Cross-App Navigation Dropdown -->
+            <div class="dropdown mt-3">
+                <a class="accounts-nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-exchange-alt"></i>
+                    Switch Application
+                </a>
+                <div class="dropdown-menu bg-dark border-0">
+                    <a href="{% url 'loans:dashboard' %}" class="dropdown-item text-white">
+                        <i class="fas fa-hand-holding-usd me-2"></i> Loans System
+                    </a>
+                    <a href="{% url 'reports:owner_monitoring' %}" class="dropdown-item text-white">
+                        <i class="fas fa-chart-bar me-2"></i> Reports System
+                    </a>
                     {% if request.user.is_superuser %}
-                    <li class="nav-item">
-                        <a class="nav-link {% if 'audit' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'accounts:audit_logs' %}">
-                            <i class="fas fa-clipboard-list me-1"></i>Audit Logs
-                        </a>
-                    </li>
+                    <a href="{% url 'core:admin_dashboard' %}" class="dropdown-item text-white">
+                        <i class="fas fa-cog me-2"></i> System Admin
+                    </a>
                     {% endif %}
-                </ul>
-                
-                <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user me-1"></i>{{ request.user.username }}
+                </div>
+            </div>
+            {% endwith %}
+        </nav>
+        
+        <!-- User Info -->
+        <div class="position-absolute bottom-0 start-0 end-0 p-3 border-top border-secondary">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" 
+                     style="width: 40px; height: 40px;">
+                    <span class="text-white fw-bold">{{ request.user.username|first|upper }}</span>
+                </div>
+                <div class="ms-3">
+                    <div class="fw-semibold text-white">{{ request.user.username }}</div>
+                    <small class="text-white opacity-75">Accounts Manager</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="accounts-content" id="accountsContent">
+        <!-- Topbar -->
+        <nav class="accounts-topbar">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center justify-content-between">
+                    <!-- Left: Toggle & Breadcrumb -->
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-outline-secondary d-md-none me-3" id="sidebarToggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item">
+                                    <a href="{% url 'accounts:dashboard' %}">Accounts</a>
+                                </li>
+                                {% block breadcrumb %}{% endblock %}
+                            </ol>
+                        </nav>
+                    </div>
+                    
+                    <!-- Right: Actions -->
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="{% url 'accounts:account_create' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-user-plus me-1"></i> New Client
                         </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-2"></i>Profile</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
-                        </ul>
-                    </li>
-                </ul>
+                        <a href="{% url 'loans:loan_application_create' %}" class="btn btn-success btn-sm">
+                            <i class="fas fa-file-alt me-1"></i> New Loan
+                        </a>
+                        <a href="{% url 'accounts:logout' %}" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </a>
+                    </div>
+                </div>
             </div>
-        </div>
-    </nav>
-
-    <div class="container">
-        <!-- Page Header -->
-        <div class="row mb-4">
-            <div class="col">
-                {% block page_header %}
-                <h1 class="h3 mb-0">{% block page_title %}{% endblock %}</h1>
-                <p class="text-muted">{% block page_subtitle %}{% endblock %}</p>
-                {% endblock %}
-            </div>
-            <div class="col-auto">
-                {% block page_actions %}{% endblock %}
-            </div>
-        </div>
-
-        <!-- Messages -->
-        {% if messages %}
-        <div class="row mb-4">
-            <div class="col">
+        </nav>
+        
+        <!-- Content Area -->
+        <div class="container-fluid py-4">
+            <!-- Messages -->
+            {% if messages %}
+            <div class="mb-4">
                 {% for message in messages %}
                 <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                     {{ message }}
@@ -233,61 +265,45 @@
                 </div>
                 {% endfor %}
             </div>
+            {% endif %}
+            
+            <!-- Page Header -->
+            <div class="page-header mb-4">
+                <h1 class="h3 fw-bold mb-2">{% block page_title %}{% endblock %}</h1>
+                <p class="text-muted">{% block page_subtitle %}{% endblock %}</p>
+            </div>
+            
+            <!-- Page Actions -->
+            {% block page_actions %}{% endblock %}
+            
+            <!-- Main Content -->
+            {% block content %}{% endblock %}
         </div>
-        {% endif %}
-
-        <!-- Main Content -->
-        {% block content %}{% endblock %}
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p class="mb-0">Haliqua Loan & Savings Management System v1.0 © {% now "Y" %}</p>
-        </div>
-    </footer>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <!-- DataTables -->
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    
-    <script>
-        // Initialize DataTables
-        $(document).ready(function() {
-            $('.datatable').DataTable({
-                pageLength: 25,
-                responsive: true,
-                language: {
-                    search: "Search:",
-                    lengthMenu: "Show _MENU_ entries",
-                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                    paginate: {
-                        first: "First",
-                        last: "Last",
-                        next: "Next",
-                        previous: "Previous"
-                    }
-                }
-            });
-        });
         
-        // Confirm delete actions
-        document.addEventListener('DOMContentLoaded', function() {
-            const deleteButtons = document.querySelectorAll('.btn-delete');
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    if (!confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
-                        e.preventDefault();
-                    }
-                });
-            });
-        });
-    </script>
-    
-    {% block extra_js %}{% endblock %}
-</body>
-</html>
+        <!-- Footer -->
+        <footer class="border-top py-3">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p class="text-muted mb-0">
+                            &copy; {% now "Y" %} Haliqua Investments | Accounts Management
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <p class="text-muted mb-0">
+                            v2.0 | {% now "F j, Y" %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<script>
+    // Toggle sidebar on mobile
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+        document.getElementById('accountsSidebar').classList.toggle('active');
+    });
+</script>
+{% endblock %}

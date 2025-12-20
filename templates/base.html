@@ -1,108 +1,56 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Haliqua Loan Management System{% endblock %}</title>
+    <title>{% block title %}Haliqua Management System{% endblock %}</title>
+    <!-- Add this to ALL your base.html files in the <head> section -->
+    <meta http-equiv="Content-Security-Policy" 
+      content="
+        default-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net https://cdnjs.cloudflare.com;
+        script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net;
+        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.datatables.net https://cdnjs.cloudflare.com;
+        font-src 'self' https://cdnjs.cloudflare.com;
+        img-src 'self' data: https: http: blob:;
+        connect-src 'self';
+        frame-ancestors 'self';
+        base-uri 'self';
+        form-action 'self';
+    ">
     
-    <!-- Bootstrap 5 CSS -->
+    <!-- CSS Dependencies -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    
+    <!-- Page-specific CSS -->
+    {% block extra_css %}{% endblock %}
+    
     <style>
         :root {
-            --primary: #2c3e50;
-            --secondary: #3498db;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --danger: #e74c3c;
-            --info: #17a2b8;
-            --light: #f8f9fa;
-            --dark: #343a40;
+            --primary: #1a365d;
+            --secondary: #4299e1;
+            --success: #38a169;
+            --warning: #d69e2e;
+            --danger: #e53e3e;
+            --light: #f8fafc;
+            --dark: #2d3748;
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fa;
-        }
-        
-        /* Sidebar */
-        .sidebar {
-            background: linear-gradient(180deg, var(--primary) 0%, #1a2530 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--light);
             min-height: 100vh;
-            position: fixed;
-            width: 250px;
-            color: white;
-            transition: all 0.3s;
-            z-index: 1000;
         }
         
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .brand-logo {
-            font-weight: 700;
-            font-size: 1.5rem;
-            color: white;
-            text-decoration: none;
-        }
-        
-        .brand-logo span {
-            color: var(--secondary);
-        }
-        
-        .nav-sidebar {
-            padding: 20px 0;
-        }
-        
-        .nav-item {
-            margin: 5px 0;
-        }
-        
-        .nav-link {
-            color: #b0b7c3;
-            padding: 12px 20px;
-            border-left: 3px solid transparent;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-        }
-        
-        .nav-link:hover, .nav-link.active {
-            color: white;
-            background-color: rgba(255,255,255,0.1);
-            border-left: 3px solid var(--secondary);
-        }
-        
-        .nav-link i {
-            width: 25px;
-            font-size: 1.1rem;
-        }
-        
-        /* Main Content */
-        .main-content {
-            margin-left: 250px;
-            transition: all 0.3s;
-        }
-        
-        .page-header {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        
-        /* Cards */
+        /* Common Components */
         .card {
             border: none;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            transition: transform 0.3s;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s;
         }
         
         .card:hover {
@@ -110,438 +58,99 @@
         }
         
         .card-header {
-            background-color: white;
-            border-bottom: 1px solid #eaeaea;
-            padding: 15px 20px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
             border-radius: 10px 10px 0 0 !important;
+            padding: 1.25rem 1.5rem;
         }
         
-        .card-title {
-            color: var(--primary);
-            font-weight: 600;
-            margin: 0;
+        .btn {
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
         }
         
-        /* Tables */
-        .table {
-            margin-bottom: 0;
+        .btn-primary {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            border-color: var(--warning);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            border-color: var(--danger);
         }
         
         .table th {
-            border-top: none;
+            background-color: var(--light);
             font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
             color: var(--primary);
-            background-color: #f8f9fa;
         }
         
-        .table td {
-            vertical-align: middle;
+        .alert {
+            border-radius: 10px;
+            border: none;
         }
         
-        /* Badges */
         .badge {
-            padding: 5px 10px;
+            padding: 0.35rem 0.65rem;
             font-weight: 500;
-        }
-        
-        .badge-status-pending { background-color: #fff3cd; color: #856404; }
-        .badge-status-approved { background-color: #d4edda; color: #155724; }
-        .badge-status-disbursed { background-color: #cce5ff; color: #004085; }
-        .badge-status-rejected { background-color: #f8d7da; color: #721c24; }
-        .badge-status-active { background-color: #d4edda; color: #155724; }
-        .badge-status-overdue { background-color: #f8d7da; color: #721c24; }
-        .badge-status-closed { background-color: #e2e3e5; color: #383d41; }
-        
-        /* Buttons */
-        .btn {
             border-radius: 6px;
-            padding: 8px 16px;
-            font-weight: 500;
-        }
-        
-        .btn-primary { background-color: var(--secondary); border-color: var(--secondary); }
-        .btn-success { background-color: var(--success); border-color: var(--success); }
-        .btn-warning { background-color: var(--warning); border-color: var(--warning); }
-        .btn-danger { background-color: var(--danger); border-color: var(--danger); }
-        
-        /* Forms */
-        .form-control, .form-select {
-            border-radius: 6px;
-            border: 1px solid #dee2e6;
-            padding: 8px 12px;
-        }
-        
-        .form-control:focus, .form-select:focus {
-            border-color: var(--secondary);
-            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
-        }
-        
-        .form-label {
-            font-weight: 500;
-            color: var(--primary);
-        }
-        
-        /* Dashboard Stats Cards */
-        .stat-card {
-            border-top: 4px solid;
-            overflow: hidden;
-        }
-        
-        .stat-icon {
-            font-size: 2.5rem;
-            opacity: 0.8;
         }
         
         /* Responsive */
         @media (max-width: 768px) {
-            .sidebar {
-                margin-left: -250px;
-            }
-            
-            .sidebar.active {
-                margin-left: 0;
-            }
-            
-            .main-content {
-                margin-left: 0;
-            }
-            
-            .main-content.active {
-                margin-left: 250px;
+            .container-fluid {
+                padding-left: 1rem;
+                padding-right: 1rem;
             }
         }
     </style>
     
-    {% block extra_css %}{% endblock %}
+    {% block app_css %}{% endblock %}
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <a href="{% url 'loans:dashboard' %}" class="brand-logo">
-                Hali<span>QUA</span> Loans
-            </a>
-        </div>
-        
-        <nav class="nav-sidebar">
-            <ul class="nav flex-column">
-                <!-- Dashboard -->
-                <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
-                       href="{% url 'loans:dashboard' %}">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                
-                <!-- Loan Applications -->
-                <li class="nav-item">
-                    <a class="nav-link {% if 'loan_application' in request.resolver_match.url_name %}active{% endif %}" 
-                       href="{% url 'loans:loan_application_list' %}">
-                        <i class="fas fa-file-alt"></i>
-                        <span>Applications</span>
-                    </a>
-                </li>
-                
-                <!-- Loans -->
-                <li class="nav-item">
-                    <a class="nav-link {% if 'loan' in request.resolver_match.url_name and 'application' not in request.resolver_match.url_name %}active{% endif %}" 
-                       href="{% url 'loans:loan_list' %}">
-                        <i class="fas fa-hand-holding-usd"></i>
-                        <span>Loan Portfolio</span>
-                    </a>
-                </li>
-                
-                <!-- Loan Products -->
-                <li class="nav-item">
-                    <a class="nav-link {% if 'loan_product' in request.resolver_match.url_name %}active{% endif %}" 
-                       href="{% url 'loans:loan_product_list' %}">
-                        <i class="fas fa-cogs"></i>
-                        <span>Loan Products</span>
-                    </a>
-                </li>
-                
-                <!-- Payments -->
-                <li class="nav-item">
-                    <a class="nav-link {% if 'payment' in request.resolver_match.url_name %}active{% endif %}" 
-                       href="{% url 'loans:loan_list' %}?status=ACTIVE">
-                        <i class="fas fa-credit-card"></i>
-                        <span>Payments</span>
-                    </a>
-                </li>
-                
-                <!-- Guarantors -->
-                <li class="nav-item">
-                    <a class="nav-link {% if 'guarantor' in request.resolver_match.url_name %}active{% endif %}" 
-                       href="{% url 'loans:guarantor_list' %}">
-                        <i class="fas fa-user-shield"></i>
-                        <span>Guarantors</span>
-                    </a>
-                </li>
-                
-                <!-- Reports -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>Reports</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="{% url 'loans:loan_portfolio_report' %}">
-                                Portfolio Report
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'loans:overdue_loans_report' %}">
-                                Overdue Loans
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'loans:collections_report' %}">
-                                Collections Report
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                
-                <!-- Tools -->
-                <li class="nav-item">
-                    <a class="nav-link {% if 'calculator' in request.resolver_match.url_name %}active{% endif %}" 
-                       href="{% url 'loans:loan_calculator' %}">
-                        <i class="fas fa-calculator"></i>
-                        <span>Loan Calculator</span>
-                    </a>
-                </li>
-                
-                <!-- Quick Actions -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-bolt"></i>
-                        <span>Quick Actions</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="{% url 'loans:quick_payment' %}">
-                                <i class="fas fa-money-bill-wave"></i> Quick Payment
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'loans:bulk_payment_processing' %}">
-                                <i class="fas fa-users"></i> Bulk Payment
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'loans:bulk_loan_disbursement' %}">
-                                <i class="fas fa-file-invoice-dollar"></i> Bulk Disbursement
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                
-                <!-- Account Links -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-users"></i>
-                        <span>Client Accounts</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="{% url 'accounts:account_list' %}">
-                                <i class="fas fa-list me-2"></i> All Clients
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'accounts:account_create' %}">
-                                <i class="fas fa-plus me-2"></i> New Client
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'accounts:savings_list' %}">
-                                <i class="fas fa-piggy-bank me-2"></i> Savings
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                
-                <!-- Admin Links -->
-                {% if request.user.is_superuser or request.user.is_staff %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'accounts:edit_request_list' %}">
-                        <i class="fas fa-edit"></i>
-                        <span>Edit Requests</span>
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'accounts:audit_logs' %}">
-                        <i class="fas fa-clipboard-list"></i>
-                        <span>Audit Logs</span>
-                    </a>
-                </li>
-                {% endif %}
-                
-                <!-- Divider -->
-                <li class="nav-item">
-                    <hr class="text-light opacity-50 mx-3">
-                </li>
-                
-                <!-- Settings -->
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-cog"></i>
-                        <span>Settings</span>
-                    </a>
-                </li>
-                
-                <!-- User Profile -->
-                <li class="nav-item mt-auto">
-                    <div class="d-flex align-items-center px-3 py-2">
-                        <div class="flex-shrink-0">
-                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" 
-                                 style="width: 40px; height: 40px;">
-                                <span class="text-white fw-bold">{{ request.user.username|first|upper }}</span>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="fw-semibold">{{ request.user.get_full_name|default:request.user.username }}</div>
-                            <small class="text-light opacity-75">
-                                {% if request.user.is_superuser %}
-                                    Administrator
-                                {% elif 'Loan Officers' in request.user.groups.all|join:', ' %}
-                                    Loan Officer
-                                {% elif 'Accountant' in request.user.groups.all|join:', ' %}
-                                    Accountant
-                                {% elif request.user.is_staff %}
-                                    Staff
-                                {% else %}
-                                    User
-                                {% endif %}
-                            </small>                                                                                                                                                                                                                                                        </div>
-                        <a href="{% url 'core:login' %}" class="text-light opacity-75 ms-2">
-                            <i class="fas fa-sign-out-alt"></i>
-                        </a>
-                    </div>
-                </li>
-            </ul>
-        </nav>
-    </div>
+    {% block app_layout %}{% endblock %}
     
-    <!-- Main Content -->
-    <div class="main-content" id="mainContent">
-        <!-- Top Navigation -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
-            <div class="container-fluid">
-                <!-- Toggle Sidebar Button (Mobile) -->
-                <button class="btn btn-outline-secondary d-md-none" type="button" id="sidebarToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                
-                <!-- Breadcrumb -->
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="{% url 'loans:dashboard' %}">Dashboard</a></li>
-                        {% block breadcrumb %}{% endblock %}
-                    </ol>
-                </nav>
-                
-                <!-- Date and Actions -->
-                <div class="d-flex align-items-center">
-                    <span class="me-3 text-muted d-none d-md-block">
-                        <i class="fas fa-calendar-alt me-1"></i>
-                        {% now "F j, Y" %}
-                    </span>
-                    
-                    <div class="btn-group" role="group">
-                        <a href="{% url 'loans:loan_application_create' %}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus me-1"></i>New Application
-                        </a>
-                        <a href="{% url 'loans:quick_payment' %}" class="btn btn-success btn-sm">
-                            <i class="fas fa-money-bill-wave me-1"></i>Quick Payment
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </nav>
-        
-        <!-- Messages -->
-        {% if messages %}
-        <div class="container-fluid mb-4">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-        
-        <!-- Page Content -->
-        <div class="container-fluid">
-            {% block content %}{% endblock %}
-        </div>
-        
-        <!-- Footer -->
-        <footer class="mt-5 pt-4 border-top">
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="col-md-6">
-                        <p class="text-muted">
-                            &copy; {% now "Y" %} Haliqua Investments. All rights reserved.
-                        </p>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <p class="text-muted">
-                            Loan Management System v1.0
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </footer>
-    </div>
-    
-    <!-- JavaScript Libraries -->
+    <!-- Common JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     
-    <!-- Custom JavaScript -->
     <script>
-        // Toggle Sidebar on Mobile
-        document.getElementById('sidebarToggle').addEventListener('click', function() {
-            document.getElementById('sidebar').classList.toggle('active');
-            document.getElementById('mainContent').classList.toggle('active');
-        });
-        
-        // Initialize Tooltips
-        document.addEventListener('DOMContentLoaded', function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
+        // Initialize DataTables
+        $(document).ready(function() {
+            $('.datatable').DataTable({
+                pageLength: 25,
+                responsive: true,
+                language: {
+                    search: "Search:",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries"
+                }
             });
+            
+            // Auto-dismiss alerts
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
         });
         
         // Confirm delete
         function confirmDelete(message) {
             return confirm(message || 'Are you sure you want to delete this item?');
         }
-        
-        // Format currency
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'UGX',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(amount);
-        }
-        
-        // Auto-dismiss alerts after 5 seconds
-        setTimeout(function() {
-            var alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function(alert) {
-                var bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            });
-        }, 5000);
     </script>
     
     {% block extra_js %}{% endblock %}
