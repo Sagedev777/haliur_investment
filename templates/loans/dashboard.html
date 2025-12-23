@@ -10,11 +10,15 @@
 
 {% block content %}
 <!-- Page Header -->
-<div class="page-header">
+<div class="page-header mb-4">
     <div class="row align-items-center">
         <div class="col">
-            <h1 class="h2 mb-0">Loan Dashboard</h1>
-            <p class="text-muted mb-0">Overview of loan portfolio and performance</p>
+            <h1 class="h2 mb-2 fw-bold text-gray-800">
+                <i class="fas fa-hand-holding-usd me-2 text-primary"></i>Loan Dashboard
+            </h1>
+            <p class="text-muted mb-0">
+                <i class="fas fa-chart-line me-1"></i> Overview of loan portfolio and performance
+            </p>
         </div>
         <div class="col-auto">
             <div class="btn-group" role="group">
@@ -30,75 +34,75 @@
 </div>
 
 <!-- Key Metrics -->
-<div class="row">
-    <div class="col-xl-3 col-md-6">
-        <div class="card stat-card border-top-primary">
-            <div class="card-body">
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card stat-card border-start-primary border-top-0 border-end-0 border-bottom-0 border-start-4 shadow-sm h-100">
+            <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-muted mb-1">Total Portfolio</h6>
-                        <h3 class="mb-0">UGX {{ total_portfolio|floatformat:0|intcomma }}</h3>
+                        <h6 class="text-muted mb-2">Total Portfolio</h6>
+                        <h3 class="mb-1 fw-bold text-gray-800">UGX {{ total_portfolio|floatformat:0|intcomma }}</h3>
                         <small class="text-muted">
                             <i class="fas fa-arrow-up text-success me-1"></i>
                             {{ active_loans }} active loans
                         </small>
                     </div>
-                    <div class="stat-icon text-primary">
-                        <i class="fas fa-chart-line"></i>
+                    <div class="stat-icon text-primary opacity-75">
+                        <i class="fas fa-chart-line fa-2x"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="col-xl-3 col-md-6">
-        <div class="card stat-card border-top-success">
-            <div class="card-body">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card stat-card border-start-success border-top-0 border-end-0 border-bottom-0 border-start-4 shadow-sm h-100">
+            <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-muted mb-1">Total Disbursed</h6>
-                        <h3 class="mb-0">UGX {{ total_disbursed|floatformat:0|intcomma }}</h3>
+                        <h6 class="text-muted mb-2">Total Disbursed</h6>
+                        <h3 class="mb-1 fw-bold text-gray-800">UGX {{ total_disbursed|floatformat:0|intcomma }}</h3>
                         <small class="text-muted">Total loans disbursed</small>
                     </div>
-                    <div class="stat-icon text-success">
-                        <i class="fas fa-hand-holding-usd"></i>
+                    <div class="stat-icon text-success opacity-75">
+                        <i class="fas fa-hand-holding-usd fa-2x"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="col-xl-3 col-md-6">
-        <div class="card stat-card border-top-warning">
-            <div class="card-body">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card stat-card border-start-warning border-top-0 border-end-0 border-bottom-0 border-start-4 shadow-sm h-100">
+            <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-muted mb-1">Overdue Amount</h6>
-                        <h3 class="mb-0">UGX {{ overdue_loans_amount|floatformat:0|intcomma }}</h3>
+                        <h6 class="text-muted mb-2">Overdue Amount</h6>
+                        <h3 class="mb-1 fw-bold text-gray-800">UGX {{ overdue_loans_amount|floatformat:0|intcomma }}</h3>
                         <small class="text-muted">
                             <i class="fas fa-exclamation-triangle text-warning me-1"></i>
                             {{ overdue_loans }} overdue loans
                         </small>
                     </div>
-                    <div class="stat-icon text-warning">
-                        <i class="fas fa-exclamation-circle"></i>
+                    <div class="stat-icon text-warning opacity-75">
+                        <i class="fas fa-exclamation-circle fa-2x"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="col-xl-3 col-md-6">
-        <div class="card stat-card border-top-info">
-            <div class="card-body">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card stat-card border-start-info border-top-0 borderend-0 border-bottom-0 border-start-4 shadow-sm h-100">
+            <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-muted mb-1">Pending Applications</h6>
-                        <h3 class="mb-0">{{ pending_applications }}</h3>
+                        <h6 class="text-muted mb-2">Pending Applications</h6>
+                        <h3 class="mb-1 fw-bold text-gray-800">{{ pending_applications }}</h3>
                         <small class="text-muted">Awaiting review</small>
                     </div>
-                    <div class="stat-icon text-info">
-                        <i class="fas fa-file-alt"></i>
+                    <div class="stat-icon text-info opacity-75">
+                        <i class="fas fa-file-alt fa-2x"></i>
                     </div>
                 </div>
             </div>
@@ -107,53 +111,54 @@
 </div>
 
 <!-- Charts and Tables -->
-<div class="row">
+<div class="row mb-4">
     <!-- Recent Applications -->
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-file-contract me-2"></i>Recent Loan Applications
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="card-title mb-0 fw-bold text-gray-800">
+                    <i class="fas fa-file-contract me-2 text-primary"></i>Recent Loan Applications
                 </h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <th>App #</th>
-                                <th>Client</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th>Date</th>
+                                <th class="border-0">App #</th>
+                                <th class="border-0">Client</th>
+                                <th class="border-0">Amount</th>
+                                <th class="border-0">Status</th>
+                                <th class="border-0">Date</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for app in recent_applications %}
                             <tr>
                                 <td>
-                                    <a href="{% url 'loans:loan_application_detail' app.pk %}" class="text-decoration-none">
+                                    <a href="{% url 'loans:loan_application_detail' app.pk %}" class="text-decoration-none fw-semibold text-primary">
                                         {{ app.application_number|truncatechars:8 }}
                                     </a>
                                 </td>
                                 <td>{{ app.client.full_account_name|truncatechars:20 }}</td>
-                                <td>UGX {{ app.requested_amount|floatformat:0|intcomma }}</td>
+                                <td class="fw-semibold">UGX {{ app.requested_amount|floatformat:0|intcomma }}</td>
                                 <td>
                                     {% if app.status == 'SUBMITTED' %}
-                                    <span class="badge badge-status-pending">Pending</span>
+                                    <span class="badge badge-status-pending bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">Pending</span>
                                     {% elif app.status == 'APPROVED' %}
-                                    <span class="badge badge-status-approved">Approved</span>
+                                    <span class="badge badge-status-approved bg-success bg-opacity-10 text-success border border-success border-opacity-25">Approved</span>
                                     {% elif app.status == 'REJECTED' %}
-                                    <span class="badge badge-status-rejected">Rejected</span>
+                                    <span class="badge badge-status-rejected bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">Rejected</span>
                                     {% else %}
                                     <span class="badge badge-secondary">{{ app.status }}</span>
                                     {% endif %}
                                 </td>
-                                <td>{{ app.application_date|date:"M d" }}</td>
+                                <td class="text-muted">{{ app.application_date|date:"M d" }}</td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="fas fa-file-contract fa-2x mb-3 d-block opacity-50"></i>
                                     No recent applications
                                 </td>
                             </tr>
@@ -161,9 +166,9 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="text-end">
+                <div class="card-footer bg-white border-0 py-3">
                     <a href="{% url 'loans:loan_application_list' %}" class="btn btn-sm btn-outline-primary">
-                        View All Applications
+                        <i class="fas fa-eye me-1"></i> View All Applications
                     </a>
                 </div>
             </div>
@@ -171,41 +176,42 @@
     </div>
     
     <!-- Upcoming Payments -->
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-calendar-check me-2"></i>Upcoming Payments (Next 7 Days)
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="card-title mb-0 fw-bold text-gray-800">
+                    <i class="fas fa-calendar-check me-2 text-success"></i>Upcoming Payments (Next 7 Days)
                 </h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <th>Loan #</th>
-                                <th>Client</th>
-                                <th>Due Date</th>
-                                <th>Amount</th>
-                                <th>Action</th>
+                                <th class="border-0">Loan #</th>
+                                <th class="border-0">Client</th>
+                                <th class="border-0">Due Date</th>
+                                <th class="border-0">Amount</th>
+                                <th class="border-0">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for payment in upcoming_payments %}
                             <tr>
-                                <td>{{ payment.loan.loan_number|truncatechars:8 }}</td>
+                                <td class="fw-semibold">{{ payment.loan.loan_number|truncatechars:8 }}</td>
                                 <td>{{ payment.loan.client.full_account_name|truncatechars:20 }}</td>
-                                <td>{{ payment.due_date|date:"M d, Y" }}</td>
-                                <td>UGX {{ payment.total_amount|floatformat:0|intcomma }}</td>
+                                <td class="text-primary fw-semibold">{{ payment.due_date|date:"M d, Y" }}</td>
+                                <td class="fw-bold">UGX {{ payment.total_amount|floatformat:0|intcomma }}</td>
                                 <td>
-                                    <a href="{% url 'loans:process_payment' payment.loan.pk %}" class="btn btn-sm btn-outline-primary btn-sm">
-                                        Pay
+                                    <a href="{% url 'loans:process_payment' payment.loan.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-money-bill-wave me-1"></i> Pay
                                     </a>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="fas fa-calendar-check fa-2x mb-3 d-block opacity-50"></i>
                                     No upcoming payments in next 7 days
                                 </td>
                             </tr>
@@ -213,9 +219,9 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="text-end">
+                <div class="card-footer bg-white border-0 py-3">
                     <a href="{% url 'loans:loan_list' %}?status=ACTIVE" class="btn btn-sm btn-outline-primary">
-                        View Active Loans
+                        <i class="fas fa-eye me-1"></i> View Active Loans
                     </a>
                 </div>
             </div>
@@ -224,32 +230,32 @@
 </div>
 
 <!-- Second Row -->
-<div class="row">
+<div class="row mb-4">
     <!-- Overdue Loans -->
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header bg-warning bg-opacity-10">
-                <h5 class="card-title mb-0">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-warning bg-opacity-10 border-0 py-3">
+                <h5 class="card-title mb-0 fw-bold text-gray-800">
                     <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Overdue Loans
                 </h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <th>Loan #</th>
-                                <th>Client</th>
-                                <th>Days Overdue</th>
-                                <th>Amount Due</th>
-                                <th>Action</th>
+                                <th class="border-0">Loan #</th>
+                                <th class="border-0">Client</th>
+                                <th class="border-0">Days Overdue</th>
+                                <th class="border-0">Amount Due</th>
+                                <th class="border-0">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for loan in overdue_list %}
                             <tr>
                                 <td>
-                                    <a href="{% url 'loans:loan_detail' loan.pk %}" class="text-decoration-none">
+                                    <a href="{% url 'loans:loan_detail' loan.pk %}" class="text-decoration-none fw-semibold text-primary">
                                         {{ loan.loan_number|truncatechars:8 }}
                                     </a>
                                 </td>
@@ -257,16 +263,17 @@
                                 <td>
                                     <span class="badge bg-danger">{{ loan.days_overdue }} days</span>
                                 </td>
-                                <td>UGX {{ loan.overdue_amount|floatformat:0|intcomma }}</td>
+                                <td class="fw-bold">UGX {{ loan.overdue_amount|floatformat:0|intcomma }}</td>
                                 <td>
-                                    <a href="{% url 'loans:process_payment' loan.pk %}" class="btn btn-sm btn-outline-warning btn-sm">
-                                        Collect
+                                    <a href="{% url 'loans:process_payment' loan.pk %}" class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-bullhorn me-1"></i> Collect
                                     </a>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="fas fa-check-circle fa-2x mb-3 d-block text-success opacity-75"></i>
                                     No overdue loans
                                 </td>
                             </tr>
@@ -274,9 +281,9 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="text-end">
+                <div class="card-footer bg-white border-0 py-3">
                     <a href="{% url 'loans:overdue_loans_report' %}" class="btn btn-sm btn-outline-warning">
-                        View Overdue Report
+                        <i class="fas fa-file-alt me-1"></i> View Overdue Report
                     </a>
                 </div>
             </div>
@@ -284,38 +291,38 @@
     </div>
     
     <!-- Today's Stats -->
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-chart-pie me-2"></i>Today's Summary
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="card-title mb-0 fw-bold text-gray-800">
+                    <i class="fas fa-chart-pie me-2 text-info"></i>Today's Summary
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row text-center">
                     <div class="col-4">
                         <div class="p-3">
-                            <h3 class="text-primary">{{ applications_today }}</h3>
+                            <h3 class="text-primary fw-bold">{{ applications_today }}</h3>
                             <small class="text-muted">Applications</small>
                         </div>
                     </div>
                     <div class="col-4">
                         <div class="p-3">
-                            <h3 class="text-success">UGX {{ disbursements_today|floatformat:0|intcomma }}</h3>
+                            <h3 class="text-success fw-bold">UGX {{ disbursements_today|floatformat:0|intcomma }}</h3>
                             <small class="text-muted">Disbursed</small>
                         </div>
                     </div>
                     <div class="col-4">
                         <div class="p-3">
-                            <h3 class="text-info">UGX {{ payments_today|floatformat:0|intcomma }}</h3>
+                            <h3 class="text-info fw-bold">UGX {{ payments_today|floatformat:0|intcomma }}</h3>
                             <small class="text-muted">Collections</small>
                         </div>
                     </div>
                 </div>
-                <hr>
+                <hr class="my-3">
                 <!-- Quick Actions -->
                 <div class="text-center">
-                    <div class="btn-group" role="group">
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
                         <a href="{% url 'loans:loan_application_create' %}" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i>New Application
                         </a>
@@ -335,9 +342,9 @@
 <!-- Performance Chart (Placeholder) -->
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="card-title mb-0 fw-bold text-gray-800">
                     <i class="fas fa-chart-line me-2"></i>Monthly Performance
                 </h5>
             </div>
@@ -347,6 +354,34 @@
         </div>
     </div>
 </div>
+
+<style>
+    .stat-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .table-hover tbody tr {
+        transition: all 0.2s;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fc;
+        transform: translateX(5px);
+    }
+    
+    .border-start-4 {
+        border-left-width: 4px !important;
+    }
+    
+    .card {
+        border-radius: 0.5rem;
+    }
+</style>
 
 {% endblock %}
 
@@ -362,24 +397,43 @@
                 label: 'Disbursements',
                 data: [12000000, 19000000, 15000000, 25000000, 22000000, 30000000, 28000000],
                 borderColor: 'rgb(75, 192, 192)',
-                tension: 0.1
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                borderWidth: 2,
+                tension: 0.1,
+                fill: true
             }, {
                 label: 'Collections',
                 data: [8000000, 12000000, 10000000, 18000000, 15000000, 22000000, 20000000],
                 borderColor: 'rgb(255, 159, 64)',
-                tension: 0.1
+                backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                borderWidth: 2,
+                tension: 0.1,
+                fill: true
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: {
                     position: 'top',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                    }
                 },
                 tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
                     callbacks: {
                         label: function(context) {
-                            return formatCurrency(context.raw);
+                            return 'UGX ' + context.raw.toLocaleString();
                         }
                     }
                 }
@@ -387,14 +441,41 @@
             scales: {
                 y: {
                     beginAtZero: true,
+                    grid: {
+                        drawBorder: false
+                    },
                     ticks: {
                         callback: function(value) {
                             return 'UGX ' + value.toLocaleString();
                         }
                     }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index',
+            },
+            elements: {
+                point: {
+                    radius: 3,
+                    hoverRadius: 6
                 }
             }
         }
+    });
+    
+    // Add animation to cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.stat-card');
+        cards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.classList.add('animate__animated', 'animate__fadeInUp');
+        });
     });
 </script>
 {% endblock %}
