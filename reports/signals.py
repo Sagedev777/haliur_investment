@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 from django.core.files.base import ContentFile
 from .models import SystemReport
-from client_accounts.models import ClientAccount, SavingsTransaction, Guarantor
-from loans.models import LoanApplication, LoanPayment
+from client_accounts.models import ClientAccount, SavingsTransaction
+from loans.models import LoanApplication, LoanPayment, Guarantor
 
 @receiver(post_save, sender=User)
 def auto_generate_daily_report(sender, instance, created, **kwargs):
