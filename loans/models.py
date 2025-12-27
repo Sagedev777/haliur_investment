@@ -176,9 +176,6 @@ class CollateralDocument(models.Model):
     file = models.FileField(upload_to='collaterals/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
-class CollateralDocument(models.Model):
-    loan_application = models.ForeignKey(LoanApplication, on_delete=models.CASCADE, related_name='collateral_docs')
-    file = models.FileField(upload_to='collaterals/')
 
 class LoanApplicationDocument(models.Model):
     loan_application = models.ForeignKey(LoanApplication, on_delete=models.CASCADE, related_name='documents')
