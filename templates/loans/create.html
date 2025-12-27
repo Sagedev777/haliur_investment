@@ -10,7 +10,7 @@
             <label>Client</label>
             <select name="client_account" class="form-select">
                 {% for account in accounts %}
-                    <option value="{{ account.id }}">{{ account.full_account_name }}</option>
+                <option value="{{ account.id }}">{{ account.full_account_name }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -30,12 +30,12 @@
             <label>Loan Officer</label>
             <select name="loan_officer" class="form-select">
                 {% for officer in officers %}
-                    <option value="{{ officer.id }}">{{ officer.username }}</option>
+                <option value="{{ officer.id }}">{{ officer.username }}</option>
                 {% endfor %}
             </select>
         </div>
         <button type="submit" class="btn btn-success">Submit Loan</button>
-        <a href="{% url 'loans:list_loans' %}" class="btn btn-secondary">Cancel</a>
+        <a href="{% url 'loans:loan_list' %}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
 {% endblock %}
