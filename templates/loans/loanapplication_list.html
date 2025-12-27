@@ -1,5 +1,5 @@
 <!-- templates/loans/loanapplication_list.html -->
-{% extends 'base.html' %}
+{% extends 'loans/base.html' %}
 {% load humanize %}
 
 {% block title %}Loan Applications{% endblock %}
@@ -30,16 +30,18 @@
     <div class="card-body">
         <ul class="nav nav-tabs" id="statusTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link {% if not request.GET.status %}active{% endif %}" 
-                        onclick="window.location.href='{% url 'loans:loan_application_list' %}'">
+                <button class="nav-link {% if not request.GET.status %}active{% endif %}"
+                    onclick="window.location.href='{% url 'loans:loan_application_list' %}'">
                     All <span class="badge bg-secondary">{{ total_applications }}</span>
                 </button>
             </li>
             {% for status, count in status_counts.items %}
             <li class="nav-item" role="presentation">
-                <button class="nav-link {% if request.GET.status == status %}active{% endif %}" 
-                        onclick="window.location.href='{% url 'loans:loan_application_list' %}?status={{ status }}'">
-                    {{ status|title }} <span class="badge bg-{% if status == 'SUBMITTED' %}warning{% elif status == 'APPROVED' %}success{% elif status == 'REJECTED' %}danger{% else %}secondary{% endif %}">{{ count }}</span>
+                <button class="nav-link {% if request.GET.status == status %}active{% endif %}"
+                    onclick="window.location.href='{% url 'loans:loan_application_list' %}?status={{ status }}'">
+                    {{ status|title }} <span
+                        class="badge bg-{% if status == 'SUBMITTED' %}warning{% elif status == 'APPROVED' %}success{% elif status == 'REJECTED' %}danger{% else %}secondary{% endif %}">{{
+                        count }}</span>
                 </button>
             </li>
             {% endfor %}
@@ -53,27 +55,26 @@
         <form method="get" class="row g-3">
             <div class="col-md-3">
                 <label class="form-label">Search</label>
-                <input type="text" class="form-control" name="search" placeholder="Client name, account no..." 
-                       value="{{ request.GET.search }}">
+                <input type="text" class="form-control" name="search" placeholder="Client name, account no..."
+                    value="{{ request.GET.search }}">
             </div>
             <div class="col-md-2">
                 <label class="form-label">Min Amount</label>
-                <input type="number" class="form-control" name="min_amount" placeholder="Min" 
-                       value="{{ request.GET.min_amount }}">
+                <input type="number" class="form-control" name="min_amount" placeholder="Min"
+                    value="{{ request.GET.min_amount }}">
             </div>
             <div class="col-md-2">
                 <label class="form-label">Max Amount</label>
-                <input type="number" class="form-control" name="max_amount" placeholder="Max" 
-                       value="{{ request.GET.max_amount }}">
+                <input type="number" class="form-control" name="max_amount" placeholder="Max"
+                    value="{{ request.GET.max_amount }}">
             </div>
             <div class="col-md-3">
                 <label class="form-label">Date Range</label>
                 <div class="input-group">
-                    <input type="date" class="form-control datepicker" name="date_from" 
-                           value="{{ request.GET.date_from }}">
+                    <input type="date" class="form-control datepicker" name="date_from"
+                        value="{{ request.GET.date_from }}">
                     <span class="input-group-text">to</span>
-                    <input type="date" class="form-control datepicker" name="date_to" 
-                           value="{{ request.GET.date_to }}">
+                    <input type="date" class="form-control datepicker" name="date_to" value="{{ request.GET.date_to }}">
                 </div>
             </div>
             <div class="col-md-2 d-flex align-items-end">
@@ -132,7 +133,8 @@
                             <strong>UGX {{ app.requested_amount|floatformat:0|intcomma }}</strong>
                             {% if app.approved_amount %}
                             <br>
-                            <small class="text-success">Approved: UGX {{ app.approved_amount|floatformat:0|intcomma }}</small>
+                            <small class="text-success">Approved: UGX {{ app.approved_amount|floatformat:0|intcomma
+                                }}</small>
                             {% endif %}
                         </td>
                         <td>
@@ -152,8 +154,8 @@
                         </td>
                         <td>
                             <div class="progress" style="height: 20px;">
-                                <div class="progress-bar {% if app.credit_score >= 80 %}bg-success{% elif app.credit_score >= 60 %}bg-info{% elif app.credit_score >= 40 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                     role="progressbar" style="width: {{ app.credit_score }}%">
+                                <div class="progress-bar {% if app.credit_score >= 80 %}bg-success{% elif app.credit_score >= 60 %}bg-info{% elif app.credit_score >= 40 %}bg-warning{% else %}bg-danger{% endif %}"
+                                    role="progressbar" style="width: {{ app.credit_score }}%">
                                     {{ app.credit_score }}%
                                 </div>
                             </div>
@@ -165,24 +167,24 @@
                         </td>
                         <td>
                             <div class="btn-group" role="group">
-                                <a href="{% url 'loans:loan_application_detail' app.pk %}" 
-                                   class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="View">
+                                <a href="{% url 'loans:loan_application_detail' app.pk %}"
+                                    class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="View">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 {% if app.status == 'SUBMITTED' or app.status == 'UNDER_REVIEW' %}
-                                <a href="{% url 'loans:loan_application_review' app.pk %}" 
-                                   class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Review">
+                                <a href="{% url 'loans:loan_application_review' app.pk %}"
+                                    class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Review">
                                     <i class="fas fa-check-circle"></i>
                                 </a>
                                 {% endif %}
                                 {% if app.status == 'APPROVED' %}
-                                <a href="{% url 'loans:loan_disbursement_create' app.pk %}" 
-                                   class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Disburse">
+                                <a href="{% url 'loans:loan_disbursement_create' app.pk %}"
+                                    class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Disburse">
                                     <i class="fas fa-money-bill-wave"></i>
                                 </a>
                                 {% endif %}
-                                <a href="{% url 'loans:loan_application_documents' app.pk %}" 
-                                   class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Documents">
+                                <a href="{% url 'loans:loan_application_documents' app.pk %}"
+                                    class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Documents">
                                     <i class="fas fa-file"></i>
                                 </a>
                             </div>
@@ -205,50 +207,54 @@
                 </tbody>
             </table>
         </div>
-        
+
         <!-- Pagination -->
         {% if is_paginated %}
         <nav aria-label="Page navigation">
             <ul class="pagination justify-content-center">
                 {% if page_obj.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    <a class="page-link"
+                        href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
                         First
                     </a>
                 </li>
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    <a class="page-link"
+                        href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
                         Previous
                     </a>
                 </li>
                 {% endif %}
-                
+
                 {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                    <li class="page-item active">
-                        <span class="page-link">{{ num }}</span>
+                {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <li class="page-item">
+                    <a class="page-link"
+                        href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        {{ num }}
+                    </a>
                     </li>
-                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                            {{ num }}
+                        <a class="page-link"
+                            href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Next
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Last
                         </a>
                     </li>
                     {% endif %}
-                {% endfor %}
-                
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                        Next
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                        Last
-                    </a>
-                </li>
-                {% endif %}
             </ul>
         </nav>
         {% endif %}

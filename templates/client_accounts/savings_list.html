@@ -116,9 +116,9 @@
                             <label for="type_filter" class="form-label">Transaction Type</label>
                             <select class="form-select" id="type_filter" name="type">
                                 <option value="">All Types</option>
-                                <option value="DEPOSIT" {% if type_filter=='DEPOSIT' %}selected{% endif %}>Deposit
+                                <option value="DEPOSIT" {% if type_filter == 'DEPOSIT' %}selected{% endif %}>Deposit
                                 </option>
-                                <option value="WITHDRAWAL" {% if type_filter=='WITHDRAWAL' %}selected{% endif %}>
+                                <option value="WITHDRAWAL" {% if type_filter == 'WITHDRAWAL' %}selected{% endif %}>
                                     Withdrawal</option>
                             </select>
                         </div>

@@ -1,5 +1,5 @@
 <!-- loans/templates/loans/bulk_payment.html -->
-{% extends 'base.html' %}
+{% extends 'loans/base.html' %}
 {% load static %}
 
 {% block title %}Bulk Payments{% endblock %}
@@ -12,7 +12,7 @@
                 <i class="fas fa-money-bill-wave"></i> Bulk Payment Processing
             </h4>
         </div>
-        
+
         <div class="card-body">
             <!-- Instructions -->
             <div class="alert alert-info mb-4">
@@ -24,46 +24,51 @@
                     <li>All payments will be recorded in the system</li>
                 </ul>
             </div>
-            
+
             <!-- Tab Navigation -->
             <ul class="nav nav-tabs mb-4" id="bulkPaymentTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button">
+                    <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload"
+                        type="button">
                         <i class="fas fa-upload"></i> Upload CSV
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual" type="button">
+                    <button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual"
+                        type="button">
                         <i class="fas fa-edit"></i> Manual Entry
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="template-tab" data-bs-toggle="tab" data-bs-target="#template" type="button">
+                    <button class="nav-link" id="template-tab" data-bs-toggle="tab" data-bs-target="#template"
+                        type="button">
                         <i class="fas fa-download"></i> Download Template
                     </button>
                 </li>
             </ul>
-            
+
             <!-- Tab Content -->
             <div class="tab-content" id="bulkPaymentTabsContent">
-                
+
                 <!-- Upload CSV Tab -->
                 <div class="tab-pane fade show active" id="upload" role="tabpanel">
                     <div class="row">
                         <div class="col-md-8">
-                            <form method="POST" enctype="multipart/form-data" action="{% url 'loans:process_bulk_payments' %}">
+                            <form method="POST" enctype="multipart/form-data"
+                                action="{% url 'loans:process_bulk_payments' %}">
                                 {% csrf_token %}
-                                
+
                                 <div class="mb-4">
                                     <label for="csvFile" class="form-label">
                                         <strong>Select CSV File</strong>
                                     </label>
-                                    <input type="file" class="form-control" id="csvFile" name="csv_file" accept=".csv" required>
+                                    <input type="file" class="form-control" id="csvFile" name="csv_file" accept=".csv"
+                                        required>
                                     <small class="form-text text-muted">
                                         File must be in CSV format with headers matching the template
                                     </small>
                                 </div>
-                                
+
                                 <div class="mb-4">
                                     <label class="form-label">
                                         <strong>Payment Method</strong>
@@ -76,17 +81,18 @@
                                         <option value="CHEQUE">Cheque</option>
                                     </select>
                                 </div>
-                                
+
                                 <div class="mb-4">
                                     <label for="transactionDate" class="form-label">
                                         <strong>Payment Date</strong>
                                     </label>
-                                    <input type="date" class="form-control" id="transactionDate" name="payment_date" 
-                                           value="{{ today|date:'Y-m-d' }}" required>
+                                    <input type="date" class="form-control" id="transactionDate" name="payment_date"
+                                        value="{{ today|date:'Y-m-d' }}" required>
                                 </div>
-                                
+
                                 <div class="form-check mb-4">
-                                    <input class="form-check-input" type="checkbox" id="validateOnly" name="validate_only" checked>
+                                    <input class="form-check-input" type="checkbox" id="validateOnly"
+                                        name="validate_only" checked>
                                     <label class="form-check-label" for="validateOnly">
                                         Validate only (don't save payments)
                                     </label>
@@ -94,7 +100,7 @@
                                         Check this to validate the file first without saving payments
                                     </small>
                                 </div>
-                                
+
                                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                                     <button type="reset" class="btn btn-secondary">
                                         <i class="fas fa-redo"></i> Clear
@@ -105,7 +111,7 @@
                                 </div>
                             </form>
                         </div>
-                        
+
                         <div class="col-md-4">
                             <div class="card border-info">
                                 <div class="card-header bg-info text-white">
@@ -118,7 +124,7 @@
                                         <li><code>payment_amount</code> (e.g., 100000)</li>
                                         <li><code>transaction_reference</code> (optional)</li>
                                     </ol>
-                                    
+
                                     <h6>Example CSV:</h6>
                                     <pre class="bg-light p-2 small">loan_application_number,payment_amount,transaction_reference
 AN1234,150000,TRX001
@@ -129,19 +135,19 @@ AN9012,200000,</pre>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Manual Entry Tab -->
                 <div class="tab-pane fade" id="manual" role="tabpanel">
                     <form method="POST" action="{% url 'loans:save_bulk_payments' %}">
                         {% csrf_token %}
-                        
+
                         <div class="row mb-4">
                             <div class="col-md-3">
                                 <label class="form-label">
                                     <strong>Payment Date</strong>
                                 </label>
-                                <input type="date" class="form-control" name="payment_date" 
-                                       value="{{ today|date:'Y-m-d' }}" required>
+                                <input type="date" class="form-control" name="payment_date"
+                                    value="{{ today|date:'Y-m-d' }}" required>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">
@@ -162,7 +168,7 @@ AN9012,200000,</pre>
                                 <input type="hidden" name="received_by" value="{{ user.id }}">
                             </div>
                         </div>
-                        
+
                         <!-- Payment Entries -->
                         <div class="table-responsive mb-4">
                             <table class="table table-hover" id="bulkPaymentTable">
@@ -176,7 +182,8 @@ AN9012,200000,</pre>
                                         <th>Transaction Reference</th>
                                         <th>Notes</th>
                                         <th>
-                                            <button type="button" class="btn btn-sm btn-success" onclick="addPaymentRow()">
+                                            <button type="button" class="btn btn-sm btn-success"
+                                                onclick="addPaymentRow()">
                                                 <i class="fas fa-plus"></i>
                                             </button>
                                         </th>
@@ -194,7 +201,7 @@ AN9012,200000,</pre>
                                 </tfoot>
                             </table>
                         </div>
-                        
+
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                             <button type="button" class="btn btn-secondary" onclick="clearAllRows()">
                                 <i class="fas fa-trash"></i> Clear All
@@ -205,27 +212,30 @@ AN9012,200000,</pre>
                         </div>
                     </form>
                 </div>
-                
+
                 <!-- Template Download Tab -->
                 <div class="tab-pane fade" id="template" role="tabpanel">
                     <div class="text-center py-5">
                         <i class="fas fa-file-csv fa-4x text-success mb-4"></i>
                         <h4>Download CSV Template</h4>
                         <p class="mb-4">Download the template file to ensure your CSV is formatted correctly.</p>
-                        
+
                         <div class="row justify-content-center">
                             <div class="col-md-6">
                                 <div class="card">
                                     <div class="card-body">
                                         <h5>Template Options</h5>
                                         <div class="d-grid gap-3">
-                                            <a href="{% url 'loans:download_bulk_template' %}?type=simple" class="btn btn-outline-primary">
+                                            <a href="{% url 'loans:download_bulk_template' %}?type=simple"
+                                                class="btn btn-outline-primary">
                                                 <i class="fas fa-download"></i> Simple Template (3 columns)
                                             </a>
-                                            <a href="{% url 'loans:download_bulk_template' %}?type=detailed" class="btn btn-outline-success">
+                                            <a href="{% url 'loans:download_bulk_template' %}?type=detailed"
+                                                class="btn btn-outline-success">
                                                 <i class="fas fa-download"></i> Detailed Template (all columns)
                                             </a>
-                                            <a href="{% url 'loans:download_bulk_template' %}?type=sample" class="btn btn-outline-info">
+                                            <a href="{% url 'loans:download_bulk_template' %}?type=sample"
+                                                class="btn btn-outline-info">
                                                 <i class="fas fa-download"></i> Sample Data (with example)
                                             </a>
                                         </div>
@@ -233,7 +243,7 @@ AN9012,200000,</pre>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="mt-4 text-start">
                             <h5>Instructions:</h5>
                             <ol>
@@ -252,31 +262,31 @@ AN9012,200000,</pre>
 
 <!-- JavaScript for Bulk Payment -->
 <script>
-// Global variables
-let rowCount = 0;
-const activeLoans = {{ active_loans_json|safe }};
+    // Global variables
+    let rowCount = 0;
+    const activeLoans = {{ active_loans_json| safe }};
 
-// Initialize with 3 rows
-document.addEventListener('DOMContentLoaded', function() {
-    for (let i = 0; i < 3; i++) {
-        addPaymentRow();
-    }
-    updateTotal();
-});
-
-function addPaymentRow() {
-    rowCount++;
-    const tbody = document.getElementById('paymentRows');
-    const tr = document.createElement('tr');
-    tr.id = `row-${rowCount}`;
-    
-    // Loan application dropdown options
-    let loanOptions = '<option value="">Select Loan</option>';
-    activeLoans.forEach(loan => {
-        loanOptions += `<option value="${loan.id}" data-balance="${loan.balance}" data-client="${loan.client}">${loan.number} - ${loan.client} (Balance: ${loan.balance_formatted})</option>`;
+    // Initialize with 3 rows
+    document.addEventListener('DOMContentLoaded', function () {
+        for (let i = 0; i < 3; i++) {
+            addPaymentRow();
+        }
+        updateTotal();
     });
-    
-    tr.innerHTML = `
+
+    function addPaymentRow() {
+        rowCount++;
+        const tbody = document.getElementById('paymentRows');
+        const tr = document.createElement('tr');
+        tr.id = `row-${rowCount}`;
+
+        // Loan application dropdown options
+        let loanOptions = '<option value="">Select Loan</option>';
+        activeLoans.forEach(loan => {
+            loanOptions += `<option value="${loan.id}" data-balance="${loan.balance}" data-client="${loan.client}">${loan.number} - ${loan.client} (Balance: ${loan.balance_formatted})</option>`;
+        });
+
+        tr.innerHTML = `
         <td>${rowCount}</td>
         <td>
             <select class="form-select loan-select" name="loan_application_${rowCount}" 
@@ -308,108 +318,109 @@ function addPaymentRow() {
             </button>
         </td>
     `;
-    
-    tbody.appendChild(tr);
-    checkSubmitButton();
-}
 
-function removeRow(rowId) {
-    const row = document.getElementById(`row-${rowId}`);
-    if (row) {
-        row.remove();
+        tbody.appendChild(tr);
+        checkSubmitButton();
+    }
+
+    function removeRow(rowId) {
+        const row = document.getElementById(`row-${rowId}`);
+        if (row) {
+            row.remove();
+            updateTotal();
+            checkSubmitButton();
+        }
+    }
+
+    function clearAllRows() {
+        document.getElementById('paymentRows').innerHTML = '';
+        rowCount = 0;
         updateTotal();
         checkSubmitButton();
     }
-}
 
-function clearAllRows() {
-    document.getElementById('paymentRows').innerHTML = '';
-    rowCount = 0;
-    updateTotal();
-    checkSubmitButton();
-}
+    function updateRowInfo(rowId) {
+        const select = document.querySelector(`#row-${rowId} .loan-select`);
+        const selectedOption = select.selectedOptions[0];
+        const clientField = document.getElementById(`client-${rowId}`);
+        const balanceField = document.getElementById(`balance-${rowId}`);
 
-function updateRowInfo(rowId) {
-    const select = document.querySelector(`#row-${rowId} .loan-select`);
-    const selectedOption = select.selectedOptions[0];
-    const clientField = document.getElementById(`client-${rowId}`);
-    const balanceField = document.getElementById(`balance-${rowId}`);
-    
-    if (selectedOption && selectedOption.value) {
-        clientField.value = selectedOption.dataset.client;
-        balanceField.value = selectedOption.dataset.balance_formatted;
-    } else {
-        clientField.value = '';
-        balanceField.value = '';
-    }
-}
-
-function updateTotal() {
-    let total = 0;
-    const amountInputs = document.querySelectorAll('.payment-amount');
-    
-    amountInputs.forEach(input => {
-        const value = parseFloat(input.value) || 0;
-        total += value;
-    });
-    
-    document.getElementById('totalAmount').textContent = total.toLocaleString();
-}
-
-function checkSubmitButton() {
-    const hasRows = document.querySelectorAll('#paymentRows tr').length > 0;
-    const hasValidData = Array.from(document.querySelectorAll('.loan-select')).some(select => select.value);
-    
-    const submitBtn = document.getElementById('submitBtn');
-    if (hasRows && hasValidData) {
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('btn-secondary');
-        submitBtn.classList.add('btn-primary');
-    } else {
-        submitBtn.disabled = true;
-        submitBtn.classList.remove('btn-primary');
-        submitBtn.classList.add('btn-secondary');
-    }
-}
-
-// Tab switching
-document.getElementById('manual-tab').addEventListener('shown.bs.tab', function() {
-    // When manual tab is shown, add initial rows if none exist
-    if (rowCount === 0) {
-        for (let i = 0; i < 3; i++) {
-            addPaymentRow();
+        if (selectedOption && selectedOption.value) {
+            clientField.value = selectedOption.dataset.client;
+            balanceField.value = selectedOption.dataset.balance_formatted;
+        } else {
+            clientField.value = '';
+            balanceField.value = '';
         }
     }
-});
+
+    function updateTotal() {
+        let total = 0;
+        const amountInputs = document.querySelectorAll('.payment-amount');
+
+        amountInputs.forEach(input => {
+            const value = parseFloat(input.value) || 0;
+            total += value;
+        });
+
+        document.getElementById('totalAmount').textContent = total.toLocaleString();
+    }
+
+    function checkSubmitButton() {
+        const hasRows = document.querySelectorAll('#paymentRows tr').length > 0;
+        const hasValidData = Array.from(document.querySelectorAll('.loan-select')).some(select => select.value);
+
+        const submitBtn = document.getElementById('submitBtn');
+        if (hasRows && hasValidData) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('btn-secondary');
+            submitBtn.classList.add('btn-primary');
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('btn-primary');
+            submitBtn.classList.add('btn-secondary');
+        }
+    }
+
+    // Tab switching
+    document.getElementById('manual-tab').addEventListener('shown.bs.tab', function () {
+        // When manual tab is shown, add initial rows if none exist
+        if (rowCount === 0) {
+            for (let i = 0; i < 3; i++) {
+                addPaymentRow();
+            }
+        }
+    });
 </script>
 
 <style>
-.payment-amount {
-    text-align: right;
-    font-weight: bold;
-}
+    .payment-amount {
+        text-align: right;
+        font-weight: bold;
+    }
 
-#totalAmount {
-    font-weight: bold;
-    color: #198754;
-    font-size: 1.1em;
-}
+    #totalAmount {
+        font-weight: bold;
+        color: #198754;
+        font-size: 1.1em;
+    }
 
-.loan-select option {
-    padding: 8px;
-}
+    .loan-select option {
+        padding: 8px;
+    }
 
-.client-name, .balance-due {
-    background-color: #f8f9fa;
-    font-weight: 500;
-}
+    .client-name,
+    .balance-due {
+        background-color: #f8f9fa;
+        font-weight: 500;
+    }
 
-.nav-tabs .nav-link {
-    font-weight: 500;
-}
+    .nav-tabs .nav-link {
+        font-weight: 500;
+    }
 
-.nav-tabs .nav-link.active {
-    font-weight: bold;
-}
+    .nav-tabs .nav-link.active {
+        font-weight: bold;
+    }
 </style>
 {% endblock %}

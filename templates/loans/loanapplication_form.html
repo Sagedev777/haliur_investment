@@ -1,5 +1,5 @@
 <!-- templates/loans/loanapplication_form.html -->
-{% extends 'base.html' %}
+{% extends 'loans/base.html' %}
 {% load widget_tweaks %}
 
 {% block title %}{% if form.instance.pk %}Edit{% else %}New{% endif %} Loan Application{% endblock %}
@@ -19,45 +19,45 @@
                 <h5 class="card-title mb-0">
                     <i class="fas fa-file-alt me-2"></i>
                     {% if form.instance.pk %}
-                        Edit Loan Application: {{ form.instance.application_number }}
+                    Edit Loan Application: {{ form.instance.application_number }}
                     {% else %}
-                        New Loan Application
+                    New Loan Application
                     {% endif %}
                 </h5>
             </div>
-            
+
             <form method="post" enctype="multipart/form-data" id="loanApplicationForm">
                 {% csrf_token %}
-                
+
                 <div class="card-body">
                     <!-- Form Steps -->
                     <ul class="nav nav-pills mb-4" id="formSteps" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="client-tab" data-bs-toggle="tab" 
-                                    data-bs-target="#client-step" type="button">
+                            <button class="nav-link active" id="client-tab" data-bs-toggle="tab"
+                                data-bs-target="#client-step" type="button">
                                 <span class="step-number">1</span> Client Details
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="loan-tab" data-bs-toggle="tab" 
-                                    data-bs-target="#loan-step" type="button">
+                            <button class="nav-link" id="loan-tab" data-bs-toggle="tab" data-bs-target="#loan-step"
+                                type="button">
                                 <span class="step-number">2</span> Loan Details
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="guarantor-tab" data-bs-toggle="tab" 
-                                    data-bs-target="#guarantor-step" type="button">
+                            <button class="nav-link" id="guarantor-tab" data-bs-toggle="tab"
+                                data-bs-target="#guarantor-step" type="button">
                                 <span class="step-number">3</span> Guarantors
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="documents-tab" data-bs-toggle="tab" 
-                                    data-bs-target="#documents-step" type="button">
+                            <button class="nav-link" id="documents-tab" data-bs-toggle="tab"
+                                data-bs-target="#documents-step" type="button">
                                 <span class="step-number">4</span> Documents
                             </button>
                         </li>
                     </ul>
-                    
+
                     <!-- Form Steps Content -->
                     <div class="tab-content" id="formStepsContent">
                         <!-- Step 1: Client Details -->
@@ -69,10 +69,9 @@
                                         <select class="form-select select2" name="client" required>
                                             <option value="">Select a client...</option>
                                             {% for client in clients %}
-                                            <option value="{{ client.pk }}" 
-                                                    {% if form.instance.client.pk == client.pk %}selected{% endif %}
-                                                    data-balance="{{ client.current_balance }}"
-                                                    data-income="{{ client.monthly_income|default:0 }}">
+                                            <option value="{{ client.pk }}" {% if form.instance.client.pk==client.pk
+                                                %}selected{% endif %} data-balance="{{ client.current_balance }}"
+                                                data-income="{{ client.monthly_income|default:0 }}">
                                                 {{ client.account_number }} - {{ client.full_account_name }}
                                             </option>
                                             {% endfor %}
@@ -91,7 +90,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Step 2: Loan Details -->
                         <div class="tab-pane fade" id="loan-step" role="tabpanel">
                             <div class="row">
@@ -101,41 +100,44 @@
                                         <select class="form-select" name="loan_product" required id="loanProduct">
                                             <option value="">Select product...</option>
                                             {% for product in products %}
-                                            <option value="{{ product.pk }}" 
-                                                    {% if form.instance.loan_product.pk == product.pk %}selected{% endif %}
-                                                    data-min="{{ product.min_loan_amount }}"
-                                                    data-max="{{ product.max_loan_amount }}"
-                                                    data-rate="{{ product.annual_interest_rate }}"
-                                                    data-min-term="{{ product.min_loan_term_days }}"
-                                                    data-max-term="{{ product.max_loan_term_days }}">
+                                            <option value="{{ product.pk }}" {% if
+                                                form.instance.loan_product.pk==product.pk %}selected{% endif %}
+                                                data-min="{{ product.min_loan_amount }}"
+                                                data-max="{{ product.max_loan_amount }}"
+                                                data-rate="{{ product.annual_interest_rate }}"
+                                                data-min-term="{{ product.min_loan_term_days }}"
+                                                data-max-term="{{ product.max_loan_term_days }}">
                                                 {{ product.name }} ({{ product.annual_interest_rate }}%)
                                             </option>
                                             {% endfor %}
                                         </select>
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label">Requested Amount (UGX) *</label>
-                                        {% render_field form.requested_amount class="form-control" placeholder="Enter amount" id="requestedAmount" %}
+                                        {% render_field form.requested_amount class="form-control" placeholder="Enter
+                                        amount" id="requestedAmount" %}
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label">Requested Term (Days) *</label>
-                                        {% render_field form.requested_term_days class="form-control" placeholder="Enter term in days" id="requestedTerm" %}
+                                        {% render_field form.requested_term_days class="form-control" placeholder="Enter
+                                        term in days" id="requestedTerm" %}
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label">Purpose of Loan *</label>
-                                        {% render_field form.purpose class="form-control" placeholder="Describe loan purpose" %}
+                                        {% render_field form.purpose class="form-control" placeholder="Describe loan
+                                        purpose" %}
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-12">
                                     <div class="card bg-light">
                                         <div class="card-body">
@@ -146,7 +148,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-12 mt-3">
                                     <div class="alert alert-info">
                                         <i class="fas fa-calculator me-2"></i>
@@ -158,7 +160,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Step 3: Guarantors -->
                         <div class="tab-pane fade" id="guarantor-step" role="tabpanel">
                             <div class="row">
@@ -167,39 +169,43 @@
                                         <label class="form-label">Select Guarantors</label>
                                         <select class="form-select select2" name="guarantors" multiple>
                                             {% for guarantor in guarantors %}
-                                            <option value="{{ guarantor.pk }}" 
-                                                    {% if guarantor in form.instance.guarantors.all %}selected{% endif %}>
-                                                {{ guarantor.guarantor_id }} - {{ guarantor.individual.full_account_name }}
+                                            <option value="{{ guarantor.pk }}" {% if guarantor in
+                                                form.instance.guarantors.all %}selected{% endif %}>
+                                                {{ guarantor.guarantor_id }} - {{ guarantor.individual.full_account_name
+                                                }}
                                             </option>
                                             {% endfor %}
                                         </select>
                                         <small class="text-muted">You can select multiple guarantors</small>
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-12">
                                     <div class="mb-3">
                                         <label class="form-label">Collateral Description</label>
-                                        {% render_field form.collateral_description class="form-control" rows="3" placeholder="Describe collateral provided" %}
+                                        {% render_field form.collateral_description class="form-control" rows="3"
+                                        placeholder="Describe collateral provided" %}
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label">Collateral Value (UGX)</label>
-                                        {% render_field form.collateral_value class="form-control" placeholder="Estimated value" %}
+                                        {% render_field form.collateral_value class="form-control"
+                                        placeholder="Estimated value" %}
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-12">
                                     <div class="alert alert-warning">
                                         <i class="fas fa-exclamation-triangle me-2"></i>
-                                        <strong>Note:</strong> At least one guarantor or collateral is recommended for loan approval.
+                                        <strong>Note:</strong> At least one guarantor or collateral is recommended for
+                                        loan approval.
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Step 4: Documents -->
                         <div class="tab-pane fade" id="documents-step" role="tabpanel">
                             <div class="row">
@@ -207,10 +213,11 @@
                                     <div class="mb-3">
                                         <label class="form-label">Upload Supporting Documents</label>
                                         <input type="file" class="form-control" name="documents" multiple>
-                                        <small class="text-muted">You can upload multiple files (ID, payslips, etc.)</small>
+                                        <small class="text-muted">You can upload multiple files (ID, payslips,
+                                            etc.)</small>
                                     </div>
                                 </div>
-                                
+
                                 {% if form.instance.pk %}
                                 <div class="col-md-12">
                                     <h6>Existing Documents</h6>
@@ -222,7 +229,8 @@
                                                     <i class="fas fa-file-pdf text-danger me-2"></i>
                                                     {{ doc.document.name|slice:"40:" }}
                                                 </div>
-                                                <a href="{{ doc.document.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <a href="{{ doc.document.url }}" target="_blank"
+                                                    class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-download"></i>
                                                 </a>
                                             </div>
@@ -236,36 +244,36 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Form Errors -->
                     {% if form.errors %}
                     <div class="alert alert-danger mt-3">
                         <h6>Please correct the following errors:</h6>
                         <ul class="mb-0">
                             {% for field in form %}
-                                {% for error in field.errors %}
-                                <li>{{ field.label }}: {{ error }}</li>
-                                {% endfor %}
+                            {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
                             {% endfor %}
                             {% for error in form.non_field_errors %}
-                                <li>{{ error }}</li>
+                            <li>{{ error }}</li>
                             {% endfor %}
                         </ul>
                     </div>
                     {% endif %}
                 </div>
-                
+
                 <div class="card-footer">
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-outline-secondary" id="prevStep">
                             <i class="fas fa-arrow-left me-1"></i> Previous
                         </button>
-                        
+
                         <div>
                             <button type="button" class="btn btn-outline-info" id="nextStep">
                                 Next <i class="fas fa-arrow-right ms-1"></i>
                             </button>
-                            
+
                             <button type="submit" class="btn btn-primary ms-2">
                                 <i class="fas fa-check me-1"></i>
                                 {% if form.instance.pk %}Update Application{% else %}Submit Application{% endif %}
@@ -281,51 +289,51 @@
 
 {% block extra_js %}
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
         let currentStep = 1;
         const totalSteps = 4;
-        
+
         // Step Navigation
-        $('#nextStep').click(function() {
+        $('#nextStep').click(function () {
             if (currentStep < totalSteps) {
                 currentStep++;
                 updateStep();
             }
         });
-        
-        $('#prevStep').click(function() {
+
+        $('#prevStep').click(function () {
             if (currentStep > 1) {
                 currentStep--;
                 updateStep();
             }
         });
-        
+
         function updateStep() {
             // Update tabs
             $('.nav-pills .nav-link').removeClass('active');
             $(`.nav-pills .nav-link:nth-child(${currentStep})`).addClass('active');
-            
+
             // Update tab content
             $('.tab-pane').removeClass('show active');
             $(`.tab-pane:nth-child(${currentStep})`).addClass('show active');
-            
+
             // Update button visibility
             $('#prevStep').toggle(currentStep > 1);
             $('#nextStep').toggle(currentStep < totalSteps);
-            
+
             // Update submit button text on last step
             if (currentStep === totalSteps) {
                 $('#nextStep').hide();
             }
         }
-        
+
         // Update client info when client is selected
-        $('select[name="client"]').change(function() {
+        $('select[name="client"]').change(function () {
             const clientId = $(this).val();
             const selectedOption = $(this).find('option:selected');
             const balance = selectedOption.data('balance');
             const income = selectedOption.data('income');
-            
+
             if (clientId) {
                 let html = `
                     <div class="row">
@@ -344,16 +352,16 @@
                 $('#clientInfo').html('<p class="text-muted mb-0">Select a client to view details</p>');
             }
         });
-        
+
         // Update product terms when product is selected
-        $('#loanProduct').change(function() {
+        $('#loanProduct').change(function () {
             const selectedOption = $(this).find('option:selected');
             const minAmount = selectedOption.data('min');
             const maxAmount = selectedOption.data('max');
             const rate = selectedOption.data('rate');
             const minTerm = selectedOption.data('min-term');
             const maxTerm = selectedOption.data('max-term');
-            
+
             if ($(this).val()) {
                 let html = `
                     <div class="row">
@@ -376,20 +384,20 @@
                 $('#productTerms').html('<p class="text-muted mb-0">Select a product to view terms</p>');
             }
         });
-        
+
         // Calculate loan details
         function calculateLoan() {
             const amount = parseFloat($('#requestedAmount').val()) || 0;
             const term = parseInt($('#requestedTerm').val()) || 0;
             const rate = parseFloat($('#loanProduct').find('option:selected').data('rate')) || 0;
-            
+
             if (amount > 0 && term > 0 && rate > 0) {
                 const annualInterest = amount * (rate / 100);
                 const dailyInterest = annualInterest / 365;
                 const totalInterest = dailyInterest * term;
                 const totalRepayment = amount + totalInterest;
                 const dailyPayment = totalRepayment / term;
-                
+
                 let html = `
                     <div class="row">
                         <div class="col-md-3">
@@ -413,10 +421,10 @@
                 $('#loanCalculation').html(html);
             }
         }
-        
+
         // Trigger calculations on input change
         $('#requestedAmount, #requestedTerm, #loanProduct').on('input change', calculateLoan);
-        
+
         // Initialize
         updateStep();
         calculateLoan();

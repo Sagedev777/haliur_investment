@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'loans/base.html' %}
 {% load humanize %}
 
 {% block title %}Loan Portfolio Report{% endblock %}
@@ -40,20 +40,21 @@
                     <form method="get" class="row g-3">
                         <div class="col-md-3">
                             <label for="start_date" class="form-label">Start Date</label>
-                            <input type="date" class="form-control" id="start_date" name="start_date" 
-                                   value="{{ start_date|date:'Y-m-d' }}">
+                            <input type="date" class="form-control" id="start_date" name="start_date"
+                                value="{{ start_date|date:'Y-m-d' }}">
                         </div>
                         <div class="col-md-3">
                             <label for="end_date" class="form-label">End Date</label>
-                            <input type="date" class="form-control" id="end_date" name="end_date" 
-                                   value="{{ end_date|date:'Y-m-d' }}">
+                            <input type="date" class="form-control" id="end_date" name="end_date"
+                                value="{{ end_date|date:'Y-m-d' }}">
                         </div>
                         <div class="col-md-3">
                             <label for="loan_officer" class="form-label">Loan Officer</label>
                             <select class="form-select" id="loan_officer" name="loan_officer">
                                 <option value="">All Officers</option>
                                 {% for officer in loan_officers %}
-                                <option value="{{ officer.id }}" {% if officer.id == selected_officer %}selected{% endif %}>
+                                <option value="{{ officer.id }}" {% if officer.id==selected_officer %}selected{% endif
+                                    %}>
                                     {{ officer.get_full_name|default:officer.username }}
                                 </option>
                                 {% endfor %}
@@ -64,7 +65,7 @@
                             <select class="form-select" id="loan_type" name="loan_type">
                                 <option value="">All Types</option>
                                 {% for type_code, type_name in loan_types %}
-                                <option value="{{ type_code }}" {% if type_code == selected_type %}selected{% endif %}>
+                                <option value="{{ type_code }}" {% if type_code==selected_type %}selected{% endif %}>
                                     {{ type_name }}
                                 </option>
                                 {% endfor %}
@@ -110,7 +111,8 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                 Active Loans</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.active_loans|intcomma }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.active_loans|intcomma }}
+                            </div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-check-circle fa-2x text-gray-300"></i>
@@ -127,7 +129,8 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                 Total Portfolio</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{ summary.total_portfolio|intcomma|floatformat:2 }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{
+                                summary.total_portfolio|intcomma|floatformat:2 }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-chart-pie fa-2x text-gray-300"></i>
@@ -144,7 +147,8 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                 Outstanding</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{ summary.total_outstanding|intcomma|floatformat:2 }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{
+                                summary.total_outstanding|intcomma|floatformat:2 }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
@@ -161,7 +165,8 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
                                 NPL Ratio</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.npl_ratio|floatformat:2 }}%</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.npl_ratio|floatformat:2 }}%
+                            </div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
@@ -178,7 +183,8 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
                                 Collection Rate</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.collection_rate|floatformat:2 }}%</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ summary.collection_rate|floatformat:2
+                                }}%</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-percentage fa-2x text-gray-300"></i>
@@ -196,26 +202,26 @@
                 <div class="card-header">
                     <ul class="nav nav-tabs card-header-tabs" id="portfolioTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" 
-                                    data-bs-target="#overview" type="button" role="tab">
+                            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab"
+                                data-bs-target="#overview" type="button" role="tab">
                                 <i class="fas fa-chart-bar"></i> Overview
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="performance-tab" data-bs-toggle="tab" 
-                                    data-bs-target="#performance" type="button" role="tab">
+                            <button class="nav-link" id="performance-tab" data-bs-toggle="tab"
+                                data-bs-target="#performance" type="button" role="tab">
                                 <i class="fas fa-chart-line"></i> Performance
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="risk-tab" data-bs-toggle="tab" 
-                                    data-bs-target="#risk" type="button" role="tab">
+                            <button class="nav-link" id="risk-tab" data-bs-toggle="tab" data-bs-target="#risk"
+                                type="button" role="tab">
                                 <i class="fas fa-shield-alt"></i> Risk Analysis
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="breakdown-tab" data-bs-toggle="tab" 
-                                    data-bs-target="#breakdown" type="button" role="tab">
+                            <button class="nav-link" id="breakdown-tab" data-bs-toggle="tab" data-bs-target="#breakdown"
+                                type="button" role="tab">
                                 <i class="fas fa-pie-chart"></i> Portfolio Breakdown
                             </button>
                         </li>
@@ -223,14 +229,15 @@
                 </div>
                 <div class="card-body">
                     <div class="tab-content" id="portfolioTabsContent">
-                        
+
                         <!-- Overview Tab -->
                         <div class="tab-pane fade show active" id="overview" role="tabpanel">
                             <div class="row">
                                 <div class="col-md-8">
                                     <h5 class="card-title">Portfolio Overview</h5>
-                                    <p class="card-text">Comprehensive overview of loan portfolio status and distribution.</p>
-                                    
+                                    <p class="card-text">Comprehensive overview of loan portfolio status and
+                                        distribution.</p>
+
                                     <div class="table-responsive">
                                         <table class="table table-bordered">
                                             <thead class="table-light">
@@ -246,7 +253,8 @@
                                                 {% for status in status_distribution %}
                                                 <tr>
                                                     <td>
-                                                        <span class="badge bg-{{ status.badge_color }}">{{ status.status_display }}</span>
+                                                        <span class="badge bg-{{ status.badge_color }}">{{
+                                                            status.status_display }}</span>
                                                     </td>
                                                     <td>{{ status.count|intcomma }}</td>
                                                     <td>${{ status.total_amount|intcomma|floatformat:2 }}</td>
@@ -287,14 +295,16 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <h5 class="card-title">Portfolio Performance Metrics</h5>
-                                    
+
                                     <div class="row mb-4">
                                         <div class="col-md-4">
                                             <div class="card bg-light">
                                                 <div class="card-body text-center">
                                                     <h6>PAR > 30 Days</h6>
-                                                    <h3 class="text-warning">${{ performance.par_30|intcomma|floatformat:2 }}</h3>
-                                                    <p class="text-muted mb-0">{{ performance.par_30_percentage|floatformat:2 }}% of Portfolio</p>
+                                                    <h3 class="text-warning">${{
+                                                        performance.par_30|intcomma|floatformat:2 }}</h3>
+                                                    <p class="text-muted mb-0">{{
+                                                        performance.par_30_percentage|floatformat:2 }}% of Portfolio</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -302,8 +312,10 @@
                                             <div class="card bg-light">
                                                 <div class="card-body text-center">
                                                     <h6>PAR > 60 Days</h6>
-                                                    <h3 class="text-danger">${{ performance.par_60|intcomma|floatformat:2 }}</h3>
-                                                    <p class="text-muted mb-0">{{ performance.par_60_percentage|floatformat:2 }}% of Portfolio</p>
+                                                    <h3 class="text-danger">${{
+                                                        performance.par_60|intcomma|floatformat:2 }}</h3>
+                                                    <p class="text-muted mb-0">{{
+                                                        performance.par_60_percentage|floatformat:2 }}% of Portfolio</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -311,8 +323,11 @@
                                             <div class="card bg-light">
                                                 <div class="card-body text-center">
                                                     <h6>Write-offs</h6>
-                                                    <h3 class="text-danger">${{ performance.write_offs|intcomma|floatformat:2 }}</h3>
-                                                    <p class="text-muted mb-0">{{ performance.write_offs_percentage|floatformat:2 }}% of Portfolio</p>
+                                                    <h3 class="text-danger">${{
+                                                        performance.write_offs|intcomma|floatformat:2 }}</h3>
+                                                    <p class="text-muted mb-0">{{
+                                                        performance.write_offs_percentage|floatformat:2 }}% of Portfolio
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
@@ -395,10 +410,12 @@
                                                             <td>{{ officer.name }}</td>
                                                             <td>{{ officer.loan_count|intcomma }}</td>
                                                             <td>${{ officer.portfolio|intcomma|floatformat:2 }}</td>
-                                                            <td class="{% if officer.npl_ratio > 5 %}text-danger{% elif officer.npl_ratio > 2 %}text-warning{% else %}text-success{% endif %}">
+                                                            <td
+                                                                class="{% if officer.npl_ratio > 5 %}text-danger{% elif officer.npl_ratio > 2 %}text-warning{% else %}text-success{% endif %}">
                                                                 {{ officer.npl_ratio|floatformat:2 }}%
                                                             </td>
-                                                            <td class="{% if officer.collection_rate < 90 %}text-danger{% elif officer.collection_rate < 95 %}text-warning{% else %}text-success{% endif %}">
+                                                            <td
+                                                                class="{% if officer.collection_rate < 90 %}text-danger{% elif officer.collection_rate < 95 %}text-warning{% else %}text-success{% endif %}">
                                                                 {{ officer.collection_rate|floatformat:2 }}%
                                                             </td>
                                                         </tr>
@@ -457,77 +474,80 @@
                 </div>
                 <div class="card-body">
                     {% if loans %}
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover" id="loansTable">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Loan #</th>
-                                        <th>Client</th>
-                                        <th>Loan Officer</th>
-                                        <th>Type</th>
-                                        <th>Disbursed</th>
-                                        <th>Principal</th>
-                                        <th>Outstanding</th>
-                                        <th>Status</th>
-                                        <th>Risk Rating</th>
-                                        <th>Days Overdue</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for loan in loans %}
-                                    <tr class="{% if loan.days_overdue > 30 %}table-warning{% elif loan.days_overdue > 60 %}table-danger{% endif %}">
-                                        <td>{{ loan.loan_number|default:loan.id }}</td>
-                                        <td>
-                                            <a href="{% url 'accounts:account_detail' loan.client_account.pk %}" 
-                                               class="text-primary">
-                                                {{ loan.client_account.full_account_name|truncatechars:20 }}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="loansTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Loan #</th>
+                                    <th>Client</th>
+                                    <th>Loan Officer</th>
+                                    <th>Type</th>
+                                    <th>Disbursed</th>
+                                    <th>Principal</th>
+                                    <th>Outstanding</th>
+                                    <th>Status</th>
+                                    <th>Risk Rating</th>
+                                    <th>Days Overdue</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for loan in loans %}
+                                <tr
+                                    class="{% if loan.days_overdue > 30 %}table-warning{% elif loan.days_overdue > 60 %}table-danger{% endif %}">
+                                    <td>{{ loan.loan_number|default:loan.id }}</td>
+                                    <td>
+                                        <a href="{% url 'accounts:account_detail' loan.client_account.pk %}"
+                                            class="text-primary">
+                                            {{ loan.client_account.full_account_name|truncatechars:20 }}
+                                        </a>
+                                    </td>
+                                    <td>{{ loan.loan_officer.get_full_name|default:loan.loan_officer.username }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ loan.get_loan_type_display }}</span>
+                                    </td>
+                                    <td>{{ loan.disbursement_date|date:"Y-m-d"|default:"Not disbursed" }}</td>
+                                    <td class="text-end">${{ loan.loan_amount|intcomma|floatformat:2 }}</td>
+                                    <td class="text-end fw-bold">${{ loan.remaining_balance|intcomma|floatformat:2 }}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ loan.status_badge_color }}">
+                                            {{ loan.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ loan.risk_badge_color }}">
+                                            {{ loan.risk_rating|default:"N/A" }}
+                                        </span>
+                                    </td>
+                                    <td
+                                        class="text-center {% if loan.days_overdue > 30 %}text-warning fw-bold{% elif loan.days_overdue > 60 %}text-danger fw-bold{% endif %}">
+                                        {{ loan.days_overdue|default:"0" }}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'loans:loan_detail' loan.pk %}"
+                                                class="btn btn-sm btn-outline-info" title="View Details">
+                                                <i class="fas fa-eye"></i>
                                             </a>
-                                        </td>
-                                        <td>{{ loan.loan_officer.get_full_name|default:loan.loan_officer.username }}</td>
-                                        <td>
-                                            <span class="badge bg-info">{{ loan.get_loan_type_display }}</span>
-                                        </td>
-                                        <td>{{ loan.disbursement_date|date:"Y-m-d"|default:"Not disbursed" }}</td>
-                                        <td class="text-end">${{ loan.loan_amount|intcomma|floatformat:2 }}</td>
-                                        <td class="text-end fw-bold">${{ loan.remaining_balance|intcomma|floatformat:2 }}</td>
-                                        <td>
-                                            <span class="badge bg-{{ loan.status_badge_color }}">
-                                                {{ loan.get_status_display }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-{{ loan.risk_badge_color }}">
-                                                {{ loan.risk_rating|default:"N/A" }}
-                                            </span>
-                                        </td>
-                                        <td class="text-center {% if loan.days_overdue > 30 %}text-warning fw-bold{% elif loan.days_overdue > 60 %}text-danger fw-bold{% endif %}">
-                                            {{ loan.days_overdue|default:"0" }}
-                                        </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="{% url 'loans:loan_detail' loan.pk %}" 
-                                                   class="btn btn-sm btn-outline-info" title="View Details">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                {% if loan.status == 'ACTIVE' %}
-                                                <a href="{% url 'loans:record_payment' loan.pk %}" 
-                                                   class="btn btn-sm btn-outline-success" title="Record Payment">
-                                                    <i class="fas fa-money-bill"></i>
-                                                </a>
-                                                {% endif %}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
+                                            {% if loan.status == 'ACTIVE' %}
+                                            <a href="{% url 'loans:record_payment' loan.pk %}"
+                                                class="btn btn-sm btn-outline-success" title="Record Payment">
+                                                <i class="fas fa-money-bill"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                     {% else %}
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            No loans found matching your criteria.
-                        </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        No loans found matching your criteria.
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -543,7 +563,8 @@
                         <div class="col-md-6">
                             <h6>Report Generated</h6>
                             <p class="mb-0">{{ generated_at|date:"F d, Y H:i:s" }}</p>
-                            <small class="text-muted">By: {{ request.user.get_full_name|default:request.user.username }}</small>
+                            <small class="text-muted">By: {{ request.user.get_full_name|default:request.user.username
+                                }}</small>
                         </div>
                         <div class="col-md-6 text-end">
                             <h6>Report Summary</h6>
@@ -561,42 +582,42 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize date pickers
-    const endDate = document.getElementById('end_date');
-    const startDate = document.getElementById('start_date');
-    
-    if (endDate) endDate.max = new Date().toISOString().split('T')[0];
-    if (startDate) startDate.max = new Date().toISOString().split('T')[0];
-    
-    // Portfolio Status Chart
-    const statusCtx = document.getElementById('statusChart').getContext('2d');
-    const statusChart = new Chart(statusCtx, {
-        type: 'pie',
-        data: {
-            labels: {{ status_labels|safe }},
-            datasets: [{
-                data: {{ status_data|safe }},
-                backgroundColor: {{ status_colors|safe }},
-                borderWidth: 2,
-                borderColor: '#fff'
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize date pickers
+        const endDate = document.getElementById('end_date');
+        const startDate = document.getElementById('start_date');
+
+        if (endDate) endDate.max = new Date().toISOString().split('T')[0];
+        if (startDate) startDate.max = new Date().toISOString().split('T')[0];
+
+        // Portfolio Status Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        const statusChart = new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: {{ status_labels| safe }},
+        datasets: [{
+            data: {{ status_data| safe }},
+        backgroundColor: {{ status_colors| safe }},
+        borderWidth: 2,
+        borderColor: '#fff'
             }]
         },
         options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `${context.label}: $${context.raw.toLocaleString()}`;
-                        }
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function (context) {
+                        return `${context.label}: $${context.raw.toLocaleString()}`;
                     }
                 }
             }
         }
+    }
     });
 
     // Disbursement Trend Chart
@@ -604,36 +625,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const disbursementChart = new Chart(disbursementCtx, {
         type: 'line',
         data: {
-            labels: {{ disbursement_months|safe }},
-            datasets: [{
-                label: 'Disbursements',
-                data: {{ disbursement_amounts|safe }},
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
+            labels: {{ disbursement_months| safe }},
+    datasets: [{
+        label: 'Disbursements',
+        data: {{ disbursement_amounts| safe }},
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4
             }]
         },
-        options: {
-            responsive: true,
+    options: {
+        responsive: true,
             plugins: {
-                legend: {
-                    display: true,
+            legend: {
+                display: true,
                     position: 'top',
                 }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
-                            return '$' + value.toLocaleString();
-                        }
+                    callback: function(value) {
+                        return '$' + value.toLocaleString();
                     }
                 }
             }
         }
+    }
     });
 
     // Loan Type Chart
@@ -641,25 +662,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const loanTypeChart = new Chart(loanTypeCtx, {
         type: 'doughnut',
         data: {
-            labels: {{ loan_type_labels|safe }},
-            datasets: [{
-                data: {{ loan_type_data|safe }},
-                backgroundColor: [
-                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', 
-                    '#e74a3b', '#858796', '#6f42c1', '#fd7e14'
-                ],
-                borderWidth: 2,
-                borderColor: '#fff'
+            labels: {{ loan_type_labels| safe }},
+    datasets: [{
+        data: {{ loan_type_data| safe }},
+        backgroundColor: [
+        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e',
+        '#e74a3b', '#858796', '#6f42c1', '#fd7e14'
+    ],
+        borderWidth: 2,
+        borderColor: '#fff'
             }]
         },
-        options: {
-            responsive: true,
+    options: {
+        responsive: true,
             plugins: {
-                legend: {
-                    position: 'bottom',
+            legend: {
+                position: 'bottom',
                 }
-            }
         }
+    }
     });
 
     // Initialize DataTable for loans table
@@ -670,56 +691,76 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-function exportReport(format) {
-    const params = new URLSearchParams(window.location.search);
-    
-    if (format === 'pdf') {
-        params.set('export', 'pdf');
-        window.location.href = window.location.pathname + '?' + params.toString();
-    } else if (format === 'csv') {
-        params.set('export', 'csv');
-        window.location.href = window.location.pathname + '?' + params.toString();
+    function exportReport(format) {
+        const params = new URLSearchParams(window.location.search);
+
+        if (format === 'pdf') {
+            params.set('export', 'pdf');
+            window.location.href = window.location.pathname + '?' + params.toString();
+        } else if (format === 'csv') {
+            params.set('export', 'csv');
+            window.location.href = window.location.pathname + '?' + params.toString();
+        }
     }
-}
 
-function refreshData() {
-    window.location.reload();
-}
+    function refreshData() {
+        window.location.reload();
+    }
 
-// Auto-refresh every 5 minutes (optional)
-// setInterval(refreshData, 300000);
+    // Auto-refresh every 5 minutes (optional)
+    // setInterval(refreshData, 300000);
 
-// Print report
-function printReport() {
-    window.print();
-}
+    // Print report
+    function printReport() {
+        window.print();
+    }
 </script>
 
 <style>
-.card {
-    border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
-}
-.border-left-primary { border-left: 4px solid #4e73df !important; }
-.border-left-success { border-left: 4px solid #1cc88a !important; }
-.border-left-info { border-left: 4px solid #36b9cc !important; }
-.border-left-warning { border-left: 4px solid #f6c23e !important; }
-.border-left-danger { border-left: 4px solid #e74a3b !important; }
-.border-left-secondary { border-left: 4px solid #858796 !important; }
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    }
 
-.table tbody tr:hover {
-    background-color: rgba(0, 0, 0, 0.02);
-}
-.nav-tabs .nav-link {
-    border-radius: 0;
-    border: none;
-    color: #6c757d;
-}
-.nav-tabs .nav-link.active {
-    color: #4e73df;
-    border-bottom: 3px solid #4e73df;
-    background-color: transparent;
-}
+    .border-left-primary {
+        border-left: 4px solid #4e73df !important;
+    }
+
+    .border-left-success {
+        border-left: 4px solid #1cc88a !important;
+    }
+
+    .border-left-info {
+        border-left: 4px solid #36b9cc !important;
+    }
+
+    .border-left-warning {
+        border-left: 4px solid #f6c23e !important;
+    }
+
+    .border-left-danger {
+        border-left: 4px solid #e74a3b !important;
+    }
+
+    .border-left-secondary {
+        border-left: 4px solid #858796 !important;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .nav-tabs .nav-link {
+        border-radius: 0;
+        border: none;
+        color: #6c757d;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #4e73df;
+        border-bottom: 3px solid #4e73df;
+        background-color: transparent;
+    }
 </style>
 
 {% endblock %}

@@ -1,5 +1,5 @@
 <!-- templates/loans/loan_list.html -->
-{% extends 'base.html' %}
+{% extends 'loans/base.html' %}
 {% load humanize %}
 
 {% block title %}Loan Portfolio{% endblock %}
@@ -66,17 +66,18 @@
     <div class="card-body">
         <ul class="nav nav-tabs" id="loanStatusTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link {% if not request.GET.status %}active{% endif %}" 
-                        onclick="window.location.href='{% url 'loans:loan_list' %}'">
+                <button class="nav-link {% if not request.GET.status %}active{% endif %}"
+                    onclick="window.location.href='{% url 'loans:loan_list' %}'">
                     All <span class="badge bg-secondary">{{ total_loans }}</span>
                 </button>
             </li>
             {% for status, count in status_counts.items %}
             <li class="nav-item" role="presentation">
-                <button class="nav-link {% if request.GET.status == status %}active{% endif %}" 
-                        onclick="window.location.href='{% url 'loans:loan_list' %}?status={{ status }}'">
-                    {{ status|title }} 
-                    <span class="badge bg-{% if status == 'ACTIVE' %}success{% elif status == 'OVERDUE' %}danger{% elif status == 'CLOSED' %}secondary{% else %}warning{% endif %}">
+                <button class="nav-link {% if request.GET.status == status %}active{% endif %}"
+                    onclick="window.location.href='{% url 'loans:loan_list' %}?status={{ status }}'">
+                    {{ status|title }}
+                    <span
+                        class="badge bg-{% if status == 'ACTIVE' %}success{% elif status == 'OVERDUE' %}danger{% elif status == 'CLOSED' %}secondary{% else %}warning{% endif %}">
                         {{ count }}
                     </span>
                 </button>
@@ -92,25 +93,26 @@
         <form method="get" class="row g-3">
             <div class="col-md-3">
                 <label class="form-label">Search</label>
-                <input type="text" class="form-control" name="search" placeholder="Loan #, client name, phone..." 
-                       value="{{ request.GET.search }}">
+                <input type="text" class="form-control" name="search" placeholder="Loan #, client name, phone..."
+                    value="{{ request.GET.search }}">
             </div>
             <div class="col-md-2">
                 <label class="form-label">Min Amount</label>
-                <input type="number" class="form-control" name="min_amount" placeholder="Min" 
-                       value="{{ request.GET.min_amount }}">
+                <input type="number" class="form-control" name="min_amount" placeholder="Min"
+                    value="{{ request.GET.min_amount }}">
             </div>
             <div class="col-md-2">
                 <label class="form-label">Max Amount</label>
-                <input type="number" class="form-control" name="max_amount" placeholder="Max" 
-                       value="{{ request.GET.max_amount }}">
+                <input type="number" class="form-control" name="max_amount" placeholder="Max"
+                    value="{{ request.GET.max_amount }}">
             </div>
             <div class="col-md-2">
                 <label class="form-label">Product</label>
                 <select class="form-select" name="product">
                     <option value="">All Products</option>
                     {% for product in products %}
-                    <option value="{{ product.pk }}" {% if request.GET.product == product.pk|stringformat:"s" %}selected{% endif %}>
+                    <option value="{{ product.pk }}" {% if request.GET.product==product.pk|stringformat:"s" %}selected{%
+                        endif %}>
                         {{ product.name }}
                     </option>
                     {% endfor %}
@@ -119,17 +121,16 @@
             <div class="col-md-3">
                 <label class="form-label">Date Range</label>
                 <div class="input-group">
-                    <input type="date" class="form-control datepicker" name="date_from" 
-                           value="{{ request.GET.date_from }}">
+                    <input type="date" class="form-control datepicker" name="date_from"
+                        value="{{ request.GET.date_from }}">
                     <span class="input-group-text">to</span>
-                    <input type="date" class="form-control datepicker" name="date_to" 
-                           value="{{ request.GET.date_to }}">
+                    <input type="date" class="form-control datepicker" name="date_to" value="{{ request.GET.date_to }}">
                 </div>
             </div>
             <div class="col-md-12">
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" name="show_overdue" id="showOverdue" 
-                           value="true" {% if request.GET.show_overdue %}checked{% endif %}>
+                    <input class="form-check-input" type="checkbox" name="show_overdue" id="showOverdue" value="true" {%
+                        if request.GET.show_overdue %}checked{% endif %}>
                     <label class="form-check-label" for="showOverdue">
                         Show Overdue Only
                     </label>
@@ -208,7 +209,7 @@
                             <br>
                             <small class="text-muted">
                                 {% if loan.days_until_next %}
-                                    {{ loan.days_until_next }} days left
+                                {{ loan.days_until_next }} days left
                                 {% endif %}
                             </small>
                             {% else %}
@@ -217,22 +218,22 @@
                         </td>
                         <td>
                             <div class="btn-group" role="group">
-                                <a href="{% url 'loans:loan_detail' loan.pk %}" 
-                                   class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="View">
+                                <a href="{% url 'loans:loan_detail' loan.pk %}" class="btn btn-sm btn-outline-primary"
+                                    data-bs-toggle="tooltip" title="View">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{% url 'loans:process_payment' loan.pk %}" 
-                                   class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Pay">
+                                <a href="{% url 'loans:process_payment' loan.pk %}"
+                                    class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Pay">
                                     <i class="fas fa-money-bill-wave"></i>
                                 </a>
-                                <a href="{% url 'loans:loan_statement' loan.pk %}" 
-                                   class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Statement">
+                                <a href="{% url 'loans:loan_statement' loan.pk %}" class="btn btn-sm btn-outline-info"
+                                    data-bs-toggle="tooltip" title="Statement">
                                     <i class="fas fa-file-invoice"></i>
                                 </a>
                                 {% if loan.status == 'ACTIVE' or loan.status == 'OVERDUE' %}
                                 <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                            type="button" data-bs-toggle="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown">
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
                                     <ul class="dropdown-menu">
@@ -242,7 +243,8 @@
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item" href="{% url 'loans:loan_statement' loan.pk %}?format=pdf">
+                                            <a class="dropdown-item"
+                                                href="{% url 'loans:loan_statement' loan.pk %}?format=pdf">
                                                 <i class="fas fa-print me-2"></i>Print Statement
                                             </a>
                                         </li>
@@ -269,50 +271,54 @@
                 </tbody>
             </table>
         </div>
-        
+
         <!-- Pagination -->
         {% if is_paginated %}
         <nav aria-label="Page navigation">
             <ul class="pagination justify-content-center">
                 {% if page_obj.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    <a class="page-link"
+                        href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
                         First
                     </a>
                 </li>
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    <a class="page-link"
+                        href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
                         Previous
                     </a>
                 </li>
                 {% endif %}
-                
+
                 {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                    <li class="page-item active">
-                        <span class="page-link">{{ num }}</span>
+                {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <li class="page-item">
+                    <a class="page-link"
+                        href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        {{ num }}
+                    </a>
                     </li>
-                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                            {{ num }}
+                        <a class="page-link"
+                            href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Next
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            Last
                         </a>
                     </li>
                     {% endif %}
-                {% endfor %}
-                
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                        Next
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                        Last
-                    </a>
-                </li>
-                {% endif %}
             </ul>
         </nav>
         {% endif %}
