@@ -17,7 +17,6 @@ INSTALLED_APPS = [
         'core.apps.CoreConfig',
         'client_accounts.apps.ClientAccountsConfig',
         'loans.apps.LoansConfig',
-        'payments.apps.PaymentsConfig',
         'reports.apps.ReportsConfig',
         ]
 
