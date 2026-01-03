@@ -402,12 +402,14 @@
                             <li class="page-item active">
                                 <span class="page-link">{{ num }}</span>
                             </li>
-                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            {% else %}
+                            {% if num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
                             <li class="page-item">
                                 <a class="page-link"
                                     href="?page={{ num }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if account_filter %}&account={{ account_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">{{
                                     num }}</a>
                                 </li>
+                            {% endif %}
                             {% endif %}
                             {% endfor %}
 
