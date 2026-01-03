@@ -114,11 +114,11 @@
                             <label for="status" class="form-label">Status</label>
                             <select class="form-select" id="status" name="status">
                                 <option value="">All Status</option>
-                                <option value="ACTIVE" {% if status_filter=='ACTIVE' %}selected{% endif %}>Active
+                                <option value="ACTIVE" {% if status_filter == 'ACTIVE' %}selected{% endif %}>Active
                                 </option>
-                                <option value="INACTIVE" {% if status_filter=='INACTIVE' %}selected{% endif %}>Inactive
+                                <option value="INACTIVE" {% if status_filter == 'INACTIVE' %}selected{% endif %}>Inactive
                                 </option>
-                                <option value="PENDING" {% if status_filter=='PENDING' %}selected{% endif %}>Pending
+                                <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending
                                 </option>
                             </select>
                         </div>

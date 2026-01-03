@@ -53,8 +53,7 @@
                             <select class="form-select" id="loan_officer" name="loan_officer">
                                 <option value="">All Officers</option>
                                 {% for officer in loan_officers %}
-                                <option value="{{ officer.id }}" {% if officer.id==selected_officer %}selected{% endif
-                                    %}>
+                                <option value="{{ officer.id }}" {% if officer.id == selected_officer|default:0 %}selected{% endif %}>
                                     {{ officer.get_full_name|default:officer.username }}
                                 </option>
                                 {% endfor %}
@@ -65,7 +64,7 @@
                             <select class="form-select" id="loan_type" name="loan_type">
                                 <option value="">All Types</option>
                                 {% for type_code, type_name in loan_types %}
-                                <option value="{{ type_code }}" {% if type_code==selected_type %}selected{% endif %}>
+                                <option value="{{ type_code }}" {% if type_code == selected_type %}selected{% endif %}>
                                     {{ type_name }}
                                 </option>
                                 {% endfor %}

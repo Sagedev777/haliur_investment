@@ -66,8 +66,8 @@
                 <label class="form-label">Status</label>
                 <select class="form-select" name="is_active">
                     <option value="">All Status</option>
-                    <option value="true" {% if request.GET.is_active=='true' %}selected{% endif %}>Active</option>
-                    <option value="false" {% if request.GET.is_active=='false' %}selected{% endif %}>Inactive</option>
+                    <option value="true" {% if request.GET.is_active == 'true' %}selected{% endif %}>Active</option>
+                    <option value="false" {% if request.GET.is_active == 'false' %}selected{% endif %}>Inactive</option>
                 </select>
             </div>
             <div class="col-md-3">

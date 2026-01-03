@@ -69,8 +69,7 @@
                                         <select class="form-select select2" name="client" required>
                                             <option value="">Select a client...</option>
                                             {% for client in clients %}
-                                            <option value="{{ client.pk }}" {% if form.instance.client.pk==client.pk
-                                                %}selected{% endif %} data-balance="{{ client.current_balance }}"
+                                            <option value="{{ client.pk }}" {% if form.instance.client.pk == client.pk %}selected{% endif %} data-balance="{{ client.current_balance }}"
                                                 data-income="{{ client.monthly_income|default:0 }}">
                                                 {{ client.account_number }} - {{ client.full_account_name }}
                                             </option>
@@ -100,8 +99,7 @@
                                         <select class="form-select" name="loan_product" required id="loanProduct">
                                             <option value="">Select product...</option>
                                             {% for product in products %}
-                                            <option value="{{ product.pk }}" {% if
-                                                form.instance.loan_product.pk==product.pk %}selected{% endif %}
+                                            <option value="{{ product.pk }}" {% if form.instance.loan_product.pk == product.pk %}selected{% endif %}
                                                 data-min="{{ product.min_loan_amount }}"
                                                 data-max="{{ product.max_loan_amount }}"
                                                 data-rate="{{ product.annual_interest_rate }}"
@@ -169,8 +167,7 @@
                                         <label class="form-label">Select Guarantors</label>
                                         <select class="form-select select2" name="guarantors" multiple>
                                             {% for guarantor in guarantors %}
-                                            <option value="{{ guarantor.pk }}" {% if guarantor in
-                                                form.instance.guarantors.all %}selected{% endif %}>
+                                            <option value="{{ guarantor.pk }}" {% if guarantor in form.instance.guarantors.all %}selected{% endif %}>
                                                 {{ guarantor.guarantor_id }} - {{ guarantor.individual.full_account_name
                                                 }}
                                             </option>
