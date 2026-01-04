@@ -17,9 +17,6 @@ from django.core.paginator import Paginator
 import json
 from django.views.decorators.http import require_POST
 from django.core.exceptions import ValidationError
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.lib.units import inch
 
 def role_required(allowed_roles):
 

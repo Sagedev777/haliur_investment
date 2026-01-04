@@ -1,0 +1,312 @@
+{% extends 'client_accounts/base.html' %}
+
+{% block title %}Savings Transactions - {{ account.account_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">Savings Transactions</h1>
+                    <p class="text-muted mb-0">Account: {{ account.account_number }} - {{ account.full_account_name }}
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'accounts:account_detail' account.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Account
+                    </a>
+                    {% if user_role == 'ADMIN' or user_role == 'ACCOUNTANT' or user_role == 'STAFF' %}
+                    <a href="{% url 'accounts:savings_deposit_account' account.pk %}" class="btn btn-success">
+                        <i class="fas fa-plus-circle"></i> New Deposit
+                    </a>
+                    <a href="{% url 'accounts:savings_withdrawal_account' account.pk %}" class="btn btn-warning">
+                        <i class="fas fa-minus-circle"></i> New Withdrawal
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <hr>
+        </div>
+    </div>
+
+    <!-- Account Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Current Balance</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{
+                                account.savings_balance|floatformat:2 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-wallet fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Transactions</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ transactions|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Account Status</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <span
+                                    class="badge bg-{% if account.account_status == 'ACTIVE' %}success{% elif account.account_status == 'PENDING' %}warning{% else %}secondary{% endif %}">
+                                    {{ account.get_account_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-info-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Last Transaction</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if transactions %}
+                                {{ transactions.0.transaction_date|date:"M d, Y" }}
+                                {% else %}
+                                No transactions
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Transaction History</h5>
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="savingsTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Reference</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Balance After</th>
+                                    <th>Processed By</th>
+                                    <th>Notes</th>
+                                    <th>Status</th>
+                                    {% if user_role == 'ADMIN' or user_role == 'ACCOUNTANT' %}
+                                    <th>Actions</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr class="{% if transaction.is_reversed %}table-secondary{% endif %}">
+                                    <td>{{ transaction.transaction_date|date:"Y-m-d H:i" }}</td>
+                                    <td><code>{{ transaction.reference_number }}</code></td>
+                                    <td>
+                                        <span
+                                            class="badge bg-{% if transaction.transaction_type == 'DEPOSIT' %}success{% else %}warning{% endif %}">
+                                            {{ transaction.get_transaction_type_display }}
+                                        </span>
+                                    </td>
+                                    <td
+                                        class="{% if transaction.transaction_type == 'DEPOSIT' %}text-success fw-bold{% else %}text-danger fw-bold{% endif %}">
+                                        {% if transaction.transaction_type == 'DEPOSIT' %}+{% else %}-{% endif %}
+                                        ${{ transaction.amount|floatformat:2 }}
+                                    </td>
+                                    <td>${{ account.savings_balance|floatformat:2 }}</td>
+                                    <td>
+                                        {% if transaction.processed_by %}
+                                        {{
+                                        transaction.processed_by.get_full_name|default:transaction.processed_by.username
+                                        }}
+                                        {% else %}
+                                        System
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ transaction.notes|truncatechars:30|default:"-" }}</td>
+                                    <td>
+                                        {% if transaction.is_reversed %}
+                                        <span class="badge bg-danger">Reversed</span>
+                                        {% else %}
+                                        <span class="badge bg-success">Completed</span>
+                                        {% endif %}
+                                    </td>
+                                    {% if user_role == 'ADMIN' or user_role == 'ACCOUNTANT' %}
+                                    <td>
+                                        {% if not transaction.is_reversed %}
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal" data-bs-target="#reverseModal{{ transaction.id }}"
+                                            title="Reverse Transaction">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                    {% endif %}
+                                </tr>
+
+                                <!-- Reverse Transaction Modal -->
+                                {% if user_role == 'ADMIN' or user_role == 'ACCOUNTANT' %}
+                                {% if not transaction.is_reversed %}
+                                <div class="modal fade" id="reverseModal{{ transaction.id }}" tabindex="-1"
+                                    aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-danger text-white">
+                                                <h5 class="modal-title">Reverse Transaction</h5>
+                                                <button type="button" class="btn-close btn-close-white"
+                                                    data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form action="{% url 'accounts:transaction_reverse' transaction.pk %}"
+                                                method="post">
+                                                {% csrf_token %}
+                                                <div class="modal-body">
+                                                    <div class="alert alert-warning">
+                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                        <strong>Warning:</strong> This action cannot be undone.
+                                                        Reversing this transaction will adjust the account balance
+                                                        accordingly.
+                                                    </div>
+
+                                                    <div class="card mb-3">
+                                                        <div class="card-body">
+                                                            <h6>Transaction Details</h6>
+                                                            <p class="mb-1"><strong>Reference:</strong> {{
+                                                                transaction.reference_number }}</p>
+                                                            <p class="mb-1"><strong>Type:</strong> {{
+                                                                transaction.get_transaction_type_display }}</p>
+                                                            <p class="mb-1"><strong>Amount:</strong> ${{
+                                                                transaction.amount|floatformat:2 }}</p>
+                                                            <p class="mb-1"><strong>Date:</strong> {{
+                                                                transaction.transaction_date|date:"M d, Y H:i" }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label for="reason" class="form-label">Reason for Reversal
+                                                            *</label>
+                                                        <textarea class="form-control" id="reason" name="reason"
+                                                            rows="3"
+                                                            placeholder="Enter reason for reversing this transaction..."
+                                                            required></textarea>
+                                                        <div class="form-text">This reason will be recorded in the audit
+                                                            log.</div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary"
+                                                        data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-danger">Confirm
+                                                        Reverse</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                Showing {{ transactions|length }} transactions for this account
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <a href="{% url 'accounts:export_transactions_csv_account' account.pk %}"
+                                class="btn btn-outline-success">
+                                <i class="fas fa-file-csv"></i> Export as CSV
+                            </a>
+                            <a href="{% url 'accounts:export_transactions_pdf_account' account.pk %}"
+                                class="btn btn-outline-danger">
+                                <i class="fas fa-file-pdf"></i> Export as PDF
+                            </a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        No transactions found for this account.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .border-left-primary {
+        border-left: 4px solid #4e73df !important;
+    }
+
+    .border-left-success {
+        border-left: 4px solid #1cc88a !important;
+    }
+
+    .border-left-warning {
+        border-left: 4px solid #f6c23e !important;
+    }
+
+    .border-left-info {
+        border-left: 4px solid #36b9cc !important;
+    }
+</style>
+
+{% endblock %}
