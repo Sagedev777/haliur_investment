@@ -11,7 +11,7 @@
     /* Loans Sidebar (Compact) */
     .loans-sidebar {
         width: 220px;
-        background: linear-gradient(180deg, #1a365d 0%, #153e75 100%);
+        background: linear-gradient(180deg, var(--primary-dark) 0%, #153e75 100%);
         color: white;
         position: fixed;
         height: 100vh;
@@ -31,7 +31,7 @@
     }
 
     .loans-brand span {
-        color: #63b3ed;
+        color: var(--secondary);
     }
 
     .loans-nav {
@@ -376,17 +376,7 @@
 
         <!-- Content Area -->
         <div class="container-fluid py-4">
-            <!-- Messages -->
-            {% if messages %}
-            <div class="mb-4">
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
+            <!-- Messages handled centrally in base.html -->
 
             <!-- Page Header -->
             <div class="page-header mb-4">

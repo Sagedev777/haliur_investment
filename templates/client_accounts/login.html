@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - HaliQUA Investments{% endblock %}
+
+{% block app_css %}
+<style>
+    body {
+        background: radial-gradient(circle at top right, #312e81, #1a365d, #0f172a);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+        width: 100%;
+        max-width: 450px;
+        padding: 0;
+    }
+
+    .login-header {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 2rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .login-brand {
+        color: white;
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .login-brand span {
+        color: var(--secondary);
+    }
+
+    .login-subtitle {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+    }
+
+    .login-body {
+        padding: 2.5rem;
+    }
+
+    .form-control {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 0.8rem 1rem;
+        border-radius: 10px;
+    }
+
+    .form-control:focus {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+        color: white;
+    }
+
+    .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .form-label {
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .input-group-text {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-right: none;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .btn-login {
+        background: linear-gradient(135deg, var(--secondary), var(--primary));
+        border: none;
+        padding: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.3);
+    }
+
+    .footer-text {
+        text-align: center;
+        margin-top: 1.5rem;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.8rem;
+    }
+
+    /* Override autofill styles */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #1e293b inset !important;
+        -webkit-text-fill-color: white !important;
+    }
+</style>
+{% endblock %}
+
+{% block app_layout %}
+<div class="login-card">
+    <div class="login-header">
+        <div class="login-brand">
+            <i class="fas fa-chart-line me-2"></i>
+            Hali<span>QUA</span>
+        </div>
+        <div class="login-subtitle">Secure Investment Management</div>
+    </div>
+
+    <div class="login-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger bg-danger bg-opacity-10 border-danger border-opacity-25 text-white mb-4">
+                {% for error in form.non_field_errors %}
+                <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="mb-4">
+                <label for="id_username" class="form-label">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username"
+                        class="form-control" id="id_username" placeholder="Enter your username" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="id_password" class="form-label">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" name="password" autocomplete="current-password" class="form-control"
+                        id="id_password" placeholder="Enter your password" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-login">
+                Sign In
+                <i class="fas fa-arrow-right ms-2"></i>
+            </button>
+
+            <div class="footer-text">
+                &copy; {% now "Y" %} Haliqua Investments. All rights reserved.
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

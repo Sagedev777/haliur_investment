@@ -1,158 +1,279 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Haliqua Management System{% endblock %}</title>
-    <!-- Add this to ALL your base.html files in the <head> section -->
-    <meta http-equiv="Content-Security-Policy" 
-      content="
-        default-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net https://cdnjs.cloudflare.com;
-        script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net;
-        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.datatables.net https://cdnjs.cloudflare.com;
-        font-src 'self' https://cdnjs.cloudflare.com;
-        img-src 'self' data: https: http: blob:;
-        connect-src 'self';
-        frame-ancestors 'self';
-        base-uri 'self';
-        form-action 'self';
-    ">
-    
+
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
     <!-- CSS Dependencies -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    
+
     <!-- Page-specific CSS -->
     {% block extra_css %}{% endblock %}
-    
+
     <style>
         :root {
-            --primary: #1a365d;
-            --secondary: #4299e1;
-            --success: #38a169;
-            --warning: #d69e2e;
-            --danger: #e53e3e;
-            --light: #f8fafc;
-            --dark: #2d3748;
+            /* Modernized Palette */
+            --primary: #4338ca;
+            /* Indigo 700 */
+            --primary-light: #6366f1;
+            /* Indigo 500 */
+            --primary-dark: #312e81;
+            /* Indigo 900 */
+
+            --secondary: #0ea5e9;
+            /* Sky 500 */
+
+            --success: #10b981;
+            /* Emerald 500 */
+            --warning: #f59e0b;
+            /* Amber 500 */
+            --danger: #ef4444;
+            /* Red 500 */
+
+            --light: #f3f4f6;
+            /* Cool Gray 100 */
+            --dark: #111827;
+            /* Gray 900 */
+            --text-muted: #6b7280;
+            /* Gray 500 */
+
+            /* Bootstrap Overrides */
+            --bs-primary: var(--primary);
+            --bs-secondary: var(--secondary);
+            --bs-success: var(--success);
+            --bs-warning: var(--warning);
+            --bs-danger: var(--danger);
+            --bs-light: var(--light);
+            --bs-dark: var(--dark);
+
+            /* UI Elements */
+            --border-radius: 12px;
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            --card-hover-transform: translateY(-4px);
+            --transition-speed: 0.3s;
         }
-        
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: var(--light);
+            color: var(--dark);
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
-        
-        /* Common Components */
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        .navbar-brand {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Modern Card Styling */
         .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            background: rgba(255, 255, 255, 0.9);
             margin-bottom: 1.5rem;
-            transition: transform 0.2s;
+            transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+            backdrop-filter: blur(10px);
         }
-        
+
         .card:hover {
-            transform: translateY(-2px);
+            transform: var(--card-hover-transform);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-        
+
         .card-header {
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
-            border-radius: 10px 10px 0 0 !important;
+            background: transparent;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             padding: 1.25rem 1.5rem;
+            font-weight: 600;
+            color: var(--primary-dark);
         }
-        
+
+        /* Buttons with Gradient & Glow */
         .btn {
             border-radius: 8px;
-            padding: 0.5rem 1rem;
+            padding: 0.6rem 1.2rem;
             font-weight: 500;
-        }
-        
-        .btn-primary {
-            background-color: var(--secondary);
-            border-color: var(--secondary);
-        }
-        
-        .btn-success {
-            background-color: var(--success);
-            border-color: var(--success);
-        }
-        
-        .btn-warning {
-            background-color: var(--warning);
-            border-color: var(--warning);
-        }
-        
-        .btn-danger {
-            background-color: var(--danger);
-            border-color: var(--danger);
-        }
-        
-        .table th {
-            background-color: var(--light);
-            font-weight: 600;
-            border-bottom: 2px solid #e2e8f0;
-            color: var(--primary);
-        }
-        
-        .alert {
-            border-radius: 10px;
+            letter-spacing: 0.025em;
+            transition: all 0.2s ease;
             border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
-        
-        .badge {
-            padding: 0.35rem 0.65rem;
-            font-weight: 500;
-            border-radius: 6px;
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
-        /* Responsive */
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #34d399);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #f87171);
+            color: white;
+        }
+
+        /* Tables */
+        .table {
+            vertical-align: middle;
+        }
+
+        .table th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            background-color: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        /* Toast Container */
+        .toast-container {
+            z-index: 1060;
+        }
+
+        .toast {
+            background-color: white;
+            border: none;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c7c7c7;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Responsive Tweaks */
         @media (max-width: 768px) {
-            .container-fluid {
-                padding-left: 1rem;
-                padding-right: 1rem;
+            .card {
+                margin-bottom: 1rem;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            .col-md-6.text-end {
+                text-align: left !important;
             }
         }
     </style>
-    
+
     {% block app_css %}{% endblock %}
 </head>
+
 <body>
     {% block app_layout %}{% endblock %}
-    
+
+    <!-- Toast Container for Messages -->
+    {% if messages %}
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        {% for message in messages %}
+        <div class="toast align-items-center text-white bg-{{ message.tags|default:'primary' }} border-0 show"
+            role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    {% if message.tags == 'success' %}<i class="fas fa-check-circle me-2"></i>{% endif %}
+                    {% if message.tags == 'error' or message.tags == 'danger' %}<i
+                        class="fas fa-exclamation-circle me-2"></i>{% endif %}
+                    {% if message.tags == 'warning' %}<i class="fas fa-exclamation-triangle me-2"></i>{% endif %}
+                    {{ message }}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <!-- Common JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    
+
     <script>
-        // Initialize DataTables
-        $(document).ready(function() {
+        // Initialize DataTables with specific config
+        $(document).ready(function () {
             $('.datatable').DataTable({
                 pageLength: 25,
                 responsive: true,
                 language: {
-                    search: "Search:",
-                    lengthMenu: "Show _MENU_ entries",
-                    info: "Showing _START_ to _END_ of _TOTAL_ entries"
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search records...",
+                    lengthMenu: "Show _MENU_",
+                    info: "Showing _START_ to _END_ of _TOTAL_",
+                    paginate: {
+                        first: '<i class="fas fa-angle-double-left"></i>',
+                        last: '<i class="fas fa-angle-double-right"></i>',
+                        previous: '<i class="fas fa-angle-left"></i>',
+                        next: '<i class="fas fa-angle-right"></i>'
+                    }
+                },
+                dom: '<"row mb-3"<"col-md-6"l><"col-md-6"f>>rt<"row mt-3"<"col-md-6"i><"col-md-6"p>>',
+                drawCallback: function () {
+                    $('.dataTables_paginate > .pagination').addClass('pagination-sm');
                 }
             });
-            
-            // Auto-dismiss alerts
-            setTimeout(function() {
-                $('.alert').alert('close');
+
+            // Auto-dismiss Toasts
+            setTimeout(function () {
+                $('.toast').toast('hide');
             }, 5000);
         });
-        
-        // Confirm delete
+
+        // Global Confirm Delete
         function confirmDelete(message) {
-            return confirm(message || 'Are you sure you want to delete this item?');
+            return confirm(message || 'Are you sure you want to delete this item? This action cannot be undone.');
         }
     </script>
-    
+
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>

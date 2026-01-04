@@ -8,93 +8,94 @@
         display: flex;
         min-height: 100vh;
     }
-    
+
     /* Accounts Sidebar */
     .accounts-sidebar {
         width: 250px;
-        background: linear-gradient(180deg, var(--primary) 0%, #2d3748 100%);
+        background: linear-gradient(180deg, var(--primary-dark) 0%, #2d3748 100%);
         color: white;
         position: fixed;
         height: 100vh;
         overflow-y: auto;
         z-index: 1000;
     }
-    
+
     .accounts-sidebar-header {
         padding: 1.5rem;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
-    
+
     .accounts-brand {
         color: white;
         text-decoration: none;
         font-weight: 700;
         font-size: 1.3rem;
     }
-    
+
     .accounts-brand span {
         color: var(--secondary);
     }
-    
+
     .accounts-nav {
         padding: 1rem 0;
     }
-    
+
     .accounts-nav-link {
-        color: rgba(255,255,255,0.85);
+        color: rgba(255, 255, 255, 0.85);
         padding: 0.75rem 1.5rem;
         text-decoration: none;
         display: block;
         transition: all 0.2s;
         border-left: 3px solid transparent;
     }
-    
-    .accounts-nav-link:hover, .accounts-nav-link.active {
-        background: rgba(255,255,255,0.1);
+
+    .accounts-nav-link:hover,
+    .accounts-nav-link.active {
+        background: rgba(255, 255, 255, 0.1);
         color: white;
         border-left-color: var(--secondary);
     }
-    
+
     .accounts-nav-link i {
         width: 20px;
         margin-right: 12px;
     }
-    
+
     /* Main Content */
     .accounts-content {
         flex: 1;
         margin-left: 250px;
     }
-    
+
     .accounts-topbar {
         background: white;
         border-bottom: 1px solid #e2e8f0;
         padding: 1rem 1.5rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
-    
+
     /* Client Quick Stats */
     .client-stat-card {
         border-top: 4px solid;
         padding: 1.5rem;
         text-align: center;
     }
-    
+
     .client-stat-icon {
         font-size: 2rem;
         margin-bottom: 1rem;
     }
-    
+
     /* Responsive */
     @media (max-width: 768px) {
         .accounts-sidebar {
             transform: translateX(-100%);
         }
-        
+
         .accounts-sidebar.active {
             transform: translateX(0);
         }
-        
+
         .accounts-content {
             margin-left: 0;
         }
@@ -113,38 +114,38 @@
                 Hali<span>QUA</span> Accounts
             </a>
         </div>
-        
+
         <!-- Navigation -->
         <nav class="accounts-nav">
             {% with active_app=request.resolver_match.app_name %}
-            <a href="{% url 'accounts:dashboard' %}" 
-               class="accounts-nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <a href="{% url 'accounts:dashboard' %}"
+                class="accounts-nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                 <i class="fas fa-tachometer-alt"></i>
                 Dashboard
             </a>
-            
-            <a href="{% url 'accounts:account_list' %}" 
-               class="accounts-nav-link {% if 'account' in request.resolver_match.url_name and 'edit' not in request.resolver_match.url_name and 'create' not in request.resolver_match.url_name %}active{% endif %}">
+
+            <a href="{% url 'accounts:account_list' %}"
+                class="accounts-nav-link {% if 'account' in request.resolver_match.url_name and 'edit' not in request.resolver_match.url_name and 'create' not in request.resolver_match.url_name %}active{% endif %}">
                 <i class="fas fa-users"></i>
                 All Clients
             </a>
-            
-            <a href="{% url 'accounts:account_create' %}" 
-               class="accounts-nav-link {% if request.resolver_match.url_name == 'account_create' %}active{% endif %}">
+
+            <a href="{% url 'accounts:account_create' %}"
+                class="accounts-nav-link {% if request.resolver_match.url_name == 'account_create' %}active{% endif %}">
                 <i class="fas fa-user-plus"></i>
                 New Client
             </a>
-            
-            <a href="{% url 'accounts:savings_list' %}" 
-               class="accounts-nav-link {% if 'savings' in request.resolver_match.url_name %}active{% endif %}">
+
+            <a href="{% url 'accounts:savings_list' %}"
+                class="accounts-nav-link {% if 'savings' in request.resolver_match.url_name %}active{% endif %}">
                 <i class="fas fa-piggy-bank"></i>
                 Savings Accounts
             </a>
-            
+
             <!-- Reports Dropdown -->
             <div class="dropdown">
-                <a class="accounts-nav-link dropdown-toggle {% if 'reports' in request.resolver_match.url_name or 'audit' in request.resolver_match.url_name %}active{% endif %}" 
-                   href="#" role="button" data-bs-toggle="dropdown">
+                <a class="accounts-nav-link dropdown-toggle {% if 'reports' in request.resolver_match.url_name or 'audit' in request.resolver_match.url_name %}active{% endif %}"
+                    href="#" role="button" data-bs-toggle="dropdown">
                     <i class="fas fa-chart-bar"></i>
                     Reports & Analytics
                 </a>
@@ -157,7 +158,7 @@
                     </a>
                 </div>
             </div>
-            
+
             <!-- Quick Actions Dropdown -->
             <div class="dropdown">
                 <a class="accounts-nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -176,7 +177,7 @@
                     </a>
                 </div>
             </div>
-            
+
             <!-- Cross-App Navigation Dropdown -->
             <div class="dropdown mt-3">
                 <a class="accounts-nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -199,12 +200,12 @@
             </div>
             {% endwith %}
         </nav>
-        
+
         <!-- User Info -->
         <div class="position-absolute bottom-0 start-0 end-0 p-3 border-top border-secondary">
             <div class="d-flex align-items-center">
-                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" 
-                     style="width: 40px; height: 40px;">
+                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center"
+                    style="width: 40px; height: 40px;">
                     <span class="text-white fw-bold">{{ request.user.username|first|upper }}</span>
                 </div>
                 <div class="ms-3">
@@ -214,7 +215,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Main Content -->
     <div class="accounts-content" id="accountsContent">
         <!-- Topbar -->
@@ -226,7 +227,7 @@
                         <button class="btn btn-outline-secondary d-md-none me-3" id="sidebarToggle">
                             <i class="fas fa-bars"></i>
                         </button>
-                        
+
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb mb-0">
                                 <li class="breadcrumb-item">
@@ -236,7 +237,7 @@
                             </ol>
                         </nav>
                     </div>
-                    
+
                     <!-- Right: Actions -->
                     <div class="d-flex align-items-center gap-3">
                         <a href="{% url 'accounts:account_create' %}" class="btn btn-primary btn-sm">
@@ -252,34 +253,24 @@
                 </div>
             </div>
         </nav>
-        
+
         <!-- Content Area -->
         <div class="container-fluid py-4">
-            <!-- Messages -->
-            {% if messages %}
-            <div class="mb-4">
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-            
+            <!-- Messages handled centrally in base.html -->
+
             <!-- Page Header -->
             <div class="page-header mb-4">
                 <h1 class="h3 fw-bold mb-2">{% block page_title %}{% endblock %}</h1>
                 <p class="text-muted">{% block page_subtitle %}{% endblock %}</p>
             </div>
-            
+
             <!-- Page Actions -->
             {% block page_actions %}{% endblock %}
-            
+
             <!-- Main Content -->
             {% block content %}{% endblock %}
         </div>
-        
+
         <!-- Footer -->
         <footer class="border-top py-3">
             <div class="container-fluid">
@@ -302,7 +293,7 @@
 
 <script>
     // Toggle sidebar on mobile
-    document.getElementById('sidebarToggle').addEventListener('click', function() {
+    document.getElementById('sidebarToggle').addEventListener('click', function () {
         document.getElementById('accountsSidebar').classList.toggle('active');
     });
 </script>
