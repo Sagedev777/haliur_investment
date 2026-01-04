@@ -112,23 +112,23 @@
                             <label for="action_filter" class="form-label">Action Type</label>
                             <select class="form-select" id="action_filter" name="action">
                                 <option value="">All Actions</option>
-                                <option value="CREATE" {% if action_filter == 'CREATE' %}selected{% endif %}>Create
+                                <option value="CREATE" {% if action_filter=='CREATE' %}selected{% endif %}>Create
                                     Account</option>
-                                <option value="UPDATE" {% if action_filter == 'UPDATE' %}selected{% endif %}>Update
+                                <option value="UPDATE" {% if action_filter=='UPDATE' %}selected{% endif %}>Update
                                     Account</option>
-                                <option value="EDIT_REQUEST" {% if action_filter == 'EDIT_REQUEST' %}selected{% endif %}>
+                                <option value="EDIT_REQUEST" {% if action_filter=='EDIT_REQUEST' %}selected{% endif %}>
                                     Edit Request</option>
-                                <option value="APPROVE_EDIT" {% if action_filter == 'APPROVE_EDIT' %}selected{% endif %}>
+                                <option value="APPROVE_EDIT" {% if action_filter=='APPROVE_EDIT' %}selected{% endif %}>
                                     Approve Edit</option>
-                                <option value="REJECT_EDIT" {% if action_filter == 'REJECT_EDIT' %}selected{% endif %}>
+                                <option value="REJECT_EDIT" {% if action_filter=='REJECT_EDIT' %}selected{% endif %}>
                                     Reject Edit</option>
-                                <option value="SAVINGS_TX" {% if action_filter == 'SAVINGS_TX' %}selected{% endif %}>
+                                <option value="SAVINGS_TX" {% if action_filter=='SAVINGS_TX' %}selected{% endif %}>
                                     Savings Transaction</option>
-                                <option value="ACCOUNT_APPROVE" {% if action_filter == 'ACCOUNT_APPROVE' %}selected{%
+                                <option value="ACCOUNT_APPROVE" {% if action_filter=='ACCOUNT_APPROVE' %}selected{%
                                     endif %}>Account Approve</option>
-                                <option value="ACCOUNT_REJECT" {% if action_filter == 'ACCOUNT_REJECT' %}selected{% endif
+                                <option value="ACCOUNT_REJECT" {% if action_filter=='ACCOUNT_REJECT' %}selected{% endif
                                     %}>Account Reject</option>
-                                <option value="STATUS_CHANGE" {% if action_filter == 'STATUS_CHANGE' %}selected{% endif
+                                <option value="STATUS_CHANGE" {% if action_filter=='STATUS_CHANGE' %}selected{% endif
                                     %}>Status Change</option>
                             </select>
                         </div>
@@ -403,15 +403,14 @@
                                 <span class="page-link">{{ num }}</span>
                             </li>
                             {% else %}
-                            {% if num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
-                            <li class="page-item">
+                            {% if num > page_obj.number|add:-3 and num < page_obj.number|add:3 %} <li class="page-item">
                                 <a class="page-link"
                                     href="?page={{ num }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if account_filter %}&account={{ account_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">{{
                                     num }}</a>
                                 </li>
-                            {% endif %}
-                            {% endif %}
-                            {% endfor %}
+                                {% endif %}
+                                {% endif %}
+                                {% endfor %}
 
                                 {% if page_obj.has_next %}
                                 <li class="page-item">
