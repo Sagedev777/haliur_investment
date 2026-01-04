@@ -207,7 +207,7 @@ def account_edit(request, pk):
             else:
                 messages.warning(request, 'No changes detected.')
     active_accounts = ClientAccount.objects.filter(account_status=ClientAccount.STATUS_ACTIVE).exclude(pk=account.pk)
-    return render(request, 'client_accounts/account_edit.html', {'account': account, 'active_accounts': active_accounts, 'user_role': user_role})
+    return render(request, 'client_accounts/account_form.html', {'account': account, 'active_accounts': active_accounts, 'user_role': user_role})
 
 @login_required
 @role_required([UserProfile.ROLE_ADMIN])

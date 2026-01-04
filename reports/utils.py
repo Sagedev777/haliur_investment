@@ -4,7 +4,7 @@ from loans.models import LoanApplication, LoanPayment, Guarantor
 from django.contrib.auth.models import User
 from decimal import Decimal
 from django.utils import timezone
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import io
 from django.core.files.base import ContentFile
 from django.db import models

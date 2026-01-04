@@ -1,0 +1,144 @@
+{% extends 'client_accounts/base.html' %}
+
+{% block title %}Edit Request Details{% endblock %}
+
+{% block page_title %}Edit Request Details{% endblock %}
+{% block page_subtitle %}Review and manage edit request{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'accounts:edit_request_list' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Back to Requests
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Request Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Account:</strong><br>
+                        {{ edit_request.client.account_number }} - {{ edit_request.client.full_account_name }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Requested By:</strong><br>
+                        {{ edit_request.requested_by.get_full_name|default:edit_request.requested_by.username }}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Status:</strong><br>
+                        {% if edit_request.status == "PENDING" %}
+                        <span class="badge bg-warning">Pending</span>
+                        {% elif edit_request.status == "APPROVED" %}
+                        <span class="badge bg-success">Approved</span>
+                        {% elif edit_request.status == "REJECTED" %}
+                        <span class="badge bg-danger">Rejected</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Created:</strong><br>
+                        {{ edit_request.created_at|date:"M d, Y H:i" }}
+                    </div>
+                </div>
+                {% if edit_request.processed_at %}
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Processed By:</strong><br>
+                        {{ edit_request.processed_by.get_full_name|default:edit_request.processed_by.username }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Processed At:</strong><br>
+                        {{ edit_request.processed_at|date:"M d, Y H:i" }}
+                    </div>
+                </div>
+                {% endif %}
+                {% if edit_request.comment %}
+                <div class="mb-3">
+                    <strong>Comment:</strong><br>
+                    {{ edit_request.comment }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">Proposed Changes</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Current Value</th>
+                            <th>Proposed Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for field, new_value in edit_request.changes.items %}
+                        <tr>
+                            <td><strong>{{ field|title }}</strong></td>
+                            <td>{{ edit_request.client|getattr:field|default:"" }}</td>
+                            <td class="text-primary">{{ new_value }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        {% if edit_request.status == 'PENDING' %}
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Actions</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'accounts:edit_request_approve' edit_request.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Approval Comment (Optional)</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-check me-2"></i>Approve Request
+                    </button>
+                </form>
+                <hr>
+                <form method="post" action="{% url 'accounts:edit_request_reject' edit_request.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Rejection Reason</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100">
+                        <i class="fas fa-times me-2"></i>Reject Request
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">Account Summary</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2"><strong>Account Number:</strong> {{ edit_request.client.account_number }}</li>
+                    <li class="mb-2"><strong>Type:</strong> {{ edit_request.client.get_account_type_display }}</li>
+                    <li class="mb-2"><strong>Status:</strong> {{ edit_request.client.get_account_status_display }}</li>
+                    <li class="mb-2"><strong>Savings Balance:</strong> UGX {{ edit_request.client.savings_balance|floatformat:0 }}</li>
+                    <li class="mb-0"><strong>Created:</strong> {{ edit_request.client.registration_date|date:"M d, Y" }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

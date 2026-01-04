@@ -1,0 +1,129 @@
+{% extends 'client_accounts/base.html' %}
+
+{% block title %}Edit Requests{% endblock %}
+
+{% block page_title %}Edit Requests{% endblock %}
+{% block page_subtitle %}Manage pending account edit requests{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'accounts:account_list' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Back to Accounts
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <!-- Filter Card -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Filters</h6>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="status" class="form-label">Request Status</label>
+                        <select name="status" id="status" class="form-select">
+                            <option value="">All Statuses</option>
+                            <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
+                            <option value="APPROVED" {% if status_filter == 'APPROVED' %}selected{% endif %}>Approved</option>
+                            <option value="REJECTED" {% if status_filter == 'REJECTED' %}selected{% endif %}>Rejected</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="account" class="form-label">Search by Account Number</label>
+                        <input type="text" class="form-control" id="account" name="account"
+                               placeholder="Enter account number..."
+                               value="{{ request.GET.account }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-filter me-2"></i>Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">All Edit Requests</h6>
+                <span class="badge bg-primary">{{ edit_requests|length }} requests</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 datatable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Account</th>
+                                <th>Requested By</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Fields to Change</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in edit_requests %}
+                            <tr>
+                                <td>
+                                    <strong>{{ request.client.account_number }}</strong><br>
+                                    <small class="text-muted">{{ request.client.full_account_name }}</small>
+                                </td>
+                                <td>{{ request.requested_by.get_full_name|default:request.requested_by.username }}</td>
+                                <td>
+                                    {% if request.status == "PENDING" %}
+                                    <span class="badge bg-warning">Pending</span>
+                                    {% elif request.status == "APPROVED" %}
+                                    <span class="badge bg-success">Approved</span>
+                                    {% elif request.status == "REJECTED" %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ request.created_at|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    {% for field in request.changes %}
+                                    <span class="badge bg-secondary">{{ field }}</span>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'accounts:edit_request_detail' request.pk %}"
+                                           class="btn btn-outline-primary" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if request.status == 'PENDING' %}
+                                        <a href="{% url 'accounts:edit_request_approve' request.pk %}"
+                                           class="btn btn-outline-success" title="Approve"
+                                           onclick="return confirm('Are you sure you want to approve this edit request?')">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                        <a href="{% url 'accounts:edit_request_reject' request.pk %}"
+                                           class="btn btn-outline-danger" title="Reject"
+                                           onclick="return confirm('Are you sure you want to reject this edit request?')">
+                                            <i class="fas fa-times"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    <i class="fas fa-edit fa-2x mb-3"></i><br>
+                                    No edit requests found.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
