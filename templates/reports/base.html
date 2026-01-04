@@ -1,181 +1,347 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Haliur System{% endblock %}</title>
+{% block app_css %}
+<style>
+    /* Reports-specific styles */
+    .reports-layout {
+        display: flex;
+        min-height: 100vh;
+    }
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    /* Reports Sidebar */
+    .reports-sidebar {
+        width: 250px;
+        background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+        color: white;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+        z-index: 1000;
+    }
 
-    <!-- Global Custom CSS -->
-    <link rel="stylesheet" href="{% static 'reports/css/styles.css' %}">
+    .reports-sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-    {% block extra_head %}{% endblock %}
-</head>
+    .reports-brand {
+        color: white;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1.3rem;
+    }
 
-<body>
+    .reports-brand span {
+        color: #3498db;
+    }
 
-    <!-- ================= NAVBAR ================= -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-        <div class="container-fluid">
+    .reports-nav {
+        padding: 1rem 0;
+    }
 
-            <a class="navbar-brand" href="{% url 'core:admin_dashboard' %}">
-                Haliur System
+    .reports-nav-link {
+        color: rgba(255, 255, 255, 0.85);
+        padding: 0.75rem 1.5rem;
+        text-decoration: none;
+        display: block;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .reports-nav-link:hover,
+    .reports-nav-link.active,
+    .reports-nav-link[aria-expanded="true"] {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border-left-color: #3498db;
+    }
+
+    .reports-nav-link i.icon {
+        width: 20px;
+        margin-right: 12px;
+    }
+
+    .reports-nav-link i.arrow {
+        font-size: 0.8rem;
+        transition: transform 0.2s;
+    }
+
+    .reports-nav-link[aria-expanded="true"] i.arrow {
+        transform: rotate(90deg);
+    }
+
+    .reports-submenu {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 0.5rem 0;
+    }
+
+    .reports-submenu-link {
+        color: rgba(255, 255, 255, 0.7);
+        padding: 0.5rem 1.5rem 0.5rem 3.5rem;
+        text-decoration: none;
+        display: block;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .reports-submenu-link:hover,
+    .reports-submenu-link.active {
+        color: white;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Main Content */
+    .reports-content {
+        flex: 1;
+        margin-left: 250px;
+    }
+
+    .reports-topbar {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .reports-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .reports-sidebar.active {
+            transform: translateX(0);
+        }
+
+        .reports-content {
+            margin-left: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block app_layout %}
+<div class="reports-layout">
+    <!-- Sidebar -->
+    <div class="reports-sidebar" id="reportsSidebar">
+        <!-- Header -->
+        <div class="reports-sidebar-header">
+            <a href="{% url 'reports:reports_dashboard' %}" class="reports-brand">
+                <i class="fas fa-chart-line me-2"></i>
+                Hali<span>QUA</span> Reports
+            </a>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="reports-nav">
+            <a href="{% url 'reports:reports_dashboard' %}"
+                class="reports-nav-link {% if request.resolver_match.url_name == 'reports_dashboard' %}active{% endif %}">
+                <div><i class="fas fa-tachometer-alt icon"></i> Dashboard</div>
             </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <!-- Loans Reports -->
+            <a class="reports-nav-link" href="#loansSubmenu" data-bs-toggle="collapse"
+                aria-expanded="{% if 'loan' in request.resolver_match.url_name %}true{% else %}false{% endif %}">
+                <div><i class="fas fa-hand-holding-usd icon"></i> Loans</div>
+                <i class="fas fa-chevron-right arrow"></i>
+            </a>
+            <div class="collapse {% if 'loan' in request.resolver_match.url_name %}show{% endif %}" id="loansSubmenu">
+                <div class="reports-submenu">
+                    <a href="{% url 'reports:loan_performance' %}"
+                        class="reports-submenu-link {% if 'performance' in request.resolver_match.url_name and 'loan' in request.resolver_match.url_name %}active{% endif %}">Performance</a>
+                    <a href="{% url 'reports:loan_portfolio_report' %}"
+                        class="reports-submenu-link {% if 'portfolio' in request.resolver_match.url_name %}active{% endif %}">Portfolio</a>
+                    <a href="{% url 'reports:loan_defaults_report' %}"
+                        class="reports-submenu-link {% if 'defaults' in request.resolver_match.url_name %}active{% endif %}">Defaults</a>
+                    <a href="{% url 'reports:loan_collections_report' %}"
+                        class="reports-submenu-link {% if 'collections' in request.resolver_match.url_name %}active{% endif %}">Collections</a>
+                </div>
+            </div>
 
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- Savings Reports -->
+            <a class="reports-nav-link" href="#savingsSubmenu" data-bs-toggle="collapse"
+                aria-expanded="{% if 'savings' in request.resolver_match.url_name or 'savers' in request.resolver_match.url_name %}true{% else %}false{% endif %}">
+                <div><i class="fas fa-piggy-bank icon"></i> Savings</div>
+                <i class="fas fa-chevron-right arrow"></i>
+            </a>
+            <div class="collapse {% if 'savings' in request.resolver_match.url_name or 'savers' in request.resolver_match.url_name %}show{% endif %}"
+                id="savingsSubmenu">
+                <div class="reports-submenu">
+                    <a href="{% url 'reports:savings_report' %}"
+                        class="reports-submenu-link {% if request.resolver_match.url_name == 'savings_report' %}active{% endif %}">Accounts
+                        & Balances</a>
+                    <a href="{% url 'reports:savings_growth_report' %}"
+                        class="reports-submenu-link {% if 'growth' in request.resolver_match.url_name %}active{% endif %}">Growth</a>
+                    <a href="{% url 'reports:savings_transactions_report' %}"
+                        class="reports-submenu-link {% if 'transactions' in request.resolver_match.url_name %}active{% endif %}">Transactions</a>
+                    <a href="{% url 'reports:top_savers_report' %}"
+                        class="reports-submenu-link {% if 'top_savers' in request.resolver_match.url_name %}active{% endif %}">Top
+                        Savers</a>
+                </div>
+            </div>
 
-                <ul class="navbar-nav me-auto">
+            <!-- Staff Reports -->
+            <a class="reports-nav-link" href="#staffSubmenu" data-bs-toggle="collapse"
+                aria-expanded="{% if 'staff' in request.resolver_match.url_name %}true{% else %}false{% endif %}">
+                <div><i class="fas fa-users icon"></i> Staff</div>
+                <i class="fas fa-chevron-right arrow"></i>
+            </a>
+            <div class="collapse {% if 'staff' in request.resolver_match.url_name %}show{% endif %}" id="staffSubmenu">
+                <div class="reports-submenu">
+                    <a href="{% url 'reports:staff_performance' %}"
+                        class="reports-submenu-link {% if 'performance' in request.resolver_match.url_name and 'staff' in request.resolver_match.url_name %}active{% endif %}">Performance</a>
+                    <a href="{% url 'reports:staff_loans_report' %}"
+                        class="reports-submenu-link {% if 'loans' in request.resolver_match.url_name and 'staff' in request.resolver_match.url_name %}active{% endif %}">Loans
+                        Handled</a>
+                    <a href="{% url 'reports:staff_savings_report' %}"
+                        class="reports-submenu-link {% if 'savings' in request.resolver_match.url_name and 'staff' in request.resolver_match.url_name %}active{% endif %}">Savings
+                        Processed</a>
+                </div>
+            </div>
 
-                    <!-- DASHBOARD -->
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/dashboard/admin/' %}active{% endif %}"
-                            href="{% url 'core:admin_dashboard' %}">
-                            Dashboard
+            <!-- Financial Reports -->
+            <a class="reports-nav-link" href="#financialSubmenu" data-bs-toggle="collapse"
+                aria-expanded="{% if 'financial' in request.resolver_match.url_name or 'profit' in request.resolver_match.url_name %}true{% else %}false{% endif %}">
+                <div><i class="fas fa-chart-pie icon"></i> Financial</div>
+                <i class="fas fa-chevron-right arrow"></i>
+            </a>
+            <div class="collapse {% if 'financial' in request.resolver_match.url_name or 'profit' in request.resolver_match.url_name %}show{% endif %}"
+                id="financialSubmenu">
+                <div class="reports-submenu">
+                    <a href="{% url 'reports:financial_report' %}"
+                        class="reports-submenu-link {% if request.resolver_match.url_name == 'financial_report' %}active{% endif %}">General
+                        Report</a>
+                    <a href="{% url 'reports:financial_summary' %}"
+                        class="reports-submenu-link {% if 'summary' in request.resolver_match.url_name %}active{% endif %}">Summary</a>
+                    <a href="{% url 'reports:profit_loss_report' %}"
+                        class="reports-submenu-link {% if 'profit' in request.resolver_match.url_name %}active{% endif %}">Profit
+                        & Loss</a>
+                </div>
+            </div>
+
+            <!-- Cross-App Navigation -->
+            <div class="mt-3 border-top border-secondary pt-3">
+                <a class="reports-nav-link" href="#appsSubmenu" data-bs-toggle="collapse">
+                    <div><i class="fas fa-exchange-alt icon"></i> Switch App</div>
+                    <i class="fas fa-chevron-right arrow"></i>
+                </a>
+                <div class="collapse" id="appsSubmenu">
+                    <div class="reports-submenu">
+                        <a href="{% url 'accounts:dashboard' %}" class="reports-submenu-link">
+                            <i class="fas fa-user-friends me-2"></i> Accounts
                         </a>
-                    </li>
-
-                    <!-- CLIENT ACCOUNTS -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle 
-                       {% if 'accounts' in request.path %}active{% endif %}" href="#" id="accDrop"
-                            data-bs-toggle="dropdown">
-                            Client Accounts
+                        <a href="{% url 'loans:dashboard' %}" class="reports-submenu-link">
+                            <i class="fas fa-hand-holding-usd me-2"></i> Loans
                         </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'accounts:account_list' %}">
-                                    All Accounts
-                                </a></li>
-                            <li><a class="dropdown-item" href="{% url 'accounts:account_create' %}">
-                                    Add New Account
-                                </a></li>
-                        </ul>
-                    </li>
-
-                    <!-- LOANS -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle 
-                       {% if 'loans' in request.path %}active{% endif %}" href="#" id="loanDrop"
-                            data-bs-toggle="dropdown">
-                            Loans
+                        {% if request.user.is_superuser %}
+                        <a href="{% url 'core:admin_dashboard' %}" class="reports-submenu-link">
+                            <i class="fas fa-cog me-2"></i> Admin
                         </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'loans:loan_list' %}">All Loans</a></li>
-                            <li><a class="dropdown-item" href="{% url 'loans:loan_application_create' %}">
-                                    Apply Loan
-                                </a></li>
-                            <li><a class="dropdown-item" href="{% url 'reports:loan_performance' %}">
-                                    Performance
-                                </a></li>
-                            <li><a class="dropdown-item" href="{% url 'reports:loan_portfolio_report' %}">
-                                    Portfolio
-                                </a></li>
-                            <li><a class="dropdown-item" href="{% url 'reports:loan_defaults_report' %}">
-                                    Defaults
-                                </a></li>
-                            <li><a class="dropdown-item" href="{% url 'reports:loan_collections_report' %}">
-                                    Collections
-                                </a></li>
-                        </ul>
-                    </li>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
 
-                    <!-- SAVINGS (only reports—no savings app needed) -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle 
-                       {% if 'savings' in request.path %}active{% endif %}" href="#" id="saveDrop"
-                            data-bs-toggle="dropdown">
-                            Savings
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'reports:savings_report' %}">
-                                    Accounts & Balances
-                                </a></li>
-                            <li><a class="dropdown-item" href="{% url 'reports:savings_growth_report' %}">
-                                    Growth
-                                </a></li>
-                            <li><a class="dropdown-item" href="{% url 'reports:savings_transactions_report' %}">
-                                    Transactions
-                                </a></li>
-                            <li><a class="dropdown-item" href="{% url 'reports:top_savers_report' %}">
-                                    Top Savers
-                                </a></li>
-                        </ul>
-                    </li>
+        </nav>
 
-                    <!-- STAFF REPORTS -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle 
-                       {% if 'staff' in request.path %}active{% endif %}" href="#" id="staffDrop"
-                            data-bs-toggle="dropdown">
-                            Staff
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'reports:staff_performance' %}">
-                                    Performance
-                                </a></li>
-                            <li><a class="dropdown-item" href="{% url 'reports:staff_loans_report' %}">
-                                    Loans
-                                </a></li>
-                            <li><a class="dropdown-item" href="{% url 'reports:staff_savings_report' %}">
-                                    Savings
-                                </a></li>
-                        </ul>
-                    </li>
-
-                    <!-- FINANCIAL REPORTS -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle 
-                       {% if 'financial' in request.path %}active{% endif %}" href="#" id="finDrop"
-                            data-bs-toggle="dropdown">
-                            Financial
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'reports:financial_report' %}">
-                                    Report
-                                </a></li>
-                            <li><a class="dropdown-item" href="{% url 'reports:financial_summary' %}">
-                                    Summary
-                                </a></li>
-                            <li><a class="dropdown-item" href="{% url 'reports:profit_loss_report' %}">
-                                    Profit & Loss
-                                </a></li>
-                        </ul>
-                    </li>
-
-                </ul>
-
-                <!-- LOGOUT -->
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link btn btn-danger text-white" href="{% url 'core:logout' %}">
-                            Logout
-                        </a>
-                    </li>
-                </ul>
-
+        <!-- User Info -->
+        <div class="position-absolute bottom-0 start-0 end-0 p-3 border-top border-secondary bg-dark">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center"
+                    style="width: 40px; height: 40px;">
+                    <span class="text-white fw-bold">{{ request.user.username|first|upper }}</span>
+                </div>
+                <div class="ms-3">
+                    <div class="fw-semibold text-white">{{ request.user.username }}</div>
+                    <small class="text-white opacity-75">Reports Viewer</small>
+                </div>
             </div>
         </div>
-    </nav>
-
-    <!-- CONTENT BLOCK -->
-    <div class="container my-4">
-        {% block content %}{% endblock %}
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Main Content -->
+    <div class="reports-content" id="reportsContent">
+        <!-- Topbar -->
+        <nav class="reports-topbar">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center justify-content-between">
+                    <!-- Left: Toggle & Breadcrumb -->
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-outline-secondary d-md-none me-3" id="sidebarToggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
 
-    <!-- Custom JS -->
-    <script src="{% static 'reports/js/scripts.js' %}"></script>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item">
+                                    <a href="{% url 'reports:reports_dashboard' %}">Reports</a>
+                                </li>
+                                {% block breadcrumb %}{% endblock %}
+                            </ol>
+                        </nav>
+                    </div>
 
-    {% block extra_js %}{% endblock %}
-</body>
+                    <!-- Right: Date -->
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="text-muted"><i class="far fa-calendar-alt me-2"></i>{% now "F j, Y" %}</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
 
-</html>
+        <!-- Content Area -->
+        <div class="container-fluid py-4">
+            <!-- Messages -->
+            {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 fw-bold mb-0">{% block page_title %}{% endblock %}</h1>
+                    <p class="text-muted mb-0">{% block page_subtitle %}{% endblock %}</p>
+                </div>
+                <div>
+                    {% block page_actions %}{% endblock %}
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- Footer -->
+        <footer class="border-top py-3 mt-auto">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p class="text-muted mb-0">
+                            &copy; {% now "Y" %} Haliqua Investments | Reporting Module
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<script>
+    // Toggle sidebar on mobile
+    document.getElementById('sidebarToggle').addEventListener('click', function () {
+        document.getElementById('reportsSidebar').classList.toggle('active');
+    });
+</script>
+{% endblock %}

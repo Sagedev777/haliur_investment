@@ -1,9 +1,10 @@
 {% extends 'reports/base.html' %}
 {% block title %}Staff Loans{% endblock %}
 
-{% block content %}
-<h1 class="mb-4">Loans per Staff Member</h1>
+{% block page_title %}Staff Loans{% endblock %}
+{% block page_subtitle %}Loans processed by staff members{% endblock %}
 
+{% block content %}
 <table class="table table-bordered table-hover">
     <thead class="table-dark">
         <tr>
@@ -21,10 +22,17 @@
             <td>{{ loan.id }}</td>
             <td>{{ loan.client.name }}</td>
             <td>{{ loan.amount|floatformat:2 }}</td>
-            <td>{{ loan.status|capfirst }}</td>
+            <td>
+                <span
+                    class="badge {% if loan.status == 'APPROVED' %}bg-success{% elif loan.status == 'PENDING' %}bg-warning{% elif loan.status == 'REJECTED' %}bg-danger{% else %}bg-primary{% endif %} bg-opacity-10 text-dark border border-opacity-25">
+                    {{ loan.status|capfirst }}
+                </span>
+            </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="text-center">No loans found</td></tr>
+        <tr>
+            <td colspan="5" class="text-center">No loans found</td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>

@@ -1,9 +1,10 @@
 {% extends 'reports/base.html' %}
 {% block title %}Staff Savings{% endblock %}
 
-{% block content %}
-<h1 class="mb-4">Savings Processed per Staff</h1>
+{% block page_title %}Staff Savings{% endblock %}
+{% block page_subtitle %}Savings transactions processed by staff{% endblock %}
 
+{% block content %}
 <table class="table table-bordered table-hover">
     <thead class="table-dark">
         <tr>
@@ -22,7 +23,9 @@
             <td>{{ txn.amount|floatformat:2 }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="4" class="text-center">No savings found</td></tr>
+        <tr>
+            <td colspan="4" class="text-center">No savings found</td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>

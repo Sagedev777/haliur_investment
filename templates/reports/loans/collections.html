@@ -1,12 +1,15 @@
 {% extends 'reports/base.html' %}
 {% block title %}Loan Collections{% endblock %}
 
-{% block content %}
-<h1 class="mb-4">Loan Collections</h1>
+{% block page_title %}Loan Collections{% endblock %}
+{% block page_subtitle %}Track loan repayments and collections{% endblock %}
 
+{% block content %}
 <form method="get" class="row g-2 mb-3">
-    <div class="col-md-3"><input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date }}"></div>
-    <div class="col-md-3"><input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date }}"></div>
+    <div class="col-md-3"><input type="date" name="start_date" class="form-control"
+            value="{{ request.GET.start_date }}"></div>
+    <div class="col-md-3"><input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date }}">
+    </div>
     <div class="col-md-3">
         <select name="status" class="form-select">
             <option value="">All Status</option>
@@ -39,7 +42,9 @@
             <td>{{ payment.date|date:"Y-m-d" }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" class="text-center">No payments found</td></tr>
+        <tr>
+            <td colspan="6" class="text-center">No payments found</td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>

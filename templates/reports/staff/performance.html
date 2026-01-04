@@ -1,9 +1,16 @@
 {% extends 'reports/base.html' %}
 {% block title %}Staff Performance{% endblock %}
 
-{% block content %}
-<h1 class="mb-4">Staff Performance</h1>
+{% block page_title %}Staff Performance{% endblock %}
+{% block page_subtitle %}Staff productivity metrics{% endblock %}
 
+{% block page_actions %}
+<a href="{% url 'reports:export_staff_csv' %}" class="btn btn-success btn-sm">
+    <i class="fas fa-file-csv me-1"></i> Export CSV
+</a>
+{% endblock %}
+
+{% block content %}
 <table class="table table-bordered table-hover">
     <thead class="table-dark">
         <tr>
@@ -16,13 +23,23 @@
     <tbody>
         {% for staff in staff_list %}
         <tr>
-            <td>{{ staff.username }}</td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="avatar-xs me-2 rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center"
+                        style="width: 32px; height: 32px;">
+                        {{ staff.username|first|upper }}
+                    </div>
+                    {{ staff.username }}
+                </div>
+            </td>
             <td>{{ staff.loans_count }}</td>
             <td>{{ staff.savings_count }}</td>
             <td>{{ staff.reports_count }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="4" class="text-center">No staff data available</td></tr>
+        <tr>
+            <td colspan="4" class="text-center">No staff data available</td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>

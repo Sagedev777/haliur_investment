@@ -1,30 +1,42 @@
 {% extends 'reports/base.html' %}
 {% block title %}Savings Growth{% endblock %}
 
+{% block page_title %}Savings Growth{% endblock %}
+{% block page_subtitle %}Visualizing savings accumulation over time{% endblock %}
+
 {% block extra_head %}
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Savings Growth Over Time</h1>
-
-<canvas id="growthChart" height="100"></canvas>
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <canvas id="growthChart" height="100"></canvas>
+    </div>
+</div>
 
 <script>
-const ctx = document.getElementById('growthChart').getContext('2d');
-const growthChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: {{ growth.labels|safe }},
+    document.addEventListener("DOMContentLoaded", function () {
+        const ctx = document.getElementById('growthChart').getContext('2d');
+        const growthChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ growth.labels | safe }},
         datasets: [{
             label: 'Total Savings',
-            data: {{ growth.values|safe }},
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 2
-        }]
-    },
-    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            data: {{ growth.values | safe }},
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 2,
+        tension: 0.1
+            }]
+        },
+        options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true } }
+    }
+    });
 });
 </script>
 {% endblock %}

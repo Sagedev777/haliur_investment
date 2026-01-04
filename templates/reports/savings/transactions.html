@@ -1,12 +1,15 @@
 {% extends 'reports/base.html' %}
 {% block title %}Savings Transactions{% endblock %}
 
-{% block content %}
-<h1 class="mb-4">Savings Transactions</h1>
+{% block page_title %}Savings Transactions{% endblock %}
+{% block page_subtitle %}History of all savings transactions{% endblock %}
 
+{% block content %}
 <form method="get" class="row g-2 mb-3">
-    <div class="col-md-3"><input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date }}"></div>
-    <div class="col-md-3"><input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date }}"></div>
+    <div class="col-md-3"><input type="date" name="start_date" class="form-control"
+            value="{{ request.GET.start_date }}"></div>
+    <div class="col-md-3"><input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date }}">
+    </div>
     <div class="col-md-3">
         <select name="type" class="form-select">
             <option value="">All Types</option>
@@ -34,12 +37,18 @@
             <td>{{ txn.id }}</td>
             <td>{{ txn.account.id }}</td>
             <td>{{ txn.account.client.name }}</td>
-            <td>{{ txn.type|capfirst }}</td>
+            <td>
+                <span
+                    class="badge {% if txn.type == 'DEPOSIT' %}bg-success{% else %}bg-danger{% endif %} bg-opacity-10 text-dark border border-opacity-25">{{
+                    txn.type|capfirst }}</span>
+            </td>
             <td>{{ txn.amount|floatformat:2 }}</td>
             <td>{{ txn.date|date:"Y-m-d" }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" class="text-center">No transactions found</td></tr>
+        <tr>
+            <td colspan="6" class="text-center">No transactions found</td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>

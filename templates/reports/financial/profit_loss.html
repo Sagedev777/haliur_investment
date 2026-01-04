@@ -1,9 +1,10 @@
 {% extends 'reports/base.html' %}
 {% block title %}Profit & Loss{% endblock %}
 
-{% block content %}
-<h1 class="mb-4">Profit & Loss Report</h1>
+{% block page_title %}Profit & Loss Report{% endblock %}
+{% block page_subtitle %}Revenue vs Expenses Analysis{% endblock %}
 
+{% block content %}
 <table class="table table-striped table-bordered">
     <thead class="table-dark">
         <tr>
@@ -22,7 +23,9 @@
             <td>{{ item.profit|floatformat:2 }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="4" class="text-center">No data available</td></tr>
+        <tr>
+            <td colspan="4" class="text-center">No data available</td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>

@@ -1,9 +1,10 @@
 {% extends 'reports/base.html' %}
 {% block title %}Financial Report{% endblock %}
 
-{% block content %}
-<h1 class="mb-4">Financial Report</h1>
+{% block page_title %}Financial Report{% endblock %}
+{% block page_subtitle %}Comprehensive financial overview{% endblock %}
 
+{% block content %}
 <table class="table table-bordered table-hover">
     <thead class="table-dark">
         <tr>
@@ -24,7 +25,9 @@
             <td>{{ report.date|date:"Y-m-d" }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="text-center">No data available</td></tr>
+        <tr>
+            <td colspan="5" class="text-center">No data available</td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
