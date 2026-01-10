@@ -342,8 +342,7 @@
             {{ request.user.username|first|upper }}
         </div>
         <div>
-            <div style="font-weight: 600; font-size: 0.95rem;">{{
-                request.user.get_full_name|default:request.user.username }}</div>
+            <div style="font-weight: 600; font-size: 0.95rem;">{{ request.user.first_name }} {{ request.user.last_name }}</div>
             <small class="text-white-50">Administrator</small>
         </div>
     </div>

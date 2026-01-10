@@ -750,8 +750,7 @@
                         <div class="col-md-6">
                             <h6>Report Generated</h6>
                             <p class="mb-0">{{ generated_at|date:"F d, Y H:i:s" }}</p>
-                            <small class="text-muted">By: {{ request.user.get_full_name|default:request.user.username
-                                }}</small>
+                            <small class="text-muted">By: {{ request.user.first_name }} {{ request.user.last_name }}</small>
                         </div>
                         <div class="col-md-6 text-end">
                             <h6>Collection Performance</h6>
