@@ -29,7 +29,7 @@
                         <select name="status" id="status" class="form-select">
                             <option value="">All Statuses</option>
                             {% for status_value, status_label in status_choices %}
-                            <option value="{{ status_value }}" {% if status_filter==status_value %}selected{% endif %}>
+                            <option value="{{ status_value }}" {% if status_filter == status_value %}selected{% endif %}>
                                 {{ status_label }}
                             </option>
                             {% endfor %}
@@ -39,9 +39,9 @@
                         <label for="account_type" class="form-label">Account Type</label>
                         <select name="account_type" id="account_type" class="form-select">
                             <option value="">All Types</option>
-                            <option value="SINGLE" {% if request.GET.account_type=='SINGLE' %}selected{% endif %}>Single
+                            <option value="SINGLE" {% if request.GET.account_type == 'SINGLE' %}selected{% endif %}>Single
                             </option>
-                            <option value="JOINT" {% if request.GET.account_type=='JOINT' %}selected{% endif %}>Joint
+                            <option value="JOINT" {% if request.GET.account_type == 'JOINT' %}selected{% endif %}>Joint
                             </option>
                         </select>
                     </div>

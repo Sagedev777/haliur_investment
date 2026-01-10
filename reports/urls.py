@@ -1,4 +1,50 @@
 from django.urls import path
 from . import views
+
 app_name = 'reports'
-urlpatterns = [path('', views.owner_monitoring, name='reports_dashboard'), path('dashboard/', views.owner_monitoring, name='owner_monitoring'), path('overview/', views.owner_monitoring, name='reports_overview'), path('loans/', views.loan_performance_report, name='loan_performance_report'), path('loans/performance/', views.loan_performance_report, name='loan_performance'), path('loans/portfolio/', views.loan_portfolio_report, name='loan_portfolio_report'), path('loans/defaults/', views.loan_defaults_report, name='loan_defaults_report'), path('loans/collections/', views.loan_collections_report, name='loan_collections_report'), path('savings/', views.savings_report, name='savings_report'), path('savings/growth/', views.savings_growth_report, name='savings_growth_report'), path('savings/transactions/', views.savings_transactions_report, name='savings_transactions_report'), path('savings/top-savers/', views.top_savers_report, name='top_savers_report'), path('staff/', views.staff_performance_report, name='staff_performance_report'), path('staff/performance/', views.staff_performance_report, name='staff_performance'), path('staff/loans/', views.staff_loans_report, name='staff_loans_report'), path('staff/savings/', views.staff_savings_report, name='staff_savings_report'), path('financial/', views.financial_report, name='financial_report'), path('financial/summary/', views.financial_summary, name='financial_summary'), path('financial/profit-loss/', views.profit_loss_report, name='profit_loss_report'), path('export/loans/csv/', views.export_loans_csv, name='export_loans_csv'), path('export/savings/csv/', views.export_savings_csv, name='export_savings_csv'), path('export/staff/csv/', views.export_staff_csv, name='export_staff_csv'), path('export/financial/csv/', views.export_financial_csv, name='export_financial_csv'), path('generate/daily/', views.generate_daily_report, name='generate_daily_report'), path('generate/weekly/', views.generate_weekly_report, name='generate_weekly_report'), path('generate/monthly/', views.generate_monthly_report, name='generate_monthly_report'), path('export/financial/pdf/', views.export_financial_pdf, name='export_financial_pdf'), path('export/summary/pdf/', views.export_summary_pdf, name='export_summary_pdf'), path('export/profit_loss/pdf/', views.export_profit_loss_pdf, name='export_profit_loss_pdf')]
+
+urlpatterns = [
+    path('', views.owner_monitoring, name='reports_dashboard'),
+    path('dashboard/', views.owner_monitoring, name='owner_monitoring'),
+    path('overview/', views.owner_monitoring, name='reports_overview'),
+    
+    # Loan Reports
+    path('loans/', views.loan_performance_report, name='loan_performance_report'),
+    path('loans/performance/', views.loan_performance_report, name='loan_performance'),
+    path('loans/portfolio/', views.loan_portfolio_report, name='loan_portfolio_report'),
+    path('loans/defaults/', views.loan_defaults_report, name='loan_defaults_report'),
+    path('loans/collections/', views.loan_collections_report, name='loan_collections_report'),
+    
+    # Savings Reports
+    path('savings/', views.savings_report, name='savings_report'),
+    path('savings/growth/', views.savings_growth_report, name='savings_growth_report'),
+    path('savings/transactions/', views.savings_transactions_report, name='savings_transactions_report'),
+    path('savings/top-savers/', views.top_savers_report, name='top_savers_report'),
+    
+    # Staff Reports
+    path('staff/', views.staff_performance_report, name='staff_performance_report'),
+    path('staff/performance/', views.staff_performance_report, name='staff_performance'),
+    path('staff/loans/', views.staff_loans_report, name='staff_loans_report'),
+    path('staff/savings/', views.staff_savings_report, name='staff_savings_report'),
+    
+    # Financial Reports
+    path('financial/', views.financial_report, name='financial_report'),
+    path('financial/summary/', views.financial_summary, name='financial_summary'),
+    path('financial/profit-loss/', views.profit_loss_report, name='profit_loss_report'),
+    
+    # Export URLs
+    path('export/loans/csv/', views.export_loans_csv, name='export_loans_csv'),
+    path('export/loans/defaults/csv/', views.export_loans_defaults_csv, name='export_loans_defaults_csv'),
+    path('export/loans/defaults/pdf/', views.export_loans_defaults_pdf, name='export_loans_defaults_pdf'),
+    path('export/savings/csv/', views.export_savings_csv, name='export_savings_csv'),
+    path('export/staff/csv/', views.export_staff_csv, name='export_staff_csv'),
+    path('export/financial/csv/', views.export_financial_csv, name='export_financial_csv'),
+    path('export/financial/pdf/', views.export_financial_pdf, name='export_financial_pdf'),
+    path('export/summary/pdf/', views.export_summary_pdf, name='export_summary_pdf'),
+    path('export/profit_loss/pdf/', views.export_profit_loss_pdf, name='export_profit_loss_pdf'),
+    
+    # Report Generation
+    path('generate/daily/', views.generate_daily_report, name='generate_daily_report'),
+    path('generate/weekly/', views.generate_weekly_report, name='generate_weekly_report'),
+    path('generate/monthly/', views.generate_monthly_report, name='generate_monthly_report'),
+]

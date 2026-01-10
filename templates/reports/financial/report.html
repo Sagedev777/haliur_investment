@@ -9,20 +9,20 @@
     <thead class="table-dark">
         <tr>
             <th>ID</th>
-            <th>Title</th>
-            <th>Revenue</th>
-            <th>Expenses</th>
-            <th>Date</th>
+            <th>Report Type</th>
+            <th>Total Savings</th>
+            <th>Loans Disbursed</th>
+            <th>Report Date</th>
         </tr>
     </thead>
     <tbody>
         {% for report in reports %}
         <tr>
             <td>{{ report.id }}</td>
-            <td>{{ report.title }}</td>
-            <td>{{ report.revenue|floatformat:2 }}</td>
-            <td>{{ report.expenses|floatformat:2 }}</td>
-            <td>{{ report.date|date:"Y-m-d" }}</td>
+            <td>{{ report.get_report_type_display }}</td>
+            <td>{{ report.total_savings|floatformat:2 }}</td>
+            <td>{{ report.total_loans_disbursed|floatformat:2 }}</td>
+            <td>{{ report.report_date|date:"Y-m-d" }}</td>
         </tr>
         {% empty %}
         <tr>

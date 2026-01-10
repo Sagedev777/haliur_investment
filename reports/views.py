@@ -11,12 +11,6 @@ from .models import SystemReport, ActivityLog
 from .utils import generate_periodic_report
 from client_accounts.models import ClientAccount, SavingsTransaction
 from loans.models import LoanApplication, LoanPayment
-from io import BytesIO
-from django.http import FileResponse
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from django.contrib.auth.decorators import login_required
-from .models import SystemReport
 
 @login_required
 def owner_monitoring(request):
@@ -237,3 +231,43 @@ def export_profit_loss_pdf(request):
     p.save()
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename='profit_loss_report.pdf')
+
+@login_required
+def export_loans_defaults_csv(request):
+    loans = LoanApplication.objects.filter(status='DEFAULTED')
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="loan_defaults.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['ID', 'Client', 'Amount', 'Status', 'Disbursed Date', 'Default Date'])
+    for loan in loans:
+        writer.writerow([loan.id, loan.client, loan.loan_amount, loan.status, loan.disbursed_date, timezone.now().date()]) # Placeholder
+    return response
+
+@login_required
+def export_loans_defaults_pdf(request):
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    p.setTitle('Loan Defaults Report')
+    p.setFont('Helvetica-Bold', 18)
+    p.drawCentredString(300, 800, 'Haliur Investments - Loan Defaults Report')
+    
+    loans = LoanApplication.objects.filter(status='DEFAULTED')
+    y = 750
+    p.setFont('Helvetica', 12)
+    
+    if loans.exists():
+        for loan in loans:
+            if y < 100:
+                p.showPage()
+                y = 750
+            p.drawString(50, y, f"Loan ID: {loan.id}")
+            p.drawString(200, y, f"Client: {loan.client}")
+            p.drawString(400, y, f"Amount: {loan.loan_amount:,.2f} UGX")
+            y -= 25
+    else:
+        p.drawCentredString(300, y, 'No defaulted loans found.')
+        
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename='loan_defaults.pdf')

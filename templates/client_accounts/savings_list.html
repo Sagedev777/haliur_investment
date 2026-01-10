@@ -204,9 +204,7 @@
                                     <td>${{ transaction.client_account.savings_balance|floatformat:2 }}</td>
                                     <td>
                                         {% if transaction.processed_by %}
-                                        {{
-                                        transaction.processed_by.get_full_name|default:transaction.processed_by.username
-                                        }}
+                                        {{ transaction.processed_by.get_full_name|default:transaction.processed_by.username }}
                                         {% else %}
                                         System
                                         {% endif %}

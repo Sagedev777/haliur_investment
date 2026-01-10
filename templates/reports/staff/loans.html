@@ -18,14 +18,14 @@
     <tbody>
         {% for loan in loans %}
         <tr>
-            <td>{{ loan.staff.username }}</td>
+            <td>{{ loan.loan_officer.username }}</td>
             <td>{{ loan.id }}</td>
-            <td>{{ loan.client.name }}</td>
-            <td>{{ loan.amount|floatformat:2 }}</td>
+            <td>{{ loan.client.full_account_name }}</td>
+            <td>{{ loan.requested_amount|floatformat:2 }}</td>
             <td>
                 <span
                     class="badge {% if loan.status == 'APPROVED' %}bg-success{% elif loan.status == 'PENDING' %}bg-warning{% elif loan.status == 'REJECTED' %}bg-danger{% else %}bg-primary{% endif %} bg-opacity-10 text-dark border border-opacity-25">
-                    {{ loan.status|capfirst }}
+                    {{ loan.get_status_display }}
                 </span>
             </td>
         </tr>

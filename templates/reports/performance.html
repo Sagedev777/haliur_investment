@@ -40,10 +40,10 @@
         {% for loan in loans %}
         <tr>
             <td>{{ loan.id }}</td>
-            <td>{{ loan.client.name }}</td>
-            <td>{{ loan.amount|floatformat:2 }}</td>
+            <td>{{ loan.client.full_account_name }}</td>
+            <td>{{ loan.requested_amount|floatformat:2 }}</td>
             <td>{{ loan.status|capfirst }}</td>
-            <td>{{ loan.created_at|date:"Y-m-d" }}</td>
+            <td>{{ loan.application_date|date:"Y-m-d" }}</td>
         </tr>
         {% empty %}
         <tr>

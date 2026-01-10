@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Admin Dashboard - HaliQUA Investments{% endblock %}
+{% block title %}Admin Dashboard - Ateesafinancialstewards Investments{% endblock %}
 
 {% block app_css %}
 <style>
@@ -304,7 +304,7 @@
 <!-- Sidebar -->
 <div class="sidebar" id="sidebar">
     <div class="logo">
-        HALI<span>QUA</span>
+        ATEESA<span>FINANCIALSTEWARDS</span>
     </div>
 
     <nav class="nav flex-column mt-4">
@@ -358,6 +358,9 @@
             <a href="{% url 'accounts:account_create' %}" class="btn-action">
                 <i class="fas fa-plus"></i> New Account
             </a>
+            <a href="{% url 'core:staff_create' %}" class="btn-action">
+                <i class="fas fa-user-plus"></i> Add Staff
+            </a>
             <a href="{% url 'loans:loan_application_create' %}" class="btn-action">
                 <i class="fas fa-hand-holding-usd"></i> New Loan
             </a>
@@ -372,7 +375,7 @@
         <div class="row align-items-center mb-4">
             <div class="col-md-6">
                 <h1 class="h3 mb-2 fw-bold text-gray-800">Welcome back, {{
-                    request.user.get_full_name|default:request.user.username }}</h1>
+                    request.user.first_name }} {{ request.user.last_name }}</h1>
                 <p class="text-muted mb-0"><i class="fas fa-chart-line me-1"></i> Here's what's happening with your
                     business today.</p>
             </div>
@@ -691,7 +694,8 @@
     <footer class="mt-5 pt-3 border-top text-center text-muted">
         <p class="mb-0">
             <i class="fas fa-shield-alt me-1"></i>
-            Haliqua Loan & Savings Management System v1.0 © {% now "Y" %}
+            <i class="fas fa-shield-alt me-1"></i>
+            Ateesafinancialstewards Loan & Savings Management System v1.0 © {% now "Y" %}
             <span class="mx-2">•</span>
             <span class="text-success"><i class="fas fa-circle fa-xs"></i> System Status: Operational</span>
         </p>

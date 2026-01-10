@@ -131,9 +131,10 @@
     <div class="reports-sidebar" id="reportsSidebar">
         <!-- Header -->
         <div class="reports-sidebar-header">
-            <a href="{% url 'reports:reports_dashboard' %}" class="reports-brand">
+            <a href="{% if request.user.is_superuser %}{% url 'core:admin_dashboard' %}{% else %}{% url 'reports:reports_dashboard' %}{% endif %}"
+                class="reports-brand">
                 <i class="fas fa-chart-line me-2"></i>
-                Hali<span>QUA</span> Reports
+                ATEESA<span>FINANCIALSTEWARDS</span> Reports
             </a>
         </div>
 
@@ -319,7 +320,7 @@
                 <div class="row align-items-center">
                     <div class="col-md-6">
                         <p class="text-muted mb-0">
-                            &copy; {% now "Y" %} Haliqua Investments | Reporting Module
+                            &copy; {% now "Y" %} Ateesafinancialstewards Investments | Reporting Module
                         </p>
                     </div>
                 </div>

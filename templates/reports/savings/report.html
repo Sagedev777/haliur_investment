@@ -24,9 +24,9 @@
         {% for account in accounts %}
         <tr>
             <td>{{ account.id }}</td>
-            <td>{{ account.client.name }}</td>
+            <td>{{ account.full_account_name }}</td>
             <td>{{ account.savings_balance|floatformat:2 }}</td>
-            <td>{{ account.is_active|yesno:"Active,Inactive" }}</td>
+            <td>{{ account.get_account_status_display }}</td>
         </tr>
         {% empty %}
         <tr>

@@ -174,3 +174,20 @@ def home(request):
 def add_current_datetime(request):
     from django.utils import timezone
     return {'current_date': timezone.now().date(), 'current_time': timezone.now().time()}
+
+@login_required
+def staff_create(request):
+    if not (request.user.is_superuser or get_user_role(request.user) == UserProfile.ROLE_ADMIN):
+        messages.error(request, 'Unauthorized access.')
+        return redirect('core:dashboard_redirect')
+    
+    from .forms import StaffCreationForm
+    if request.method == 'POST':
+        form = StaffCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, f'Staff account for {user.username} created successfully.')
+            return redirect('core:admin_dashboard')
+    else:
+        form = StaffCreationForm()
+    return render(request, 'core/staff_create.html', {'form': form})
