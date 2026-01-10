@@ -2,6 +2,9 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
+import logging
+
+logger = logging.getLogger(__name__)
 
 class NotificationService:
 
@@ -17,7 +20,7 @@ class NotificationService:
                 NotificationService.send_sms(client.person1_contact, f'Your loan {loan.loan_number} has been approved for {loan.principal_amount}. Contact us for disbursement.')
             return True
         except Exception as e:
-            print(f'Error sending loan approval notification: {e}')
+            logger.error(f'Error sending loan approval notification: {e}')
             return False
 
     @staticmethod
@@ -30,7 +33,7 @@ class NotificationService:
                 send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [client.email], fail_silently=True)
             return True
         except Exception as e:
-            print(f'Error sending loan rejection notification: {e}')
+            logger.error(f'Error sending loan rejection notification: {e}')
             return False
 
     @staticmethod
@@ -45,7 +48,7 @@ class NotificationService:
                 NotificationService.send_sms(client.person1_contact, f'Reminder: Loan {loan.loan_number} payment of {loan.monthly_payment} due in {days_until_due} days.')
             return True
         except Exception as e:
-            print(f'Error sending payment reminder: {e}')
+            logger.error(f'Error sending payment reminder: {e}')
             return False
 
     @staticmethod
@@ -60,7 +63,7 @@ class NotificationService:
                 NotificationService.send_sms(client.person1_contact, f'URGENT: Loan {loan.loan_number} payment is {days_overdue} days overdue. Pay {loan.monthly_payment} now.')
             return True
         except Exception as e:
-            print(f'Error sending overdue notification: {e}')
+            logger.error(f'Error sending overdue notification: {e}')
             return False
 
     @staticmethod
@@ -76,16 +79,17 @@ class NotificationService:
                 NotificationService.send_sms(client.person1_contact, f'Payment of {payment.amount} received for loan {loan.loan_number}. Balance: {loan.outstanding_balance}')
             return True
         except Exception as e:
-            print(f'Error sending payment confirmation: {e}')
+            logger.error(f'Error sending payment confirmation: {e}')
             return False
 
     @staticmethod
     def send_sms(phone_number, message):
         try:
-            print(f'SMS to {phone_number}: {message}')
+            # Mock SMS sending
+            logger.info(f'SMS to {phone_number}: {message}')
             return True
         except Exception as e:
-            print(f'Error sending SMS: {e}')
+            logger.error(f'Error sending SMS: {e}')
             return False
 
     @staticmethod

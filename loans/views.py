@@ -977,7 +977,8 @@ def generate_loan_schedule_pdf(loan):
     return None
 
 def send_payment_reminder(loan):
-    print(f'Payment reminder sent for loan {loan.loan_number}')
+    # TODO: Implement SMS/Email reminder logic
+    pass
 
 def calculate_early_repayment_savings(loan, repayment_amount):
     interest_service = InterestCalculationService()

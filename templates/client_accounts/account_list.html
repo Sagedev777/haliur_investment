@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="row mb-4">
+<div class="row mb-4 animate__animated animate__fadeInDown">
     <div class="col-md-12">
         <!-- Filter Card -->
         <div class="card">
@@ -29,7 +29,7 @@
                         <select name="status" id="status" class="form-select">
                             <option value="">All Statuses</option>
                             {% for status_value, status_label in status_choices %}
-                            <option value="{{ status_value }}" {% if status_filter == status_value %}selected{% endif %}>
+                            <option value="{{ status_value }}" {% if status_filter==status_value %}selected{% endif %}>
                                 {{ status_label }}
                             </option>
                             {% endfor %}
@@ -39,15 +39,16 @@
                         <label for="account_type" class="form-label">Account Type</label>
                         <select name="account_type" id="account_type" class="form-select">
                             <option value="">All Types</option>
-                            <option value="SINGLE" {% if request.GET.account_type == 'SINGLE' %}selected{% endif %}>Single</option>
-                            <option value="JOINT" {% if request.GET.account_type == 'JOINT' %}selected{% endif %}>Joint</option>
+                            <option value="SINGLE" {% if request.GET.account_type=='SINGLE' %}selected{% endif %}>Single
+                            </option>
+                            <option value="JOINT" {% if request.GET.account_type=='JOINT' %}selected{% endif %}>Joint
+                            </option>
                         </select>
                     </div>
                     <div class="col-md-4">
                         <label for="search" class="form-label">Search</label>
-                        <input type="text" class="form-control" id="search" name="search" 
-                               placeholder="Search by name, account number, or NIN..." 
-                               value="{{ search_query }}">
+                        <input type="text" class="form-control" id="search" name="search"
+                            placeholder="Search by name, account number, or NIN..." value="{{ search_query }}">
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
                         <button type="submit" class="btn btn-primary w-100">
@@ -102,62 +103,73 @@
                                 <td>{{ account.get_account_type_display }}</td>
                                 <td>
                                     {% if account.account_status == "ACTIVE" %}
-                                    <span class="badge bg-success">Active</span>
+                                    <span
+                                        class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3">Active</span>
                                     {% elif account.account_status == "PENDING" %}
-                                    <span class="badge bg-warning">Pending</span>
+                                    <span
+                                        class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3">Pending</span>
                                     {% elif account.account_status == "INACTIVE" %}
-                                    <span class="badge bg-secondary">Inactive</span>
+                                    <span
+                                        class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-3">Inactive</span>
                                     {% elif account.account_status == "SUSPENDED" %}
-                                    <span class="badge bg-danger">Suspended</span>
+                                    <span
+                                        class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3">Suspended</span>
                                     {% elif account.account_status == "CLOSED" %}
-                                    <span class="badge bg-dark">Closed</span>
+                                    <span class="badge bg-dark rounded-pill px-3">Closed</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     <strong>UGX {{ account.savings_balance|floatformat:0 }}</strong>
                                     {% if account.total_loan_balance > 0 %}
-                                    <br><small class="text-danger">Loan: UGX {{ account.total_loan_balance|floatformat:0 }}</small>
+                                    <br><small class="text-danger">Loan: UGX {{ account.total_loan_balance|floatformat:0
+                                        }}</small>
                                     {% endif %}
                                 </td>
                                 <td>{{ account.loan_officer.get_full_name|default:account.loan_officer.username }}</td>
                                 <td>{{ account.registration_date|date:"M d, Y" }}</td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <a href="{% url 'accounts:account_detail' account.pk %}" 
-                                           class="btn btn-outline-primary" title="View">
+                                        <a href="{% url 'accounts:account_detail' account.pk %}"
+                                            class="btn btn-outline-primary" title="View">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         {% if user_role == 'ADMIN' or account.loan_officer == request.user %}
-                                        <a href="{% url 'accounts:account_edit' account.pk %}" 
-                                           class="btn btn-outline-warning" title="Edit">
+                                        <a href="{% url 'accounts:account_edit' account.pk %}"
+                                            class="btn btn-outline-warning" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         {% endif %}
                                         {% if user_role == 'ADMIN' %}
-                                        <button type="button" class="btn btn-outline-danger dropdown-toggle" 
-                                                data-bs-toggle="dropdown" title="More">
+                                        <button type="button" class="btn btn-outline-danger dropdown-toggle"
+                                            data-bs-toggle="dropdown" title="More">
                                         </button>
                                         <ul class="dropdown-menu">
                                             {% if account.account_status == 'PENDING' %}
                                             <li>
-                                                <a class="dropdown-item" href="{% url 'accounts:account_approve' account.pk %}">
+                                                <a class="dropdown-item"
+                                                    href="{% url 'accounts:account_approve' account.pk %}">
                                                     <i class="fas fa-check me-2"></i>Approve
                                                 </a>
                                             </li>
                                             <li>
-                                                <a class="dropdown-item" href="{% url 'accounts:account_reject' account.pk %}">
+                                                <a class="dropdown-item"
+                                                    href="{% url 'accounts:account_reject' account.pk %}">
                                                     <i class="fas fa-times me-2"></i>Reject
                                                 </a>
                                             </li>
                                             {% endif %}
                                             <li>
-                                                <a class="dropdown-item" href="{% url 'accounts:account_change_status' account.pk %}">
+                                                <a class="dropdown-item"
+                                                    href="{% url 'accounts:account_change_status' account.pk %}">
                                                     <i class="fas fa-exchange-alt me-2"></i>Change Status
                                                 </a>
                                             </li>
-                                            <li><hr class="dropdown-divider"></li>
                                             <li>
-                                                <a class="dropdown-item text-danger" href="{% url 'accounts:account_delete' account.pk %}">
+                                                <hr class="dropdown-divider">
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item text-danger"
+                                                    href="{% url 'accounts:account_delete' account.pk %}">
                                                     <i class="fas fa-trash me-2"></i>Delete
                                                 </a>
                                             </li>
@@ -181,38 +193,42 @@
                     </table>
                 </div>
             </div>
-            
+
             {% if page_obj.paginator.num_pages > 1 %}
             <div class="card-footer">
                 <nav aria-label="Page navigation">
                     <ul class="pagination justify-content-center mb-0">
                         {% if page_obj.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page=1{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            <a class="page-link"
+                                href="?page=1{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
                                 First
                             </a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            <a class="page-link"
+                                href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
                                 Previous
                             </a>
                         </li>
                         {% endif %}
-                        
+
                         <li class="page-item disabled">
                             <span class="page-link">
                                 Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
                             </span>
                         </li>
-                        
+
                         {% if page_obj.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            <a class="page-link"
+                                href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
                                 Next
                             </a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            <a class="page-link"
+                                href="?page={{ page_obj.paginator.num_pages }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
                                 Last
                             </a>
                         </li>

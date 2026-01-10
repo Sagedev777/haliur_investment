@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Welcome to Haliqua Investments{% endblock %}
+
+{% block app_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #f8f9fc 0%, #eef2f7 100%);
+    }
+
+    .hero-section {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        padding: 2rem 0;
+    }
+
+    .hero-bg {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 50%;
+        height: 100%;
+        background: radial-gradient(circle at center, rgba(52, 152, 219, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+        z-index: 0;
+    }
+
+    .hero-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+        padding: 3rem;
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+    }
+
+    .hero-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 6px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    .brand-text {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        background: white;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--primary);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s;
+    }
+
+    .feature-card:hover .feature-icon {
+        transform: translateY(-5px) rotate(5deg);
+        background: var(--primary);
+        color: white;
+    }
+
+    .feature-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+        color: var(--primary-dark);
+    }
+
+    .feature-text {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .btn-lg-custom {
+        padding: 1rem 2.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 50rem;
+        box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        transition: all 0.3s;
+    }
+
+    .btn-lg-custom:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(52, 152, 219, 0.4);
+    }
+
+    /* Decorative elements */
+    .shape-1 {
+        position: absolute;
+        top: -10%;
+        left: -5%;
+        width: 300px;
+        height: 300px;
+        background: linear-gradient(135deg, rgba(67, 56, 202, 0.1), rgba(14, 165, 233, 0.1));
+        border-radius: 50%;
+        filter: blur(50px);
+        z-index: -1;
+    }
+
+    .shape-2 {
+        position: absolute;
+        bottom: -10%;
+        right: -5%;
+        width: 400px;
+        height: 400px;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(67, 56, 202, 0.05));
+        border-radius: 50%;
+        filter: blur(60px);
+        z-index: -1;
+    }
+
+    @media (max-width: 991px) {
+        .brand-text {
+            font-size: 2.5rem;
+        }
+
+        .hero-section {
+            padding: 4rem 0;
+            min-height: auto;
+        }
+
+        .hero-bg {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block app_layout %}
+<div class="hero-section">
+    <!-- Background Shapes -->
+    <div class="shape-1"></div>
+    <div class="shape-2"></div>
+    <div class="hero-bg animate__animated animate__fadeIn"></div>
+
+    <div class="container position-relative z-1">
+        <div class="row align-items-center justify-content-center">
+            <!-- Left Column: Content -->
+            <div class="col-lg-6 mb-5 mb-lg-0">
+                <div class="pe-lg-5 animate__animated animate__fadeInLeft">
+                    <div
+                        class="d-inline-flex align-items-center bg-white rounded-pill px-3 py-1 mb-4 shadow-sm border border-light">
+                        <span class="badge bg-primary rounded-pill me-2">New</span>
+                        <span class="text-muted small fw-medium">Enhanced Security & UI Update</span>
+                    </div>
+
+                    <h1 class="display-4 fw-bold mb-3 text-dark">
+                        Smart Financial <br>
+                        Management with <br>
+                        <span class="brand-text">HALIQUA</span>
+                    </h1>
+
+                    <p class="lead text-muted mb-5">
+                        Streamline your loan management, savings tracking, and client relationships with our advanced,
+                        secure, and intuitive platform.
+                    </p>
+
+                    <div class="d-flex gap-3">
+                        <a href="{% url 'core:login' %}" class="btn btn-primary btn-lg-custom">
+                            <i class="fas fa-sign-in-alt me-2"></i> Access Portal
+                        </a>
+                        <a href="#features" class="btn btn-outline-primary btn-lg-custom"
+                            style="background: white; border: 1px solid var(--border-color); color: var(--primary);">
+                            <i class="fas fa-info-circle me-2"></i> Learn More
+                        </a>
+                    </div>
+
+                    <div class="mt-5 pt-4 border-top">
+                        <div class="d-flex align-items-center gap-4">
+                            <div>
+                                <h4 class="fw-bold mb-0">2.5K+</h4>
+                                <small class="text-muted">Active Clients</small>
+                            </div>
+                            <div class="border-start h-100" style="height: 40px;"></div>
+                            <div>
+                                <h4 class="fw-bold mb-0">99.9%</h4>
+                                <small class="text-muted">Uptime</small>
+                            </div>
+                            <div class="border-start h-100" style="height: 40px;"></div>
+                            <div>
+                                <h4 class="fw-bold mb-0">24/7</h4>
+                                <small class="text-muted">Support</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Card/Image -->
+            <div class="col-lg-5 offset-lg-1">
+                <div class="hero-card animate__animated animate__fadeInRight">
+                    <div class="text-center mb-4">
+                        <div class="mb-4">
+                            <span style="font-size: 4rem; color: var(--primary);">
+                                <i class="fas fa-shield-alt"></i>
+                            </span>
+                        </div>
+                        <h3 class="fw-bold mb-2">Secure Portal</h3>
+                        <p class="text-muted">Authorized Personnel Only</p>
+                    </div>
+
+                    <div class="d-grid gap-3">
+                        <div class="d-flex align-items-center p-3 rounded bg-light border">
+                            <div class="rounded-circle bg-white p-2 d-flex align-items-center justify-content-center shadow-sm"
+                                style="width: 40px; height: 40px;">
+                                <i class="fas fa-user-lock text-success"></i>
+                            </div>
+                            <div class="ms-3">
+                                <h6 class="mb-0 fw-bold">Role-Based Access</h6>
+                                <small class="text-muted">Admin, Staff, Loan Officer</small>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center p-3 rounded bg-light border">
+                            <div class="rounded-circle bg-white p-2 d-flex align-items-center justify-content-center shadow-sm"
+                                style="width: 40px; height: 40px;">
+                                <i class="fas fa-lock text-primary"></i>
+                            </div>
+                            <div class="ms-3">
+                                <h6 class="mb-0 fw-bold">Encrypted Data</h6>
+                                <small class="text-muted">End-to-end protection</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'core:login' %}" class="fw-bold text-decoration-none text-primary">
+                            Login to dashboard <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section using ID for anchor from "Learn More" -->
+        <div id="features" class="row mt-5 pt-5 justify-content-center g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm feature-card p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-hand-holding-usd"></i>
+                    </div>
+                    <h5 class="feature-title">Loan Management</h5>
+                    <p class="feature-text">End-to-end loan lifecycle management from application and approval to
+                        disbursement and repayment tracking.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm feature-card p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-piggy-bank"></i>
+                    </div>
+                    <h5 class="feature-title">Savings Tracking</h5>
+                    <p class="feature-text">Comprehensive savings account management with detailed transaction history
+                        and interest calculation.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm feature-card p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h5 class="feature-title">Real-time Reporting</h5>
+                    <p class="feature-text">Instant access to financial reports, portfolio performance, and staff
+                        productivity metrics.</p>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-5 pt-5 text-center text-muted border-top">
+            <p class="mb-2">&copy; {% now "Y" %} Haliqua Investments Management System. All rights reserved.</p>
+            <p class="small">System v1.0 | <span class="text-success"><i
+                        class="fas fa-circle fa-xs me-1"></i>Operational</span></p>
+        </footer>
+    </div>
+</div>
+{% endblock %}

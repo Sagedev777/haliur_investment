@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Admin Dashboard - HaliQUA Investments{% endblock %}
+{% block title %}Loan Officer Dashboard - HaliQUA Investments{% endblock %}
 
 {% block app_css %}
 <style>
@@ -27,7 +27,7 @@
         left: 0;
         height: 100vh;
         width: var(--sidebar-width);
-        background: linear-gradient(180deg, var(--primary-dark) 0%, #1a2530 100%);
+        background: linear-gradient(180deg, var(--primary-dark) 0%, #2c3e50 100%);
         color: white;
         box-shadow: 3px 0 15px rgba(0, 0, 0, 0.1);
         z-index: 1000;
@@ -105,6 +105,16 @@
         font-size: 1.25rem;
         margin-right: 0.75rem;
         box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+    }
+
+    .role-badge {
+        background: rgba(52, 152, 219, 0.1);
+        color: var(--secondary);
+        padding: 0.25rem 0.75rem;
+        border-radius: 50rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid rgba(52, 152, 219, 0.2);
     }
 
     /* Main Content Layout */
@@ -195,15 +205,15 @@
         background-color: var(--primary);
     }
 
-    .card-savings::before {
+    .card-active::before {
         background-color: var(--success);
     }
 
-    .card-loans::before {
+    .card-pending::before {
         background-color: var(--warning);
     }
 
-    .card-pending::before {
+    .card-default::before {
         background-color: var(--danger);
     }
 
@@ -233,31 +243,7 @@
         gap: 0.5rem;
     }
 
-    .btn-dashboard {
-        padding: 1.5rem 1rem;
-        border-radius: 0.5rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        transition: all 0.3s;
-        border: none;
-        position: relative;
-        overflow: hidden;
-        color: white;
-    }
-
-    .btn-dashboard:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.2);
-        color: white;
-    }
-
-    .btn-dashboard i {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-size: 2rem;
-    }
-
+    /* Mobile Toggle */
     .sidebar-toggle {
         display: none;
         position: fixed;
@@ -308,32 +294,20 @@
     </div>
 
     <nav class="nav flex-column mt-4">
-        <a class="nav-link active" href="{% url 'core:admin_dashboard' %}">
+        <a class="nav-link active" href="#">
             <i class="fas fa-tachometer-alt"></i> Dashboard
         </a>
+        <a class="nav-link" href="{% url 'loans:loan_application_create' %}">
+            <i class="fas fa-file-signature"></i> New Loan
+        </a>
         <a class="nav-link" href="{% url 'accounts:account_list' %}">
-            <i class="fas fa-users"></i> Client Accounts
-        </a>
-        <a class="nav-link" href="{% url 'accounts:savings_list' %}">
-            <i class="fas fa-piggy-bank"></i> Savings
-        </a>
-        <a class="nav-link" href="{% url 'loans:dashboard' %}">
-            <i class="fas fa-hand-holding-usd"></i> Loans
-        </a>
-        <a class="nav-link" href="{% url 'accounts:reports_dashboard' %}">
-            <i class="fas fa-chart-bar"></i> Reports
-        </a>
-        <a class="nav-link" href="{% url 'accounts:audit_logs' %}">
-            <i class="fas fa-clipboard-list"></i> Audit Logs
-        </a>
-        <a class="nav-link" href="{% url 'accounts:edit_request_list' %}">
-            <i class="fas fa-edit"></i> Edit Requests
-            {% if pending_edit_requests.count > 0 %}
-            <span class="badge bg-danger ms-auto">{{ pending_edit_requests.count }}</span>
-            {% endif %}
+            <i class="fas fa-users"></i> My Clients
         </a>
         <a class="nav-link" href="#">
-            <i class="fas fa-cog"></i> Settings
+            <i class="fas fa-search-dollar"></i> Loan Review
+        </a>
+        <a class="nav-link" href="#">
+            <i class="fas fa-chart-line"></i> Portfolio
         </a>
     </nav>
 
@@ -344,7 +318,9 @@
         <div>
             <div style="font-weight: 600; font-size: 0.95rem;">{{
                 request.user.get_full_name|default:request.user.username }}</div>
-            <small class="text-white-50">Administrator</small>
+            <div class="mt-1">
+                <span class="role-badge">Loan Officer</span>
+            </div>
         </div>
     </div>
 </div>
@@ -353,55 +329,49 @@
 <div class="main-content">
     <!-- Navbar -->
     <nav class="navbar">
-        <h4 class="mb-0 fw-bold text-primary"><i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard</h4>
-        <div class="quick-actions">
-            <a href="{% url 'accounts:account_create' %}" class="btn-action">
-                <i class="fas fa-plus"></i> New Account
-            </a>
-            <a href="{% url 'loans:loan_application_create' %}" class="btn-action">
-                <i class="fas fa-hand-holding-usd"></i> New Loan
-            </a>
-            <a href="{% url 'core:login' %}" class="btn-action text-danger">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <h4 class="mb-0 fw-bold text-primary">
+                    <i class="fas fa-hand-holding-usd me-2"></i>Loan Officer Dashboard
+                </h4>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="quick-actions">
+                    <a href="{% url 'accounts:account_create' %}" class="btn-action">
+                        <i class="fas fa-user-plus"></i> New Client
+                    </a>
+                    <a href="{% url 'loans:loan_application_create' %}" class="btn-action">
+                        <i class="fas fa-file-signature"></i> New Loan
+                    </a>
+                    <a href="{% url 'core:login' %}" class="btn-action text-danger">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
         </div>
     </nav>
 
     <!-- Dashboard Header -->
     <div class="dashboard-header animate__animated animate__fadeIn">
-        <div class="row align-items-center mb-4">
+        <div class="row align-items-center">
             <div class="col-md-6">
-                <h1 class="h3 mb-2 fw-bold text-gray-800">Welcome back, {{
-                    request.user.get_full_name|default:request.user.username }}</h1>
-                <p class="text-muted mb-0"><i class="fas fa-chart-line me-1"></i> Here's what's happening with your
-                    business today.</p>
+                <h1 class="h3 mb-2 fw-bold text-gray-800">
+                    <i class="fas fa-hand-holding-usd me-2 text-primary"></i>
+                    Welcome, {{ request.user.get_full_name|default:request.user.username }}
+                </h1>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-chart-line me-1"></i> Loan Portfolio Overview
+                </p>
             </div>
             <div class="col-md-6 text-md-end">
                 <div class="d-inline-block bg-light rounded-pill px-3 py-2">
-                    <p class="mb-1 text-primary"><i class="fas fa-calendar-alt me-2"></i> {% now "F d, Y" %}</p>
-                    <p class="mb-0 text-muted"><i class="fas fa-clock me-2"></i> {% now "H:i" %}</p>
+                    <p class="mb-1 text-primary">
+                        <i class="fas fa-calendar-alt me-2"></i> {% now "F d, Y" %}
+                    </p>
+                    <p class="mb-0 text-muted">
+                        <i class="fas fa-clock me-2"></i> {% now "H:i" %}
+                    </p>
                 </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <a href="{% url 'loans:dashboard' %}" class="btn btn-primary btn-dashboard w-100">
-                    <i class="fas fa-hand-holding-usd"></i>
-                    Loan Management
-                </a>
-            </div>
-            <div class="col-md-4 mb-3">
-                <a href="{% url 'accounts:dashboard' %}" class="btn btn-success btn-dashboard w-100">
-                    <i class="fas fa-users"></i>
-                    Client Accounts
-                </a>
-            </div>
-            <div class="col-md-4 mb-3">
-                <a href="{% url 'accounts:reports_dashboard' %}" class="btn btn-info btn-dashboard w-100">
-                    <i class="fas fa-chart-bar"></i>
-                    Reports & Analytics
-                </a>
             </div>
         </div>
     </div>
@@ -413,14 +383,14 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h6 class="text-muted mb-2">Total Clients</h6>
+                            <h6 class="text-muted mb-2">My Clients</h6>
                             <h2 class="mb-1">{{ total_clients }}</h2>
                             <small class="text-muted">
-                                <i class="fas fa-check-circle text-success me-1"></i>
-                                {{ active_accounts }} Active Accounts
+                                <i class="fas fa-users me-1"></i>
+                                Account holders
                             </small>
                         </div>
-                        <div class="stat-icon text-primary">
+                        <div class="stat-icon" style="color: var(--primary);">
                             <i class="fas fa-users"></i>
                         </div>
                     </div>
@@ -429,39 +399,19 @@
         </div>
 
         <div class="col-xl-3 col-md-6">
-            <div class="card stat-card card-savings">
+            <div class="card stat-card card-active">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h6 class="text-muted mb-2">Total Savings</h6>
-                            <h2 class="mb-1">UGX {{ total_savings|floatformat:0 }}</h2>
+                            <h6 class="text-muted mb-2">Active Clients</h6>
+                            <h2 class="mb-1">{{ active_clients }}</h2>
                             <small class="text-muted">
-                                <i class="fas fa-piggy-bank me-1"></i>
-                                Combined savings balance
+                                <i class="fas fa-check-circle me-1"></i>
+                                Eligible for products
                             </small>
                         </div>
-                        <div class="stat-icon text-success">
-                            <i class="fas fa-piggy-bank"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6">
-            <div class="card stat-card card-loans">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="text-muted mb-2">Pending Loans</h6>
-                            <h2 class="mb-1">{{ pending_loans }}</h2>
-                            <small class="text-muted">
-                                <i class="fas fa-clock me-1"></i>
-                                Waiting for approval
-                            </small>
-                        </div>
-                        <div class="stat-icon text-warning">
-                            <i class="fas fa-hand-holding-usd"></i>
+                        <div class="stat-icon" style="color: var(--success);">
+                            <i class="fas fa-check-circle"></i>
                         </div>
                     </div>
                 </div>
@@ -473,15 +423,35 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h6 class="text-muted mb-2">Pending Accounts</h6>
-                            <h2 class="mb-1">{{ pending_accounts }}</h2>
+                            <h6 class="text-muted mb-2">Pending Loans</h6>
+                            <h2 class="mb-1">{{ pending_loans.count }}</h2>
                             <small class="text-muted">
-                                <i class="fas fa-user-clock me-1"></i>
-                                Awaiting activation
+                                <i class="fas fa-clock me-1"></i>
+                                Awaiting approval
                             </small>
                         </div>
-                        <div class="stat-icon text-danger">
-                            <i class="fas fa-user-clock"></i>
+                        <div class="stat-icon" style="color: var(--warning);">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card card-default">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Active Loans</h6>
+                            <h2 class="mb-1">{{ active_loans.count }}</h2>
+                            <small class="text-muted">
+                                <i class="fas fa-money-check-alt me-1"></i>
+                                In repayment
+                            </small>
+                        </div>
+                        <div class="stat-icon" style="color: var(--info);">
+                            <i class="fas fa-money-check-alt"></i>
                         </div>
                     </div>
                 </div>
@@ -489,119 +459,59 @@
         </div>
     </div>
 
-    <!-- Charts & Tables Row -->
+    <!-- Main Content Row -->
     <div class="row animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
-        <!-- Recent Clients -->
-        <div class="col-lg-6">
+        <!-- Eligible Clients -->
+        <div class="col-lg-12 mb-4">
             <div class="table-card">
                 <h5 class="table-title">
-                    <i class="fas fa-users"></i> Recent Client Accounts
+                    <i class="fas fa-star text-warning"></i> Clients Eligible for New Loans
+                    <small class="text-muted ms-2 fw-normal fs-6">(High savings balance)</small>
                 </h5>
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Account No.</th>
-                                <th>Name</th>
-                                <th>Type</th>
-                                <th>Status</th>
+                                <th>Client</th>
+                                <th>Max Loan Amount</th>
+                                <th>Current Balance</th>
+                                <th>Available Limit</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for account in recent_accounts %}
+                            {% for item in eligible_for_loan %}
                             <tr>
-                                <td><strong>{{ account.account_number }}</strong></td>
-                                <td>{{ account.full_account_name|truncatechars:20 }}</td>
-                                <td>{{ account.get_account_type_display }}</td>
+                                <td class="fw-semibold">{{ item.client.full_account_name }}</td>
+                                <td class="text-success fw-bold">UGX {{ item.max_loan|floatformat:0 }}</td>
+                                <td class="text-danger">UGX {{ item.current_loan_balance|floatformat:0 }}</td>
+                                <td class="text-primary fw-bold">UGX {{ item.available_limit|floatformat:0 }}</td>
                                 <td>
-                                    {% if account.account_status == "ACTIVE" %}
-                                    <span class="badge bg-success bg-opacity-10 text-success">Active</span>
-                                    {% elif account.account_status == "PENDING" %}
-                                    <span class="badge bg-warning bg-opacity-10 text-warning">Pending</span>
-                                    {% else %}
-                                    <span class="badge bg-secondary">{{ account.account_status }}</span>
-                                    {% endif %}
+                                    <a href="{% url 'loans:loan_application_create' %}?client={{ item.client.id }}"
+                                        class="btn btn-sm btn-primary">
+                                        <i class="fas fa-file-signature me-1"></i> Apply
+                                    </a>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center py-4 text-muted">
-                                    <i class="fas fa-users fa-2x mb-2 d-block text-muted"></i>
-                                    No recent accounts
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <i class="fas fa-search-dollar fa-2x mb-2 d-block text-muted"></i>
+                                    No clients currently eligible for new loans based on automated criteria.
                                 </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                <div class="text-end mt-2">
-                    <a href="{% url 'accounts:account_list' %}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-eye me-1"></i> View All Clients
-                    </a>
-                </div>
             </div>
         </div>
 
-        <!-- Recent Transactions -->
-        <div class="col-lg-6">
-            <div class="table-card">
-                <h5 class="table-title">
-                    <i class="fas fa-exchange-alt"></i> Recent Savings Transactions
-                </h5>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Account</th>
-                                <th>Type</th>
-                                <th>Amount</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for transaction in recent_transactions %}
-                            <tr>
-                                <td>{{ transaction.client_account.account_number }}</td>
-                                <td>
-                                    {% if transaction.transaction_type == "DEPOSIT" %}
-                                    <span class="badge bg-success bg-opacity-10 text-success">Deposit</span>
-                                    {% else %}
-                                    <span class="badge bg-danger bg-opacity-10 text-danger">Withdrawal</span>
-                                    {% endif %}
-                                </td>
-                                <td><strong>UGX {{ transaction.amount|floatformat:0 }}</strong></td>
-                                <td>{{ transaction.transaction_date|date:"M d, H:i" }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center py-4 text-muted">
-                                    <i class="fas fa-exchange-alt fa-2x mb-2 d-block text-muted"></i>
-                                    No recent transactions
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="text-end mt-2">
-                    <a href="{% url 'accounts:savings_list' %}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-eye me-1"></i> View All Transactions
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Second Row: Pending Items -->
-    <div class="row animate__animated animate__fadeInUp" style="animation-delay: 0.4s;">
         <!-- Pending Loans -->
         <div class="col-lg-6">
             <div class="table-card">
                 <h5 class="table-title">
-                    <i class="fas fa-clock text-warning"></i> Pending Loan Applications
-                    {% if pending_loans > 0 %}
-                    <span class="badge bg-warning text-dark float-end">{{ pending_loans }}</span>
-                    {% endif %}
+                    <i class="fas fa-clock text-warning"></i> Pending Applications
                 </h5>
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -609,28 +519,22 @@
                             <tr>
                                 <th>Client</th>
                                 <th>Amount</th>
-                                <th>Applied</th>
-                                <th>Action</th>
+                                <th>Date</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for loan in pending_loans_list %}
+                            {% for loan in pending_loans %}
                             <tr>
-                                <td>{{ loan.client.full_account_name|truncatechars:20 }}</td>
-                                <td><strong>UGX {{ loan.requested_amount|floatformat:0 }}</strong></td>
-                                <td>{{ loan.application_date|date:"M d, Y" }}</td>
-                                <td>
-                                    <a href="{% url 'loans:loan_application_review' loan.pk %}"
-                                        class="btn btn-sm btn-outline-success">
-                                        <i class="fas fa-search me-1"></i> Review
-                                    </a>
-                                </td>
+                                <td>{{ loan.client.full_account_name|truncatechars:15 }}</td>
+                                <td class="fw-bold">UGX {{ loan.requested_amount|floatformat:0 }}</td>
+                                <td>{{ loan.application_date|date:"M d" }}</td>
+                                <td><span class="badge bg-warning text-dark">Pending</span></td>
                             </tr>
                             {% empty %}
                             <tr>
                                 <td colspan="4" class="text-center py-4 text-muted">
-                                    <i class="fas fa-check-circle fa-2x mb-2 d-block text-success"></i>
-                                    No pending loans
+                                    No pending applications
                                 </td>
                             </tr>
                             {% endfor %}
@@ -640,43 +544,40 @@
             </div>
         </div>
 
-        <!-- Pending Edit Requests -->
+        <!-- Active Loans -->
         <div class="col-lg-6">
             <div class="table-card">
                 <h5 class="table-title">
-                    <i class="fas fa-edit text-info"></i> Pending Edit Requests
-                    {% if pending_edit_requests.count > 0 %}
-                    <span class="badge bg-info float-end">{{ pending_edit_requests.count }}</span>
-                    {% endif %}
+                    <i class="fas fa-check-circle text-success"></i> Active Loans (Disbursed)
                 </h5>
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Account</th>
-                                <th>Requested By</th>
-                                <th>Date</th>
-                                <th>Action</th>
+                                <th>Client</th>
+                                <th>Amount</th>
+                                <th>Approved</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for request in pending_edit_requests %}
+                            {% for loan in active_loans %}
                             <tr>
-                                <td>{{ request.client.account_number }}</td>
-                                <td>{{ request.requested_by.username }}</td>
-                                <td>{{ request.created_at|date:"M d, H:i" }}</td>
+                                <td>{{ loan.client.full_account_name|truncatechars:15 }}</td>
+                                <td class="fw-bold">UGX {{ loan.approved_amount|floatformat:0 }}</td>
+                                <td>{{ loan.approval_date|date:"M d, Y" }}</td>
                                 <td>
-                                    <a href="{% url 'accounts:edit_request_detail' request.pk %}"
-                                        class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-search me-1"></i> Review
-                                    </a>
+                                    {% if loan.status == 'DISBURSED' %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-info">Approved</span>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
                                 <td colspan="4" class="text-center py-4 text-muted">
-                                    <i class="fas fa-check-circle fa-2x mb-2 d-block text-success"></i>
-                                    No pending edit requests
+                                    No active loans
                                 </td>
                             </tr>
                             {% endfor %}
@@ -708,7 +609,6 @@
         if (sidebarToggle) {
             sidebarToggle.addEventListener('click', function () {
                 sidebar.classList.toggle('show');
-                // Toggle main content margin if needed, or overlay behaviour
             });
         }
 

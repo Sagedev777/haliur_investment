@@ -7,6 +7,9 @@ from dateutil.relativedelta import relativedelta
 import math
 from typing import List, Dict, Tuple, Optional
 from .models import Loan, LoanProduct, LoanRepaymentSchedule, LoanTransaction
+import logging
+
+logger = logging.getLogger(__name__)
 
 class InterestCalculationService:
     DAY_COUNT_METHODS = {'ACTUAL_365': {'days_in_year': 365, 'use_actual_days': True}, 'ACTUAL_360': {'days_in_year': 360, 'use_actual_days': True}, '30_360': {'days_in_year': 360, 'use_actual_days': False}}
@@ -634,7 +637,8 @@ class NotificationService:
 
     @classmethod
     def send_sms(cls, phone_number: str, message: str):
-        print(f'[SMS to {phone_number}]: {message}')
+        # Mock SMS sending
+        logger.info(f'[SMS to {phone_number}]: {message}')
 
     @classmethod
     def send_email(cls, email: str, subject: str, body: str):

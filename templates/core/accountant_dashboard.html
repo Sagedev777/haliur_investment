@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Staff Dashboard - HaliQUA Investments{% endblock %}
+{% block title %}Accountant Dashboard - HaliQUA Investments{% endblock %}
 
 {% block app_css %}
 <style>
@@ -201,19 +201,15 @@
         height: 4px;
     }
 
-    .card-my-clients::before {
-        background-color: var(--secondary);
+    .card-savings::before {
+        background-color: var(--primary);
     }
 
-    .card-my-savings::before {
+    .card-deposits::before {
         background-color: var(--success);
     }
 
-    .card-pending-clients::before {
-        background-color: var(--warning);
-    }
-
-    .card-pending-loans::before {
+    .card-withdrawals::before {
         background-color: var(--danger);
     }
 
@@ -241,35 +237,6 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-    }
-
-    .badge-status {
-        padding: 0.35rem 0.75rem;
-        border-radius: 50rem;
-        font-weight: 600;
-        font-size: 0.75rem;
-        letter-spacing: 0.5px;
-    }
-
-    .badge-pending {
-        background-color: #fff3cd;
-        color: #856404;
-        border: 1px solid #ffeaa7;
-    }
-
-    .progress-bar-custom {
-        height: 8px;
-        border-radius: 4px;
-        background-color: #ecf0f1;
-        margin-top: 10px;
-        overflow: hidden;
-    }
-
-    .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, var(--secondary), #2980b9);
-        border-radius: 4px;
-        transition: width 0.3s ease;
     }
 
     /* Mobile Toggle */
@@ -326,23 +293,20 @@
         <a class="nav-link active" href="#">
             <i class="fas fa-tachometer-alt"></i> Dashboard
         </a>
-        <a class="nav-link" href="{% url 'accounts:account_create' %}">
-            <i class="fas fa-user-plus"></i> New Account
-        </a>
-        <a class="nav-link" href="{% url 'accounts:account_list' %}">
-            <i class="fas fa-users"></i> My Clients
-        </a>
         <a class="nav-link" href="{% url 'accounts:savings_deposit' %}">
-            <i class="fas fa-money-bill-wave"></i> Deposit
+            <i class="fas fa-money-bill-wave"></i> Record Deposit
         </a>
         <a class="nav-link" href="{% url 'accounts:savings_withdrawal' %}">
-            <i class="fas fa-wallet"></i> Withdrawal
-        </a>
-        <a class="nav-link" href="#">
-            <i class="fas fa-file-alt"></i> Reports
+            <i class="fas fa-wallet"></i> Record Withdrawal
         </a>
         <a class="nav-link" href="{% url 'accounts:savings_list' %}">
             <i class="fas fa-history"></i> Transactions
+        </a>
+        <a class="nav-link" href="{% url 'accounts:account_list' %}">
+            <i class="fas fa-users"></i> Client Accounts
+        </a>
+        <a class="nav-link" href="#">
+            <i class="fas fa-file-invoice-dollar"></i> Financial Reports
         </a>
     </nav>
 
@@ -354,13 +318,7 @@
             <div style="font-weight: 600; font-size: 0.95rem;">{{
                 request.user.get_full_name|default:request.user.username }}</div>
             <div class="mt-1">
-                {% if user_role == "LOAN_OFFICER" %}
-                <span class="role-badge">Loan Officer</span>
-                {% elif user_role == "ACCOUNTANT" %}
                 <span class="role-badge">Accountant</span>
-                {% else %}
-                <span class="role-badge">Staff</span>
-                {% endif %}
             </div>
         </div>
     </div>
@@ -373,22 +331,16 @@
         <div class="container-fluid">
             <div class="d-flex align-items-center">
                 <h4 class="mb-0 fw-bold text-primary">
-                    {% if user_role == "LOAN_OFFICER" %}
-                    <i class="fas fa-hand-holding-usd me-2"></i>Loan Officer Dashboard
-                    {% elif user_role == "ACCOUNTANT" %}
                     <i class="fas fa-calculator me-2"></i>Accountant Dashboard
-                    {% else %}
-                    <i class="fas fa-user-tie me-2"></i>Staff Dashboard
-                    {% endif %}
                 </h4>
             </div>
             <div class="d-flex align-items-center">
                 <div class="quick-actions">
-                    <a href="{% url 'accounts:account_create' %}" class="btn-action">
-                        <i class="fas fa-user-plus"></i> New Client
-                    </a>
                     <a href="{% url 'accounts:savings_deposit' %}" class="btn-action">
-                        <i class="fas fa-money-bill-wave"></i> Deposit
+                        <i class="fas fa-plus"></i> Deposit
+                    </a>
+                    <a href="{% url 'accounts:savings_withdrawal' %}" class="btn-action">
+                        <i class="fas fa-minus"></i> Withdrawal
                     </a>
                     <a href="{% url 'core:login' %}" class="btn-action text-danger">
                         <i class="fas fa-sign-out-alt"></i> Logout
@@ -403,19 +355,11 @@
         <div class="row align-items-center">
             <div class="col-md-6">
                 <h1 class="h3 mb-2 fw-bold text-gray-800">
-                    {% if user_role == "LOAN_OFFICER" %}
-                    <i class="fas fa-hand-holding-usd me-2 text-primary"></i>
-                    Welcome, Loan Officer {{ request.user.get_full_name|default:request.user.username }}
-                    {% elif user_role == "ACCOUNTANT" %}
                     <i class="fas fa-calculator me-2 text-primary"></i>
-                    Welcome, Accountant {{ request.user.get_full_name|default:request.user.username }}
-                    {% else %}
-                    <i class="fas fa-user-tie me-2 text-primary"></i>
                     Welcome, {{ request.user.get_full_name|default:request.user.username }}
-                    {% endif %}
                 </h1>
                 <p class="text-muted mb-0">
-                    <i class="fas fa-chart-line me-1"></i> Manage your assigned clients and transactions
+                    <i class="fas fa-chart-line me-1"></i> Financial Overview for Today
                 </p>
             </div>
             <div class="col-md-6 text-md-end">
@@ -433,86 +377,60 @@
 
     <!-- Statistics Cards -->
     <div class="row animate__animated animate__fadeInUp">
-        <div class="col-xl-3 col-md-6">
-            <div class="card stat-card card-my-clients">
+        <div class="col-xl-4 col-md-6">
+            <div class="card stat-card card-savings">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h6 class="text-muted mb-2">My Clients</h6>
-                            <h2 class="mb-1">{{ total_clients }}</h2>
-                            <small class="text-muted">
-                                <i class="fas fa-check-circle text-success me-1"></i>
-                                {{ active_clients }} Active
-                            </small>
-                            <div class="progress-bar-custom mt-2">
-                                {% if total_clients > 0 %}
-                                <div class="progress-fill"
-                                    style="width: {% widthratio active_clients total_clients 100 %}%"></div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="stat-icon" style="color: var(--secondary);">
-                            <i class="fas fa-users"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6">
-            <div class="card stat-card card-my-savings">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="text-muted mb-2">My Clients' Savings</h6>
+                            <h6 class="text-muted mb-2">Total Savings</h6>
                             <h2 class="mb-1">UGX {{ total_savings|floatformat:0 }}</h2>
                             <small class="text-muted">
                                 <i class="fas fa-piggy-bank me-1"></i>
-                                Total managed savings
+                                Current vault balance
+                            </small>
+                        </div>
+                        <div class="stat-icon" style="color: var(--primary);">
+                            <i class="fas fa-university"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6">
+            <div class="card stat-card card-deposits">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Deposits</h6>
+                            <h2 class="mb-1">UGX {{ total_deposits|floatformat:0 }}</h2>
+                            <small class="text-muted">
+                                <i class="fas fa-arrow-down me-1"></i>
+                                All time deposits
                             </small>
                         </div>
                         <div class="stat-icon" style="color: var(--success);">
-                            <i class="fas fa-piggy-bank"></i>
+                            <i class="fas fa-money-bill-wave"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6">
-            <div class="card stat-card card-pending-clients">
+        <div class="col-xl-4 col-md-6">
+            <div class="card stat-card card-withdrawals">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h6 class="text-muted mb-2">Pending Accounts</h6>
-                            <h2 class="mb-1">{{ pending_clients }}</h2>
+                            <h6 class="text-muted mb-2">Total Withdrawals</h6>
+                            <h2 class="mb-1">UGX {{ total_withdrawals|floatformat:0 }}</h2>
                             <small class="text-muted">
-                                <i class="fas fa-user-clock me-1"></i>
-                                Awaiting approval
-                            </small>
-                        </div>
-                        <div class="stat-icon" style="color: var(--warning);">
-                            <i class="fas fa-user-clock"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6">
-            <div class="card stat-card card-pending-loans">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="text-muted mb-2">Pending Loans</h6>
-                            <h2 class="mb-1">{{ pending_loans.count }}</h2>
-                            <small class="text-muted">
-                                <i class="fas fa-hand-holding-usd me-1"></i>
-                                For my clients
+                                <i class="fas fa-arrow-up me-1"></i>
+                                All time withdrawals
                             </small>
                         </div>
                         <div class="stat-icon" style="color: var(--danger);">
-                            <i class="fas fa-hand-holding-usd"></i>
+                            <i class="fas fa-wallet"></i>
                         </div>
                     </div>
                 </div>
@@ -522,103 +440,11 @@
 
     <!-- Main Content Row -->
     <div class="row animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
-        <!-- My Active Clients -->
-        <div class="col-lg-6">
+        <!-- Today's Transactions -->
+        <div class="col-lg-8">
             <div class="table-card">
                 <h5 class="table-title">
-                    <i class="fas fa-users"></i> My Active Clients
-                    <a href="{% url 'accounts:account_create' %}" class="btn btn-sm btn-primary float-end">
-                        <i class="fas fa-plus"></i> Add New
-                    </a>
-                </h5>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Account No.</th>
-                                <th>Name</th>
-                                <th>Savings</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for account in active_clients_list %}
-                            <tr>
-                                <td class="fw-semibold">{{ account.account_number }}</td>
-                                <td>{{ account.full_account_name|truncatechars:20 }}</td>
-                                <td class="fw-bold">UGX {{ account.savings_balance|floatformat:0 }}</td>
-                                <td>
-                                    <a href="{% url 'accounts:account_detail' account.pk %}"
-                                        class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye me-1"></i> View
-                                    </a>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center py-4 text-muted">
-                                    <i class="fas fa-users fa-2x mb-2 d-block text-muted"></i>
-                                    No active clients
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="text-end mt-2">
-                    <a href="{% url 'accounts:account_list' %}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-eye me-1"></i> View All My Clients
-                    </a>
-                </div>
-            </div>
-
-            <!-- Pending Edit Requests -->
-            <div class="table-card mt-4">
-                <h5 class="table-title">
-                    <i class="fas fa-edit text-warning"></i> My Pending Edit Requests
-                    {% if my_edit_requests.count > 0 %}
-                    <span class="badge bg-warning float-end">{{ my_edit_requests.count }}</span>
-                    {% endif %}
-                </h5>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Account</th>
-                                <th>Requested</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for request in my_edit_requests %}
-                            <tr>
-                                <td class="fw-semibold">{{ request.client.account_number }}</td>
-                                <td class="text-muted">{{ request.created_at|date:"M d, H:i" }}</td>
-                                <td><span class="badge badge-pending">Pending</span></td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="3" class="text-center py-4 text-muted">
-                                    <i class="fas fa-check-circle fa-2x mb-2 d-block text-success"></i>
-                                    No pending edit requests
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Transactions & Pending Loans -->
-        <div class="col-lg-6">
-            <!-- Recent Transactions -->
-            <div class="table-card">
-                <h5 class="table-title">
-                    <i class="fas fa-history"></i> Recent Transactions
-                    <a href="{% url 'accounts:savings_deposit' %}" class="btn btn-sm btn-success float-end">
-                        <i class="fas fa-plus"></i> New Deposit
-                    </a>
+                    <i class="fas fa-calendar-day"></i> Today's Transactions
                 </h5>
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -627,11 +453,12 @@
                                 <th>Account</th>
                                 <th>Type</th>
                                 <th>Amount</th>
-                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Ref</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for transaction in recent_transactions %}
+                            {% for transaction in today_transactions %}
                             <tr>
                                 <td class="fw-semibold">{{ transaction.client_account.account_number }}</td>
                                 <td>
@@ -644,13 +471,14 @@
                                     {% endif %}
                                 </td>
                                 <td class="fw-bold">UGX {{ transaction.amount|floatformat:0 }}</td>
-                                <td class="text-muted">{{ transaction.transaction_date|date:"M d, H:i" }}</td>
+                                <td class="text-muted">{{ transaction.transaction_date|date:"H:i" }}</td>
+                                <td class="text-muted small">{{ transaction.reference_number }}</td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center py-4 text-muted">
-                                    <i class="fas fa-exchange-alt fa-2x mb-2 d-block text-muted"></i>
-                                    No recent transactions
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <i class="fas fa-clock fa-2x mb-2 d-block text-muted"></i>
+                                    No transactions today
                                 </td>
                             </tr>
                             {% endfor %}
@@ -663,33 +491,34 @@
                     </a>
                 </div>
             </div>
+        </div>
 
-            <!-- Pending Loans for My Clients -->
-            <div class="table-card mt-4">
+        <!-- Recent Reversals -->
+        <div class="col-lg-4">
+            <div class="table-card">
                 <h5 class="table-title">
-                    <i class="fas fa-hand-holding-usd text-danger"></i> Pending Loans (My Clients)
+                    <i class="fas fa-undo text-warning"></i> Recent Reversals
                 </h5>
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Client</th>
                                 <th>Amount</th>
                                 <th>Date</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for loan in pending_loans %}
+                            {% for transaction in recent_reversals %}
                             <tr>
-                                <td>{{ loan.client.full_account_name|truncatechars:15 }}</td>
-                                <td class="fw-bold">UGX {{ loan.requested_amount|floatformat:0 }}</td>
-                                <td class="text-muted">{{ loan.application_date|date:"M d" }}</td>
+                                <td class="fw-bold text-decoration-line-through text-muted">UGX {{
+                                    transaction.amount|floatformat:0 }}</td>
+                                <td class="text-muted small">{{ transaction.reversal_date|date:"M d, H:i" }}</td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="3" class="text-center py-4 text-muted">
+                                <td colspan="2" class="text-center py-4 text-muted">
                                     <i class="fas fa-check-circle fa-2x mb-2 d-block text-success"></i>
-                                    No pending loans
+                                    No recent reversals
                                 </td>
                             </tr>
                             {% endfor %}

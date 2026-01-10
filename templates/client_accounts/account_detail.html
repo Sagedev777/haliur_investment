@@ -37,7 +37,9 @@
                 <i class="fas fa-exchange-alt me-2"></i>Change Status
             </a>
         </li>
-        <li><hr class="dropdown-divider"></li>
+        <li>
+            <hr class="dropdown-divider">
+        </li>
         <li>
             <a class="dropdown-item" href="{% url 'accounts:savings_deposit_account' account.pk %}">
                 <i class="fas fa-money-bill-wave me-2 text-success"></i>Make Deposit
@@ -54,13 +56,14 @@
 {% endblock %}
 
 {% block content %}
-<div class="row">
+<div class="row animate__animated animate__fadeInUp">
     <!-- Account Information -->
     <div class="col-lg-8">
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">Account Information</h6>
-                <span class="badge bg-{% if account.account_status == 'ACTIVE' %}success{% elif account.account_status == 'PENDING' %}warning{% elif account.account_status == 'SUSPENDED' %}danger{% else %}secondary{% endif %}">
+                <span
+                    class="badge rounded-pill px-3 py-2 bg-{% if account.account_status == 'ACTIVE' %}success bg-opacity-10 text-success border border-success border-opacity-25{% elif account.account_status == 'PENDING' %}warning bg-opacity-10 text-warning border border-warning border-opacity-25{% elif account.account_status == 'SUSPENDED' %}danger bg-opacity-10 text-danger border border-danger border-opacity-25{% else %}secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25{% endif %}">
                     {{ account.get_account_status_display }}
                 </span>
             </div>
@@ -102,7 +105,8 @@
                         <table class="table table-sm">
                             <tr>
                                 <th class="text-muted" width="40%">Savings Balance:</th>
-                                <td><strong class="text-success">UGX {{ account.savings_balance|floatformat:0 }}</strong></td>
+                                <td><strong class="text-success">UGX {{ account.savings_balance|floatformat:0
+                                        }}</strong></td>
                             </tr>
                             <tr>
                                 <th class="text-muted">Total Deposited:</th>
@@ -125,7 +129,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Primary Account Holder -->
         <div class="card mb-4">
             <div class="card-header">
@@ -135,9 +139,11 @@
                 <div class="row">
                     <div class="col-md-3 text-center mb-3">
                         {% if account.person1_photo %}
-                        <img src="{{ account.person1_photo.url }}" class="img-fluid rounded" style="max-height: 150px;" alt="Photo">
+                        <img src="{{ account.person1_photo.url }}" class="img-fluid rounded" style="max-height: 150px;"
+                            alt="Photo">
                         {% else %}
-                        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 150px;">
+                        <div class="bg-light rounded d-flex align-items-center justify-content-center"
+                            style="height: 150px;">
                             <i class="fas fa-user fa-3x text-muted"></i>
                         </div>
                         {% endif %}
@@ -173,7 +179,7 @@
                 </div>
             </div>
         </div>
-        
+
         {% if account.account_type == 'JOINT' %}
         <!-- Secondary Account Holder -->
         <div class="card mb-4">
@@ -183,19 +189,21 @@
             <div class="card-body">
                 {% if account.person2_client %}
                 <div class="alert alert-info">
-                    <i class="fas fa-link me-2"></i>Linked to existing client: 
+                    <i class="fas fa-link me-2"></i>Linked to existing client:
                     <a href="{% url 'accounts:account_detail' account.person2_client.pk %}">
                         {{ account.person2_client.account_number }}
                     </a>
                 </div>
                 {% endif %}
-                
+
                 <div class="row">
                     <div class="col-md-3 text-center mb-3">
                         {% if account.person2_photo %}
-                        <img src="{{ account.person2_photo.url }}" class="img-fluid rounded" style="max-height: 150px;" alt="Photo">
+                        <img src="{{ account.person2_photo.url }}" class="img-fluid rounded" style="max-height: 150px;"
+                            alt="Photo">
                         {% else %}
-                        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 150px;">
+                        <div class="bg-light rounded d-flex align-items-center justify-content-center"
+                            style="height: 150px;">
                             <i class="fas fa-user fa-3x text-muted"></i>
                         </div>
                         {% endif %}
@@ -233,7 +241,7 @@
         </div>
         {% endif %}
     </div>
-    
+
     <!-- Right Sidebar -->
     <div class="col-lg-4">
         <!-- Quick Stats -->
@@ -259,12 +267,13 @@
                     </div>
                     <div class="list-group-item d-flex justify-content-between align-items-center">
                         <span>Max Loan Eligibility</span>
-                        <span class="badge bg-info rounded-pill">UGX {{ account.get_max_loan_amount|floatformat:0 }}</span>
+                        <span class="badge bg-info rounded-pill">UGX {{ account.get_max_loan_amount|floatformat:0
+                            }}</span>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- Recent Transactions -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -306,7 +315,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Quick Actions -->
         <div class="card">
             <div class="card-header">
@@ -334,7 +343,8 @@
 <!-- Tabs for Detailed Views -->
 <ul class="nav nav-tabs mt-4" id="accountTabs" role="tablist">
     <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions" type="button">
+        <button class="nav-link active" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions"
+            type="button">
             <i class="fas fa-exchange-alt me-2"></i>Savings Transactions
         </button>
     </li>
@@ -383,9 +393,11 @@
                                 <td>{{ transaction.transaction_date|date:"M d, Y H:i" }}</td>
                                 <td>
                                     {% if transaction.transaction_type == 'DEPOSIT' %}
-                                    <span class="badge bg-success">Deposit</span>
+                                    <span
+                                        class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3">Deposit</span>
                                     {% else %}
-                                    <span class="badge bg-danger">Withdrawal</span>
+                                    <span
+                                        class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3">Withdrawal</span>
                                     {% endif %}
                                 </td>
                                 <td><small>{{ transaction.reference_number }}</small></td>
@@ -401,9 +413,11 @@
                                 <td>{{ transaction.notes|truncatechars:30 }}</td>
                                 <td>
                                     {% if transaction.is_reversed %}
-                                    <span class="badge bg-secondary">Reversed</span>
+                                    <span
+                                        class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-3">Reversed</span>
                                     {% else %}
-                                    <span class="badge bg-success">Completed</span>
+                                    <span
+                                        class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3">Completed</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -420,7 +434,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Loans Tab -->
     <div class="tab-pane fade" id="loans" role="tabpanel">
         <div class="card mt-3">
@@ -454,13 +468,17 @@
                                 <td>UGX {{ loan.loan_amount|floatformat:0 }}</td>
                                 <td>
                                     {% if loan.status == 'PENDING' %}
-                                    <span class="badge bg-warning">Pending</span>
+                                    <span
+                                        class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3">Pending</span>
                                     {% elif loan.status == 'APPROVED' %}
-                                    <span class="badge bg-info">Approved</span>
+                                    <span
+                                        class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill px-3">Approved</span>
                                     {% elif loan.status == 'DISBURSED' %}
-                                    <span class="badge bg-success">Disbursed</span>
+                                    <span
+                                        class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3">Disbursed</span>
                                     {% elif loan.status == 'REJECTED' %}
-                                    <span class="badge bg-danger">Rejected</span>
+                                    <span
+                                        class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3">Rejected</span>
                                     {% endif %}
                                 </td>
                                 <td>{{ loan.application_date|date:"M d, Y" }}</td>
@@ -484,7 +502,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Audit Logs Tab -->
     <div class="tab-pane fade" id="audit" role="tabpanel">
         <div class="card mt-3">
@@ -508,20 +526,22 @@
                             <tr>
                                 <td>{{ log.timestamp|date:"M d, Y H:i" }}</td>
                                 <td>
-                                    <span class="badge bg-{% if log.action == 'CREATE' %}success{% elif log.action == 'UPDATE' %}info{% elif log.action == 'APPROVE_EDIT' %}success{% elif log.action == 'REJECT_EDIT' %}danger{% else %}secondary{% endif %}">
+                                    <span
+                                        class="badge rounded-pill px-3 bg-{% if log.action == 'CREATE' %}success bg-opacity-10 text-success border border-success border-opacity-25{% elif log.action == 'UPDATE' %}info bg-opacity-10 text-info border border-info border-opacity-25{% elif log.action == 'APPROVE_EDIT' %}success bg-opacity-10 text-success border border-success border-opacity-25{% elif log.action == 'REJECT_EDIT' %}danger bg-opacity-10 text-danger border border-danger border-opacity-25{% else %}secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25{% endif %}">
                                         {{ log.get_action_display }}
                                     </span>
                                 </td>
                                 <td>{{ log.performed_by.username|default:"System" }}</td>
                                 <td>
                                     {% if log.changed_data %}
-                                    <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" 
-                                            data-bs-target="#changes-{{ log.id }}">
+                                    <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#changes-{{ log.id }}">
                                         View Changes
                                     </button>
                                     <div class="collapse mt-2" id="changes-{{ log.id }}">
                                         <div class="card card-body">
-                                            <pre class="mb-0" style="font-size: 12px;">{{ log.changed_data|pprint }}</pre>
+                                            <pre class="mb-0"
+                                                style="font-size: 12px;">{{ log.changed_data|pprint }}</pre>
                                         </div>
                                     </div>
                                     {% else %}

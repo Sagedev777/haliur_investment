@@ -99,7 +99,6 @@ def account_list(request):
 @role_required([UserProfile.ROLE_ADMIN, UserProfile.ROLE_STAFF, UserProfile.ROLE_LOAN_OFFICER])
 def account_create(request):
     user_role = get_user_role(request)
-    print('DEBUG: account_create called')
     if request.method == 'POST':
         try:
             account = ClientAccount(account_type=request.POST.get('account_type'), person1_first_name=request.POST.get('person1_first_name'), person1_last_name=request.POST.get('person1_last_name'), person1_contact=request.POST.get('person1_contact'), person1_address=request.POST.get('person1_address'), person1_area_code=request.POST.get('person1_area_code'), person1_next_of_kin=request.POST.get('person1_next_of_kin'), person1_nin=request.POST.get('person1_nin'), person1_gender=request.POST.get('person1_gender'), business_location=request.POST.get('business_location'), business_sector=request.POST.get('business_sector'), loan_officer=request.user, created_by=request.user)
@@ -135,7 +134,6 @@ def account_create(request):
             return render(request, 'client_accounts/account_form.html', {'title': 'Create Client Account', 'error': f'An unexpected error occurred: {str(e)}', 'submitted_data': request.POST, 'user_role': user_role, 'account': ClientAccount()})
     active_accounts = ClientAccount.objects.filter(account_status=ClientAccount.STATUS_ACTIVE)
     account = ClientAccount()
-    print(f'DEBUG: Created account instance: {account}')
     return render(request, 'client_accounts/account_form.html', {'title': 'Create Client Account', 'active_accounts': active_accounts, 'user_role': user_role, 'account': account})
 
 @login_required

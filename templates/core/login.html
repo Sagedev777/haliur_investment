@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 {% load static %}
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Haliqua Investments</title>
-    
+
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -26,15 +29,15 @@
             --gradient-primary: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
             --gradient-secondary: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -44,7 +47,7 @@
             position: relative;
             overflow-x: hidden;
         }
-        
+
         /* Animated background */
         .bg-animation {
             position: absolute;
@@ -55,14 +58,14 @@
             z-index: -1;
             opacity: 0.1;
         }
-        
+
         .bg-circle {
             position: absolute;
             border-radius: 50%;
             background: var(--secondary-color);
             animation: float 6s ease-in-out infinite;
         }
-        
+
         .circle-1 {
             width: 300px;
             height: 300px;
@@ -71,7 +74,7 @@
             background: rgba(52, 152, 219, 0.3);
             animation-delay: 0s;
         }
-        
+
         .circle-2 {
             width: 200px;
             height: 200px;
@@ -80,7 +83,7 @@
             background: rgba(44, 62, 80, 0.2);
             animation-delay: 2s;
         }
-        
+
         .circle-3 {
             width: 150px;
             height: 150px;
@@ -89,12 +92,19 @@
             background: rgba(231, 76, 60, 0.2);
             animation-delay: 4s;
         }
-        
+
         @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+            }
         }
-        
+
         /* Login Container */
         .login-container {
             width: 100%;
@@ -107,18 +117,19 @@
             z-index: 1;
             animation: slideUp 0.6s ease-out;
         }
-        
+
         @keyframes slideUp {
             from {
                 opacity: 0;
                 transform: translateY(50px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        
+
         /* Header */
         .login-header {
             background: var(--gradient-primary);
@@ -128,7 +139,7 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .login-header::before {
             content: '';
             position: absolute;
@@ -139,7 +150,7 @@
             background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
             opacity: 0.1;
         }
-        
+
         .logo {
             font-size: 2.5rem;
             font-weight: 800;
@@ -148,7 +159,7 @@
             display: block;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
         }
-        
+
         .logo span {
             color: #3498db;
             background: white;
@@ -159,19 +170,19 @@
             transform: rotate(-5deg);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
+
         .system-name {
             font-size: 1.1rem;
             opacity: 0.9;
             font-weight: 400;
             letter-spacing: 0.5px;
         }
-        
+
         /* Form */
         .login-form {
             padding: 40px;
         }
-        
+
         .form-title {
             color: var(--primary-color);
             font-size: 1.5rem;
@@ -180,7 +191,7 @@
             text-align: center;
             position: relative;
         }
-        
+
         .form-title::after {
             content: '';
             position: absolute;
@@ -192,12 +203,12 @@
             background: var(--gradient-secondary);
             border-radius: 2px;
         }
-        
+
         .input-group {
             position: relative;
             margin-bottom: 25px;
         }
-        
+
         .input-group label {
             position: absolute;
             top: 50%;
@@ -211,16 +222,16 @@
             padding: 0 8px;
             z-index: 1;
         }
-        
-        .input-group input:focus + label,
-        .input-group input:not(:placeholder-shown) + label {
+
+        .input-group input:focus+label,
+        .input-group input:not(:placeholder-shown)+label {
             top: 0;
             left: 40px;
             font-size: 0.8rem;
             color: var(--secondary-color);
             font-weight: 500;
         }
-        
+
         .input-icon {
             position: absolute;
             left: 15px;
@@ -230,12 +241,12 @@
             z-index: 2;
             transition: all 0.3s ease;
         }
-        
-        .input-group input:focus ~ .input-icon {
+
+        .input-group input:focus~.input-icon {
             color: var(--secondary-color);
             transform: translateY(-50%) scale(1.1);
         }
-        
+
         .form-control {
             padding: 15px 15px 15px 50px;
             border: 2px solid #e1e5eb;
@@ -245,17 +256,17 @@
             transition: all 0.3s ease;
             height: 55px;
         }
-        
+
         .form-control:focus {
             border-color: var(--secondary-color);
             box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
             transform: translateY(-2px);
         }
-        
+
         .form-control::placeholder {
             color: transparent;
         }
-        
+
         /* Error Messages */
         .error-message {
             background: #fee;
@@ -270,17 +281,34 @@
             gap: 10px;
             animation: shake 0.5s ease;
         }
-        
+
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: translateX(-5px);
+            }
+
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: translateX(5px);
+            }
         }
-        
+
         .error-message i {
             font-size: 1.2rem;
         }
-        
+
         /* Submit Button */
         .btn-login {
             background: var(--gradient-secondary);
@@ -303,7 +331,7 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .btn-login::before {
             content: '';
             position: absolute;
@@ -314,20 +342,20 @@
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
             transition: 0.5s;
         }
-        
+
         .btn-login:hover::before {
             left: 100%;
         }
-        
+
         .btn-login:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
         }
-        
+
         .btn-login:active {
             transform: translateY(-1px);
         }
-        
+
         /* Remember Me & Forgot Password */
         .form-options {
             display: flex;
@@ -336,37 +364,37 @@
             margin-bottom: 30px;
             font-size: 0.9rem;
         }
-        
+
         .form-check-input {
             width: 18px;
             height: 18px;
             margin-right: 8px;
             cursor: pointer;
         }
-        
+
         .form-check-input:checked {
             background-color: var(--secondary-color);
             border-color: var(--secondary-color);
         }
-        
+
         .form-check-label {
             cursor: pointer;
             color: #666;
             font-weight: 500;
         }
-        
+
         .forgot-password {
             color: var(--secondary-color);
             text-decoration: none;
             font-weight: 500;
             transition: all 0.3s ease;
         }
-        
+
         .forgot-password:hover {
             color: var(--primary-color);
             text-decoration: underline;
         }
-        
+
         /* Divider */
         .divider {
             display: flex;
@@ -375,7 +403,7 @@
             color: #999;
             font-size: 0.9rem;
         }
-        
+
         .divider::before,
         .divider::after {
             content: '';
@@ -383,22 +411,22 @@
             height: 1px;
             background: #e1e5eb;
         }
-        
+
         .divider span {
             padding: 0 15px;
             background: white;
         }
-        
+
         /* Role Selection (if applicable) */
         .role-selector {
             margin-bottom: 25px;
         }
-        
+
         .role-options {
             display: flex;
             gap: 10px;
         }
-        
+
         .role-option {
             flex: 1;
             border: 2px solid #e1e5eb;
@@ -409,22 +437,22 @@
             transition: all 0.3s ease;
             position: relative;
         }
-        
+
         .role-option:hover {
             border-color: var(--secondary-color);
             transform: translateY(-2px);
         }
-        
+
         .role-option input[type="radio"] {
             display: none;
         }
-        
-        .role-option input[type="radio"]:checked + .role-content {
+
+        .role-option input[type="radio"]:checked+.role-content {
             border-color: var(--secondary-color);
             background: rgba(52, 152, 219, 0.1);
             transform: translateY(-2px);
         }
-        
+
         .role-content {
             display: flex;
             flex-direction: column;
@@ -432,17 +460,17 @@
             gap: 8px;
             transition: all 0.3s ease;
         }
-        
+
         .role-content i {
             font-size: 1.5rem;
             color: var(--secondary-color);
         }
-        
+
         .role-content span {
             font-weight: 500;
             color: var(--primary-color);
         }
-        
+
         /* Footer */
         .login-footer {
             padding: 20px;
@@ -452,23 +480,23 @@
             color: #666;
             font-size: 0.85rem;
         }
-        
+
         .login-footer a {
             color: var(--secondary-color);
             text-decoration: none;
             font-weight: 500;
         }
-        
+
         .login-footer a:hover {
             text-decoration: underline;
         }
-        
+
         .copyright {
             margin-top: 5px;
             font-size: 0.8rem;
             opacity: 0.8;
         }
-        
+
         /* Security Info */
         .security-info {
             background: #f8f9fa;
@@ -482,60 +510,65 @@
             color: #666;
             border-left: 4px solid var(--success-color);
         }
-        
+
         .security-info i {
             color: var(--success-color);
             font-size: 1.2rem;
         }
-        
+
         /* Responsive */
         @media (max-width: 576px) {
             .login-container {
                 border-radius: 15px;
             }
-            
+
             .login-header {
                 padding: 30px 20px;
             }
-            
+
             .login-form {
                 padding: 30px 20px;
             }
-            
+
             .form-title {
                 font-size: 1.3rem;
             }
-            
+
             .role-options {
                 flex-direction: column;
             }
-            
+
             .form-options {
                 flex-direction: column;
                 gap: 15px;
                 align-items: flex-start;
             }
-            
+
             .forgot-password {
                 align-self: flex-end;
             }
         }
-        
+
         /* Loading Animation */
         .btn-login.loading {
             pointer-events: none;
             opacity: 0.8;
         }
-        
+
         .btn-login.loading i {
             animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
-        
+
         /* Password Toggle */
         .password-toggle {
             position: absolute;
@@ -547,11 +580,11 @@
             z-index: 3;
             transition: all 0.3s ease;
         }
-        
+
         .password-toggle:hover {
             color: var(--secondary-color);
         }
-        
+
         /* Success Message */
         .success-message {
             background: #e8f6ef;
@@ -566,13 +599,19 @@
             gap: 10px;
             animation: fadeIn 0.5s ease;
         }
-        
+
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
     </style>
 </head>
+
 <body>
     <!-- Animated Background -->
     <div class="bg-animation">
@@ -580,7 +619,7 @@
         <div class="bg-circle circle-2"></div>
         <div class="bg-circle circle-3"></div>
     </div>
-    
+
     <!-- Login Container -->
     <div class="login-container">
         <!-- Header -->
@@ -590,72 +629,61 @@
             </div>
             <p class="system-name">Loan & Savings Management System</p>
         </div>
-        
+
         <!-- Form -->
         <div class="login-form">
             <h2 class="form-title">Welcome Back</h2>
-            
+
             {% if form.errors %}
             <div class="error-message">
                 <i class="fas fa-exclamation-circle"></i>
                 <span>Invalid username or password. Please try again.</span>
             </div>
             {% endif %}
-            
+
             {% if messages %}
-                {% for message in messages %}
-                    {% if message.tags == 'success' %}
-                    <div class="success-message">
-                        <i class="fas fa-check-circle"></i>
-                        <span>{{ message }}</span>
-                    </div>
-                    {% elif message.tags == 'error' %}
-                    <div class="error-message">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <span>{{ message }}</span>
-                    </div>
-                    {% endif %}
-                {% endfor %}
+            {% for message in messages %}
+            {% if message.tags == 'success' %}
+            <div class="success-message">
+                <i class="fas fa-check-circle"></i>
+                <span>{{ message }}</span>
+            </div>
+            {% elif message.tags == 'error' %}
+            <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>{{ message }}</span>
+            </div>
             {% endif %}
-            
+            {% endfor %}
+            {% endif %}
+
             <form method="POST" action="{% url 'core:login' %}" id="loginForm">
                 {% csrf_token %}
-                
+
                 {% if next %}
-                    <input type="hidden" name="next" value="{{ next }}">
+                <input type="hidden" name="next" value="{{ next }}">
                 {% endif %}
-                
+
                 <!-- Username Field -->
                 <div class="input-group">
                     <i class="fas fa-user input-icon"></i>
-                    <input 
-                        type="text" 
-                        class="form-control" 
-                        id="username" 
-                        name="username" 
-                        placeholder="Enter your username"
-                        required
-                        autofocus
+                    <input type="text" class="form-control" id="username" name="username"
+                        placeholder="Enter your username" required autofocus
                         value="{{ form.username.value|default:'' }}">
                     <label for="username">Username</label>
                 </div>
-                
+
                 <!-- Password Field -->
                 <div class="input-group">
                     <i class="fas fa-lock input-icon"></i>
-                    <input 
-                        type="password" 
-                        class="form-control" 
-                        id="password" 
-                        name="password" 
-                        placeholder="Enter your password"
-                        required>
+                    <input type="password" class="form-control" id="password" name="password"
+                        placeholder="Enter your password" required>
                     <label for="password">Password</label>
                     <span class="password-toggle" id="passwordToggle">
                         <i class="fas fa-eye"></i>
                     </span>
                 </div>
-                
+
                 <!-- Options -->
                 <div class="form-options">
                     <div class="form-check">
@@ -668,7 +696,7 @@
                         Forgot Password?
                     </a>
                 </div>
-                
+
                 <!-- Role Selection (Optional) -->
                 <div class="role-selector">
                     <div class="role-options">
@@ -688,14 +716,14 @@
                         </label>
                     </div>
                 </div>
-                
+
                 <!-- Submit Button -->
                 <button type="submit" class="btn-login" id="loginButton">
                     <i class="fas fa-sign-in-alt"></i>
                     <span>Sign In</span>
                 </button>
-                
-                
+
+
                 <!-- Security Info -->
                 <div class="security-info">
                     <i class="fas fa-shield-alt"></i>
@@ -703,14 +731,15 @@
                 </div>
             </form>
         </div>
-        
+
         <!-- Footer -->
         <div class="login-footer">
             <p>
-                <a href="mailto:newtonisaacokolimong@gmail.com"><i class="fas fa-question-circle me-1"></i> Need Help?</a>
+                <a href="mailto:newtonisaacokolimong@gmail.com"><i class="fas fa-question-circle me-1"></i> Need
+                    Help?</a>
                 <span class="mx-2">•</span>
                 <a href="tel:+256748189282"><i class="fas fa-envelope me-1"></i> Contact Support</a>
-                
+
             </p>
             <p class="copyright">
                 &copy; {% now "Y" %} Haliqua Investments. All rights reserved.
@@ -719,21 +748,21 @@
             </p>
         </div>
     </div>
-    
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Password toggle functionality
             const passwordToggle = document.getElementById('passwordToggle');
             const passwordInput = document.getElementById('password');
-            
+
             if (passwordToggle && passwordInput) {
-                passwordToggle.addEventListener('click', function() {
+                passwordToggle.addEventListener('click', function () {
                     const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                     passwordInput.setAttribute('type', type);
-                    
+
                     // Toggle eye icon
                     const icon = passwordToggle.querySelector('i');
                     if (type === 'text') {
@@ -745,20 +774,20 @@
                     }
                 });
             }
-            
+
             // Form validation and loading state
             const loginForm = document.getElementById('loginForm');
             const loginButton = document.getElementById('loginButton');
-            
+
             if (loginForm && loginButton) {
-                loginForm.addEventListener('submit', function(e) {
+                loginForm.addEventListener('submit', function (e) {
                     const username = document.getElementById('username').value.trim();
                     const password = document.getElementById('password').value.trim();
-                    
+
                     // Basic validation
                     if (!username || !password) {
                         e.preventDefault();
-                        
+
                         // Create error message if it doesn't exist
                         let errorMessage = document.querySelector('.error-message');
                         if (!errorMessage) {
@@ -770,7 +799,7 @@
                             `;
                             loginForm.prepend(errorMessage);
                         }
-                        
+
                         // Highlight empty fields
                         if (!username) {
                             document.getElementById('username').classList.add('is-invalid');
@@ -778,10 +807,10 @@
                         if (!password) {
                             document.getElementById('password').classList.add('is-invalid');
                         }
-                        
+
                         return false;
                     }
-                    
+
                     // Show loading state
                     loginButton.classList.add('loading');
                     loginButton.disabled = true;
@@ -789,18 +818,18 @@
                         <i class="fas fa-spinner fa-spin"></i>
                         <span>Signing in...</span>
                     `;
-                    
+
                     // Form is valid, allow submission
                     return true;
                 });
             }
-            
+
             // Remove error state when user starts typing
             const inputs = document.querySelectorAll('.form-control');
             inputs.forEach(input => {
-                input.addEventListener('input', function() {
+                input.addEventListener('input', function () {
                     this.classList.remove('is-invalid');
-                    
+
                     // Remove error message if exists
                     const errorMessage = document.querySelector('.error-message');
                     if (errorMessage && !errorMessage.classList.contains('django-error')) {
@@ -808,32 +837,32 @@
                     }
                 });
             });
-            
+
             // Role selection animation
             const roleOptions = document.querySelectorAll('.role-option input[type="radio"]');
             roleOptions.forEach(option => {
-                option.addEventListener('change', function() {
+                option.addEventListener('change', function () {
                     // Remove active class from all
                     document.querySelectorAll('.role-option').forEach(el => {
                         el.classList.remove('active');
                     });
-                    
+
                     // Add active class to selected
                     this.closest('.role-option').classList.add('active');
                 });
             });
-            
+
             // Auto-focus username field
             document.getElementById('username').focus();
-            
+
             // Add ripple effect to login button
-            loginButton.addEventListener('click', function(e) {
+            loginButton.addEventListener('click', function (e) {
                 const ripple = document.createElement('span');
                 const rect = this.getBoundingClientRect();
                 const size = Math.max(rect.width, rect.height);
                 const x = e.clientX - rect.left - size / 2;
                 const y = e.clientY - rect.top - size / 2;
-                
+
                 ripple.style.cssText = `
                     position: absolute;
                     border-radius: 50%;
@@ -845,14 +874,14 @@
                     top: ${y}px;
                     left: ${x}px;
                 `;
-                
+
                 this.appendChild(ripple);
-                
+
                 setTimeout(() => {
                     ripple.remove();
                 }, 600);
             });
-            
+
             // Add CSS for ripple animation
             const style = document.createElement('style');
             style.textContent = `
@@ -864,30 +893,30 @@
                 }
             `;
             document.head.appendChild(style);
-            
+
             // Demo account auto-fill (for development only)
             const demoAccounts = {
                 'admin': { username: 'admin', password: 'admin123' },
                 'staff': { username: 'staff', password: 'staff123' },
                 'client': { username: 'client', password: 'client123' }
             };
-            
+
             // Add event listener to demo account alerts
             document.querySelectorAll('.demo-accounts .alert').forEach(alert => {
-                alert.addEventListener('click', function(e) {
+                alert.addEventListener('click', function (e) {
                     const target = e.target.closest('strong');
                     if (target) {
                         const role = target.textContent.toLowerCase().split(':')[0].trim();
                         if (demoAccounts[role]) {
                             document.getElementById('username').value = demoAccounts[role].username;
                             document.getElementById('password').value = demoAccounts[role].password;
-                            
+
                             // Set the role radio button
                             document.querySelector(`input[value="${role}"]`).checked = true;
-                            
+
                             // Trigger change event on role radio
                             document.querySelector(`input[value="${role}"]`).dispatchEvent(new Event('change'));
-                            
+
                             // Show success message
                             const successDiv = document.createElement('div');
                             successDiv.className = 'success-message';
@@ -895,14 +924,14 @@
                                 <i class="fas fa-check-circle"></i>
                                 <span>${role.charAt(0).toUpperCase() + role.slice(1)} credentials loaded!</span>
                             `;
-                            
+
                             const existingSuccess = document.querySelector('.success-message');
                             if (existingSuccess) {
                                 existingSuccess.remove();
                             }
-                            
+
                             loginForm.prepend(successDiv);
-                            
+
                             // Remove success message after 3 seconds
                             setTimeout(() => {
                                 successDiv.remove();
@@ -914,4 +943,5 @@
         });
     </script>
 </body>
+
 </html>
