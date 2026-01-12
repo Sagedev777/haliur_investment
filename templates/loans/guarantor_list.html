@@ -190,10 +190,11 @@
                                                 {% endif %}
                                             </div>
                                             <div class="flex-grow-1 ms-3">
-                                                <h6 class="mb-0">{{ guarantor.full_name }}</h6>
+                                                <h6 class="mb-0">
+                                                    {{ guarantor }}
+                                                </h6>
                                                 <small class="text-muted">NIN: {{ guarantor.nin }}</small><br>
-                                                <small class="text-muted">Added: {{ guarantor.created_at|date:"Y-m-d"
-                                                    }}</small>
+                                                <small class="text-muted">Added: {{ guarantor.created_at|date:'Y-m-d' }}</small>
                                             </div>
                                         </div>
                                     </td>
@@ -201,10 +202,8 @@
                                         <div class="contact-info">
                                             <div><i class="fas fa-phone text-primary me-2"></i> {{ guarantor.phone }}
                                             </div>
-                                            <div><i class="fas fa-envelope text-info me-2"></i> {{
-                                                guarantor.email|default:"No email" }}</div>
-                                            <div><i class="fas fa-map-marker-alt text-success me-2"></i> {{
-                                                guarantor.address|truncatechars:30 }}</div>
+                                        <div><i class="fas fa-envelope text-info me-2"></i> {{ guarantor.email|default:'No email' }}</div>
+                                        <div><i class="fas fa-map-marker-alt text-success me-2"></i> {{ guarantor.address|truncatechars:30 }}</div>
                                         </div>
                                     </td>
                                     <td>
