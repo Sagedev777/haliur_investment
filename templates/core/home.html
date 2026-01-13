@@ -3,12 +3,44 @@
 
 {% block title %}Welcome to Ateesafinancialstewards Investments{% endblock %}
 
+{% block top_navigation %}
+<!-- Home Page Navigation Items -->
+<li class="nav-item">
+    <a class="nav-link" href="#features">
+        <i class="fas fa-star"></i> Features
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="#contact">
+        <i class="fas fa-envelope"></i> Contact
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'core:login' %}">
+        <i class="fas fa-sign-in-alt"></i> Login
+    </a>
+</li>
+{% endblock %}
+
 {% block app_css %}
 <style>
+    /* Remove body padding-top for homepage only */
     body {
-        background: linear-gradient(135deg, #f8f9fc 0%, #eef2f7 100%);
+        padding-top: 0 !important;
     }
-
+    
+    /* Hide navbar on homepage initially, show on scroll */
+    .navbar-main {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+    
+    .navbar-main.scrolled {
+        background: white;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    
     .hero-section {
         min-height: 100vh;
         display: flex;
@@ -16,6 +48,7 @@
         position: relative;
         overflow: hidden;
         padding: 2rem 0;
+        background: linear-gradient(135deg, #f8f9fc 0%, #eef2f7 100%);
     }
 
     .hero-bg {
@@ -34,10 +67,11 @@
         border: 1px solid rgba(255, 255, 255, 0.5);
         border-radius: 20px;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
-        padding: 3rem;
+        padding: 2rem;
         position: relative;
         z-index: 1;
         overflow: hidden;
+        width: 100%;
     }
 
     .hero-card::before {
@@ -56,9 +90,11 @@
         background: linear-gradient(135deg, var(--primary), var(--secondary));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-size: 3rem;
+        background-clip: text;
+        font-size: 2.5rem;
         margin-bottom: 0.5rem;
         letter-spacing: -0.02em;
+        line-height: 1.2;
     }
 
     .feature-icon {
@@ -96,12 +132,16 @@
     }
 
     .btn-lg-custom {
-        padding: 1rem 2.5rem;
-        font-size: 1.1rem;
+        padding: 1rem 2rem;
+        font-size: 1rem;
         font-weight: 600;
         border-radius: 50rem;
         box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
         transition: all 0.3s;
+        min-height: 56px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .btn-lg-custom:hover {
@@ -134,18 +174,96 @@
         z-index: -1;
     }
 
+    /* Stats section */
+    .stats-section {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        margin-top: 3rem;
+    }
+
+    /* ===== MOBILE RESPONSIVE FIXES ===== */
+    
     @media (max-width: 991px) {
         .brand-text {
-            font-size: 2.5rem;
+            font-size: 2rem;
+            text-align: center;
         }
-
+        
         .hero-section {
-            padding: 4rem 0;
+            padding: 5rem 0 3rem;
             min-height: auto;
         }
-
+        
         .hero-bg {
             display: none;
+        }
+        
+        .hero-card {
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        /* Stack buttons vertically on mobile */
+        .d-flex.gap-3 {
+            flex-direction: column;
+            gap: 1rem !important;
+        }
+        
+        .btn-lg-custom {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Stats section */
+        .stats-section .d-flex {
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        
+        .stats-section .d-flex > div {
+            flex: 0 0 48%;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .border-start.h-100 {
+            display: none !important;
+        }
+        
+        /* Feature cards */
+        .feature-card {
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Shape adjustments */
+        .shape-1, .shape-2 {
+            display: none;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .brand-text {
+            font-size: 1.75rem;
+        }
+        
+        h1.display-4 {
+            font-size: 2rem !important;
+        }
+        
+        .hero-card {
+            padding: 1.25rem;
+        }
+        
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            font-size: 1.25rem;
+        }
+        
+        .stats-section .d-flex > div {
+            flex: 0 0 100%;
         }
     }
 </style>
@@ -163,24 +281,23 @@
             <!-- Left Column: Content -->
             <div class="col-lg-6 mb-5 mb-lg-0">
                 <div class="pe-lg-5 animate__animated animate__fadeInLeft">
-                    <div
-                        class="d-inline-flex align-items-center bg-white rounded-pill px-3 py-1 mb-4 shadow-sm border border-light">
+                    <div class="d-inline-flex align-items-center bg-white rounded-pill px-3 py-1 mb-4 shadow-sm border border-light">
                         <span class="badge bg-primary rounded-pill me-2">New</span>
                         <span class="text-muted small fw-medium">Enhanced Security & UI Update</span>
                     </div>
 
-                    <h1 class="display-4 fw-bold mb-3 text-dark">
-                        Smart Financial <br>
-                        Management with <br>
+                    <h1 class="display-4 fw-bold mb-3 text-dark text-center text-lg-start">
+                        Smart Financial <br class="d-none d-lg-block">
+                        Management with <br class="d-none d-lg-block">
                         <span class="brand-text">ATEESAFINANCIALSTEWARDS</span>
                     </h1>
 
-                    <p class="lead text-muted mb-5">
+                    <p class="lead text-muted mb-5 text-center text-lg-start">
                         Streamline your loan management, savings tracking, and client relationships with our advanced,
                         secure, and intuitive platform.
                     </p>
 
-                    <div class="d-flex gap-3">
+                    <div class="d-flex gap-3 flex-column flex-md-row">
                         <a href="{% url 'core:login' %}" class="btn btn-primary btn-lg-custom">
                             <i class="fas fa-sign-in-alt me-2"></i> Access Portal
                         </a>
@@ -190,19 +307,19 @@
                         </a>
                     </div>
 
-                    <div class="mt-5 pt-4 border-top">
-                        <div class="d-flex align-items-center gap-4">
-                            <div>
+                    <div class="stats-section">
+                        <div class="d-flex align-items-center justify-content-center justify-content-lg-start flex-wrap gap-4">
+                            <div class="text-center">
                                 <h4 class="fw-bold mb-0">2.5K+</h4>
                                 <small class="text-muted">Active Clients</small>
                             </div>
-                            <div class="border-start h-100" style="height: 40px;"></div>
-                            <div>
+                            <div class="border-start h-100 d-none d-md-block" style="height: 40px;"></div>
+                            <div class="text-center">
                                 <h4 class="fw-bold mb-0">99.9%</h4>
                                 <small class="text-muted">Uptime</small>
                             </div>
-                            <div class="border-start h-100" style="height: 40px;"></div>
-                            <div>
+                            <div class="border-start h-100 d-none d-md-block" style="height: 40px;"></div>
+                            <div class="text-center">
                                 <h4 class="fw-bold mb-0">24/7</h4>
                                 <small class="text-muted">Support</small>
                             </div>
@@ -216,7 +333,7 @@
                 <div class="hero-card animate__animated animate__fadeInRight">
                     <div class="text-center mb-4">
                         <div class="mb-4">
-                            <span style="font-size: 4rem; color: var(--primary);">
+                            <span style="font-size: 3rem; color: var(--primary);">
                                 <i class="fas fa-shield-alt"></i>
                             </span>
                         </div>
@@ -227,7 +344,7 @@
                     <div class="d-grid gap-3">
                         <div class="d-flex align-items-center p-3 rounded bg-light border">
                             <div class="rounded-circle bg-white p-2 d-flex align-items-center justify-content-center shadow-sm"
-                                style="width: 40px; height: 40px;">
+                                style="width: 40px; height: 40px; min-width: 40px;">
                                 <i class="fas fa-user-lock text-success"></i>
                             </div>
                             <div class="ms-3">
@@ -238,7 +355,7 @@
 
                         <div class="d-flex align-items-center p-3 rounded bg-light border">
                             <div class="rounded-circle bg-white p-2 d-flex align-items-center justify-content-center shadow-sm"
-                                style="width: 40px; height: 40px;">
+                                style="width: 40px; height: 40px; min-width: 40px;">
                                 <i class="fas fa-lock text-primary"></i>
                             </div>
                             <div class="ms-3">
@@ -291,6 +408,23 @@
             </div>
         </div>
 
+        <!-- Contact Section -->
+        <div id="contact" class="row mt-5 pt-5 justify-content-center">
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm p-4">
+                    <div class="text-center mb-4">
+                        <h3 class="fw-bold mb-2">Contact Us</h3>
+                        <p class="text-muted">Have questions? Get in touch with our team.</p>
+                    </div>
+                    <div class="text-center">
+                        <p><i class="fas fa-envelope me-2 text-primary"></i> info@ateesafinancialstewards.com</p>
+                        <p><i class="fas fa-phone me-2 text-primary"></i> +1 (234) 567-8900</p>
+                        <p><i class="fas fa-map-marker-alt me-2 text-primary"></i> 123 Finance Street, Business City</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <footer class="mt-5 pt-5 text-center text-muted border-top">
             <p class="mb-2">&copy; {% now "Y" %} Ateesafinancialstewards Investments Management System. All rights
                 reserved.</p>
@@ -299,4 +433,50 @@
         </footer>
     </div>
 </div>
+
+<script>
+    // Smooth scroll for Learn More button
+    document.querySelector('a[href="#features"]').addEventListener('click', function(e) {
+        e.preventDefault();
+        const featuresSection = document.getElementById('features');
+        if (featuresSection) {
+            featuresSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+    
+    // Smooth scroll for Contact link
+    document.querySelector('a[href="#contact"]').addEventListener('click', function(e) {
+        e.preventDefault();
+        const contactSection = document.getElementById('contact');
+        if (contactSection) {
+            contactSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+    
+    // Navbar background on scroll for homepage
+    window.addEventListener('scroll', function() {
+        const navbar = document.querySelector('.navbar-main');
+        if (window.scrollY > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+    });
+    
+    // Adjust hero section height on mobile
+    function adjustHeroHeight() {
+        const heroSection = document.querySelector('.hero-section');
+        if (window.innerWidth < 768) {
+            heroSection.style.minHeight = 'auto';
+            heroSection.style.padding = '4rem 0';
+        } else {
+            heroSection.style.minHeight = '100vh';
+            heroSection.style.padding = '2rem 0';
+        }
+    }
+    
+    // Run on load and resize
+    window.addEventListener('load', adjustHeroHeight);
+    window.addEventListener('resize', adjustHeroHeight);
+</script>
 {% endblock %}

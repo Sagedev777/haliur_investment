@@ -5,334 +5,231 @@
 <style>
     /* Reports-specific styles */
     .reports-layout {
+        min-height: calc(100vh - 76px);
         display: flex;
-        min-height: 100vh;
+        flex-direction: column;
     }
-
-    /* Reports Sidebar */
-    .reports-sidebar {
-        width: 250px;
-        background: linear-gradient(180deg, var(--primary-dark) 0%, #1a252f 100%);
-        color: white;
-        position: fixed;
-        height: 100vh;
-        overflow-y: auto;
-        z-index: 1000;
-    }
-
-    .reports-sidebar-header {
-        padding: 1.5rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .reports-brand {
-        color: white;
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 1.3rem;
-    }
-
-    .reports-brand span {
-        color: #3498db;
-    }
-
-    .reports-nav {
+    
+    /* Breadcrumb styling */
+    .breadcrumb-nav {
+        background: #f9fafb;
         padding: 1rem 0;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
     }
-
-    .reports-nav-link {
-        color: rgba(255, 255, 255, 0.85);
-        padding: 0.75rem 1.5rem;
-        text-decoration: none;
-        display: block;
-        transition: all 0.2s;
-        border-left: 3px solid transparent;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .reports-nav-link:hover,
-    .reports-nav-link.active,
-    .reports-nav-link[aria-expanded="true"] {
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-        border-left-color: #3498db;
-    }
-
-    .reports-nav-link i.icon {
-        width: 20px;
-        margin-right: 12px;
-    }
-
-    .reports-nav-link i.arrow {
-        font-size: 0.8rem;
-        transition: transform 0.2s;
-    }
-
-    .reports-nav-link[aria-expanded="true"] i.arrow {
-        transform: rotate(90deg);
-    }
-
-    .reports-submenu {
-        background: rgba(0, 0, 0, 0.2);
-        padding: 0.5rem 0;
-    }
-
-    .reports-submenu-link {
-        color: rgba(255, 255, 255, 0.7);
-        padding: 0.5rem 1.5rem 0.5rem 3.5rem;
-        text-decoration: none;
-        display: block;
-        font-size: 0.9rem;
-        transition: all 0.2s;
-    }
-
-    .reports-submenu-link:hover,
-    .reports-submenu-link.active {
-        color: white;
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    /* Main Content */
-    .reports-content {
-        flex: 1;
-        margin-left: 250px;
-    }
-
-    .reports-topbar {
+    
+    /* Stats cards */
+    .stat-card {
         background: white;
-        border-bottom: 1px solid #e2e8f0;
-        padding: 1rem 1.5rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        border-left: 4px solid var(--primary);
+        margin-bottom: 1.5rem;
     }
-
-    /* Responsive */
+    
+    .stat-card .stat-icon {
+        font-size: 2.5rem;
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--dark);
+        line-height: 1;
+    }
+    
+    .stat-card .stat-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+    
+    /* Filter section */
+    .filter-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Report table styling */
+    .report-table-container {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+    }
+    
+    /* Mobile responsiveness */
     @media (max-width: 768px) {
-        .reports-sidebar {
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
+        .reports-layout {
+            min-height: calc(100vh - 66px);
         }
-
-        .reports-sidebar.active {
-            transform: translateX(0);
+        
+        .stat-card {
+            padding: 1rem;
+            margin-bottom: 1rem;
         }
-
-        .reports-content {
-            margin-left: 0;
+        
+        .stat-card .stat-value {
+            font-size: 1.75rem;
+        }
+        
+        .filter-section {
+            padding: 1rem;
+        }
+        
+        .breadcrumb-nav {
+            padding: 0.75rem 0;
+            margin-bottom: 1rem;
         }
     }
 </style>
 {% endblock %}
 
+{% block top_navigation %}
+<!-- Reports Navigation Items -->
+<li class="nav-item">
+    <a class="nav-link {% if request.resolver_match.url_name == 'reports_dashboard' %}active{% endif %}" 
+       href="{% url 'reports:reports_dashboard' %}">
+        <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+</li>
+
+<!-- Loans Reports Dropdown -->
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle {% if 'loan' in request.resolver_match.url_name %}active{% endif %}" 
+       href="#" role="button" data-bs-toggle="dropdown">
+        <i class="fas fa-hand-holding-usd"></i> Loans Reports
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'reports:loan_performance' %}">Performance Report</a></li>
+        <li><a class="dropdown-item" href="{% url 'reports:loan_portfolio_report' %}">Portfolio Report</a></li>
+        <li><a class="dropdown-item" href="{% url 'reports:loan_defaults_report' %}">Defaults Report</a></li>
+        <li><a class="dropdown-item" href="{% url 'reports:loan_collections_report' %}">Collections Report</a></li>
+    </ul>
+</li>
+
+<!-- Savings Reports Dropdown -->
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle {% if 'savings' in request.resolver_match.url_name or 'savers' in request.resolver_match.url_name %}active{% endif %}" 
+       href="#" role="button" data-bs-toggle="dropdown">
+        <i class="fas fa-piggy-bank"></i> Savings Reports
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'reports:savings_report' %}">Accounts & Balances</a></li>
+        <li><a class="dropdown-item" href="{% url 'reports:savings_growth_report' %}">Growth Report</a></li>
+        <li><a class="dropdown-item" href="{% url 'reports:savings_transactions_report' %}">Transactions Report</a></li>
+        <li><a class="dropdown-item" href="{% url 'reports:top_savers_report' %}">Top Savers</a></li>
+    </ul>
+</li>
+
+<!-- Staff Reports Dropdown -->
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle {% if 'staff' in request.resolver_match.url_name %}active{% endif %}" 
+       href="#" role="button" data-bs-toggle="dropdown">
+        <i class="fas fa-users"></i> Staff Reports
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'reports:staff_performance' %}">Performance Report</a></li>
+        <li><a class="dropdown-item" href="{% url 'reports:staff_loans_report' %}">Loans Handled</a></li>
+        <li><a class="dropdown-item" href="{% url 'reports:staff_savings_report' %}">Savings Processed</a></li>
+    </ul>
+</li>
+
+<!-- Financial Reports Dropdown -->
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle {% if 'financial' in request.resolver_match.url_name or 'profit' in request.resolver_match.url_name %}active{% endif %}" 
+       href="#" role="button" data-bs-toggle="dropdown">
+        <i class="fas fa-chart-pie"></i> Financial Reports
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'reports:financial_report' %}">General Report</a></li>
+        <li><a class="dropdown-item" href="{% url 'reports:financial_summary' %}">Financial Summary</a></li>
+        <li><a class="dropdown-item" href="{% url 'reports:profit_loss_report' %}">Profit & Loss</a></li>
+    </ul>
+</li>
+
+<!-- Switch App Dropdown -->
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+        <i class="fas fa-exchange-alt"></i> Switch App
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'accounts:dashboard' %}"><i class="fas fa-user-friends me-2"></i> Accounts</a></li>
+        <li><a class="dropdown-item" href="{% url 'loans:dashboard' %}"><i class="fas fa-hand-holding-usd me-2"></i> Loans</a></li>
+        {% if request.user.is_superuser %}
+        <li><a class="dropdown-item" href="{% url 'core:admin_dashboard' %}"><i class="fas fa-cog me-2"></i> Admin</a></li>
+        {% endif %}
+    </ul>
+</li>
+{% endblock %}
+
 {% block app_layout %}
 <div class="reports-layout">
-    <!-- Sidebar -->
-    <div class="reports-sidebar" id="reportsSidebar">
-        <!-- Header -->
-        <div class="reports-sidebar-header">
-            <a href="{% if request.user.is_superuser %}{% url 'core:admin_dashboard' %}{% else %}{% url 'reports:reports_dashboard' %}{% endif %}"
-                class="reports-brand">
-                <i class="fas fa-chart-line me-2"></i>
-                ATEESA<span>FINANCIALSTEWARDS</span> Reports
-            </a>
-        </div>
-
-        <!-- Navigation -->
-        <nav class="reports-nav">
-            <a href="{% url 'reports:reports_dashboard' %}"
-                class="reports-nav-link {% if request.resolver_match.url_name == 'reports_dashboard' %}active{% endif %}">
-                <div><i class="fas fa-tachometer-alt icon"></i> Dashboard</div>
-            </a>
-
-            <!-- Loans Reports -->
-            <a class="reports-nav-link" href="#loansSubmenu" data-bs-toggle="collapse"
-                aria-expanded="{% if 'loan' in request.resolver_match.url_name %}true{% else %}false{% endif %}">
-                <div><i class="fas fa-hand-holding-usd icon"></i> Loans</div>
-                <i class="fas fa-chevron-right arrow"></i>
-            </a>
-            <div class="collapse {% if 'loan' in request.resolver_match.url_name %}show{% endif %}" id="loansSubmenu">
-                <div class="reports-submenu">
-                    <a href="{% url 'reports:loan_performance' %}"
-                        class="reports-submenu-link {% if 'performance' in request.resolver_match.url_name and 'loan' in request.resolver_match.url_name %}active{% endif %}">Performance</a>
-                    <a href="{% url 'reports:loan_portfolio_report' %}"
-                        class="reports-submenu-link {% if 'portfolio' in request.resolver_match.url_name %}active{% endif %}">Portfolio</a>
-                    <a href="{% url 'reports:loan_defaults_report' %}"
-                        class="reports-submenu-link {% if 'defaults' in request.resolver_match.url_name %}active{% endif %}">Defaults</a>
-                    <a href="{% url 'reports:loan_collections_report' %}"
-                        class="reports-submenu-link {% if 'collections' in request.resolver_match.url_name %}active{% endif %}">Collections</a>
-                </div>
-            </div>
-
-            <!-- Savings Reports -->
-            <a class="reports-nav-link" href="#savingsSubmenu" data-bs-toggle="collapse"
-                aria-expanded="{% if 'savings' in request.resolver_match.url_name or 'savers' in request.resolver_match.url_name %}true{% else %}false{% endif %}">
-                <div><i class="fas fa-piggy-bank icon"></i> Savings</div>
-                <i class="fas fa-chevron-right arrow"></i>
-            </a>
-            <div class="collapse {% if 'savings' in request.resolver_match.url_name or 'savers' in request.resolver_match.url_name %}show{% endif %}"
-                id="savingsSubmenu">
-                <div class="reports-submenu">
-                    <a href="{% url 'reports:savings_report' %}"
-                        class="reports-submenu-link {% if request.resolver_match.url_name == 'savings_report' %}active{% endif %}">Accounts
-                        & Balances</a>
-                    <a href="{% url 'reports:savings_growth_report' %}"
-                        class="reports-submenu-link {% if 'growth' in request.resolver_match.url_name %}active{% endif %}">Growth</a>
-                    <a href="{% url 'reports:savings_transactions_report' %}"
-                        class="reports-submenu-link {% if 'transactions' in request.resolver_match.url_name %}active{% endif %}">Transactions</a>
-                    <a href="{% url 'reports:top_savers_report' %}"
-                        class="reports-submenu-link {% if 'top_savers' in request.resolver_match.url_name %}active{% endif %}">Top
-                        Savers</a>
-                </div>
-            </div>
-
-            <!-- Staff Reports -->
-            <a class="reports-nav-link" href="#staffSubmenu" data-bs-toggle="collapse"
-                aria-expanded="{% if 'staff' in request.resolver_match.url_name %}true{% else %}false{% endif %}">
-                <div><i class="fas fa-users icon"></i> Staff</div>
-                <i class="fas fa-chevron-right arrow"></i>
-            </a>
-            <div class="collapse {% if 'staff' in request.resolver_match.url_name %}show{% endif %}" id="staffSubmenu">
-                <div class="reports-submenu">
-                    <a href="{% url 'reports:staff_performance' %}"
-                        class="reports-submenu-link {% if 'performance' in request.resolver_match.url_name and 'staff' in request.resolver_match.url_name %}active{% endif %}">Performance</a>
-                    <a href="{% url 'reports:staff_loans_report' %}"
-                        class="reports-submenu-link {% if 'loans' in request.resolver_match.url_name and 'staff' in request.resolver_match.url_name %}active{% endif %}">Loans
-                        Handled</a>
-                    <a href="{% url 'reports:staff_savings_report' %}"
-                        class="reports-submenu-link {% if 'savings' in request.resolver_match.url_name and 'staff' in request.resolver_match.url_name %}active{% endif %}">Savings
-                        Processed</a>
-                </div>
-            </div>
-
-            <!-- Financial Reports -->
-            <a class="reports-nav-link" href="#financialSubmenu" data-bs-toggle="collapse"
-                aria-expanded="{% if 'financial' in request.resolver_match.url_name or 'profit' in request.resolver_match.url_name %}true{% else %}false{% endif %}">
-                <div><i class="fas fa-chart-pie icon"></i> Financial</div>
-                <i class="fas fa-chevron-right arrow"></i>
-            </a>
-            <div class="collapse {% if 'financial' in request.resolver_match.url_name or 'profit' in request.resolver_match.url_name %}show{% endif %}"
-                id="financialSubmenu">
-                <div class="reports-submenu">
-                    <a href="{% url 'reports:financial_report' %}"
-                        class="reports-submenu-link {% if request.resolver_match.url_name == 'financial_report' %}active{% endif %}">General
-                        Report</a>
-                    <a href="{% url 'reports:financial_summary' %}"
-                        class="reports-submenu-link {% if 'summary' in request.resolver_match.url_name %}active{% endif %}">Summary</a>
-                    <a href="{% url 'reports:profit_loss_report' %}"
-                        class="reports-submenu-link {% if 'profit' in request.resolver_match.url_name %}active{% endif %}">Profit
-                        & Loss</a>
-                </div>
-            </div>
-
-            <!-- Cross-App Navigation -->
-            <div class="mt-3 border-top border-secondary pt-3">
-                <a class="reports-nav-link" href="#appsSubmenu" data-bs-toggle="collapse">
-                    <div><i class="fas fa-exchange-alt icon"></i> Switch App</div>
-                    <i class="fas fa-chevron-right arrow"></i>
-                </a>
-                <div class="collapse" id="appsSubmenu">
-                    <div class="reports-submenu">
-                        <a href="{% url 'accounts:dashboard' %}" class="reports-submenu-link">
-                            <i class="fas fa-user-friends me-2"></i> Accounts
-                        </a>
-                        <a href="{% url 'loans:dashboard' %}" class="reports-submenu-link">
-                            <i class="fas fa-hand-holding-usd me-2"></i> Loans
-                        </a>
-                        {% if request.user.is_superuser %}
-                        <a href="{% url 'core:admin_dashboard' %}" class="reports-submenu-link">
-                            <i class="fas fa-cog me-2"></i> Admin
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-        </nav>
-
-        <!-- User Info -->
-        <div class="position-absolute bottom-0 start-0 end-0 p-3 border-top border-secondary bg-dark">
-            <div class="d-flex align-items-center">
-                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center"
-                    style="width: 40px; height: 40px;">
-                    <span class="text-white fw-bold">{{ request.user.username|first|upper }}</span>
-                </div>
-                <div class="ms-3">
-                    <div class="fw-semibold text-white">{{ request.user.username }}</div>
-                    <small class="text-white opacity-75">Reports Viewer</small>
-                </div>
-            </div>
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb-nav">
+        <div class="container-fluid">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'reports:reports_dashboard' %}">Reports Dashboard</a></li>
+                    {% block breadcrumb %}{% endblock %}
+                </ol>
+            </nav>
         </div>
     </div>
 
     <!-- Main Content -->
-    <div class="reports-content" id="reportsContent">
-        <!-- Topbar -->
-        <nav class="reports-topbar">
-            <div class="container-fluid">
-                <div class="d-flex align-items-center justify-content-between">
-                    <!-- Left: Toggle & Breadcrumb -->
-                    <div class="d-flex align-items-center">
-                        <button class="btn btn-outline-secondary d-md-none me-3" id="sidebarToggle">
-                            <i class="fas fa-bars"></i>
-                        </button>
-
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb mb-0">
-                                <li class="breadcrumb-item">
-                                    <a href="{% url 'reports:reports_dashboard' %}">Reports</a>
-                                </li>
-                                {% block breadcrumb %}{% endblock %}
-                            </ol>
-                        </nav>
-                    </div>
-
-                    <!-- Right: Date -->
-                    <div class="d-flex align-items-center gap-3">
-                        <span class="text-muted"><i class="far fa-calendar-alt me-2"></i>{% now "F j, Y" %}</span>
-                    </div>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Content Area -->
-        <div class="container-fluid py-4">
-            <!-- Messages handled centrally in base.html -->
-
-            <!-- Page Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="h3 fw-bold mb-0">{% block page_title %}{% endblock %}</h1>
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div class="mb-3 mb-md-0">
+                    <h1 class="h2 fw-bold mb-1">{% block page_title %}{% endblock %}</h1>
                     <p class="text-muted mb-0">{% block page_subtitle %}{% endblock %}</p>
                 </div>
-                <div>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="text-muted"><i class="far fa-calendar-alt me-2"></i>{% now "F j, Y" %}</span>
                     {% block page_actions %}{% endblock %}
                 </div>
             </div>
-
-            <!-- Main Content -->
-            {% block content %}{% endblock %}
         </div>
 
-        <!-- Footer -->
-        <footer class="border-top py-3 mt-auto">
-            <div class="container-fluid">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <p class="text-muted mb-0">
-                            &copy; {% now "Y" %} Ateesafinancialstewards Investments | Reporting Module
-                        </p>
-                    </div>
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Main Content -->
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-top py-4">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-muted mb-0">
+                        &copy; {% now "Y" %} Ateesafinancialstewards Investments | Reporting Module
+                    </p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="text-muted mb-0">
+                        v2.0 | {% now "F j, Y" %}
+                    </p>
                 </div>
             </div>
-        </footer>
-    </div>
+        </div>
+    </footer>
 </div>
-
-<script>
-    // Toggle sidebar on mobile
-    document.getElementById('sidebarToggle').addEventListener('click', function () {
-        document.getElementById('reportsSidebar').classList.toggle('active');
-    });
-</script>
 {% endblock %}

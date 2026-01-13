@@ -1,421 +1,275 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block app_css %}
 <style>
     /* Loans-specific styles */
     .loans-layout {
+        min-height: calc(100vh - 76px);
         display: flex;
-        min-height: 100vh;
+        flex-direction: column;
     }
-
-    /* Loans Sidebar (Compact) */
-    .loans-sidebar {
-        width: 220px;
-        background: linear-gradient(180deg, var(--primary-dark) 0%, #153e75 100%);
-        color: white;
-        position: fixed;
-        height: 100vh;
-        z-index: 1000;
-    }
-
-    .loans-sidebar-header {
-        padding: 1.25rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .loans-brand {
-        color: white;
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 1.2rem;
-    }
-
-    .loans-brand span {
-        color: var(--secondary);
-    }
-
-    .loans-nav {
-        padding: 1rem 0;
-    }
-
-    .loans-nav-item {
-        margin-bottom: 0.25rem;
-    }
-
-    .loans-nav-link {
-        color: rgba(255, 255, 255, 0.85);
-        padding: 0.75rem 1rem;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        border-left: 3px solid transparent;
-        transition: all 0.2s;
-    }
-
-    .loans-nav-link:hover,
-    .loans-nav-link.active {
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-        border-left-color: #63b3ed;
-    }
-
-    .loans-nav-link i {
-        width: 20px;
-        margin-right: 10px;
-        font-size: 0.9rem;
-    }
-
-    /* Dropdown in sidebar */
-    .loans-dropdown-menu {
-        background: #2d3748;
-        border: none;
-        border-radius: 0;
-        padding: 0;
-        margin: 0;
-        width: 100%;
-    }
-
-    .loans-dropdown-item {
-        color: rgba(255, 255, 255, 0.85);
-        padding: 0.6rem 1rem 0.6rem 2.5rem;
-        text-decoration: none;
-        display: block;
-        border-left: 3px solid transparent;
-    }
-
-    .loans-dropdown-item:hover,
-    .loans-dropdown-item.active {
-        background: rgba(255, 255, 255, 0.05);
-        color: white;
-        border-left-color: #48bb78;
-    }
-
-    /* Main Content */
-    .loans-content {
-        flex: 1;
-        margin-left: 220px;
-        background: #f7fafc;
-    }
-
-    .loans-topbar {
+    
+    /* Quick stats */
+    .quick-stats {
         background: white;
-        border-bottom: 1px solid #e2e8f0;
-        padding: 0.75rem 1.5rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
-
-    /* Loan-specific components */
-    .loan-status-badge {
+    
+    .stat-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-pending { background: #fef3c7; color: #92400e; }
+    .stat-approved { background: #d1fae5; color: #065f46; }
+    .stat-active { background: #dbeafe; color: #1e40af; }
+    .stat-overdue { background: #fee2e2; color: #991b1b; }
+    .stat-closed { background: #e5e7eb; color: #374151; }
+    
+    /* Loan status badges */
+    .status-badge {
         padding: 0.25rem 0.75rem;
         border-radius: 20px;
-        font-size: 0.875rem;
-        font-weight: 500;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
-
-    .status-pending {
-        background: #fef3c7;
-        color: #92400e;
+    
+    /* Action buttons */
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
     }
-
-    .status-approved {
-        background: #d1fae5;
-        color: #065f46;
+    
+    /* Quick action card */
+    .quick-action-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        text-align: center;
+        transition: transform 0.2s ease;
     }
-
-    .status-active {
-        background: #dbeafe;
-        color: #1e40af;
+    
+    .quick-action-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px -1px rgba(0, 0, 0, 0.1);
     }
-
-    .status-overdue {
-        background: #fee2e2;
-        color: #991b1b;
+    
+    .quick-action-icon {
+        font-size: 2rem;
+        color: var(--primary);
+        margin-bottom: 1rem;
+        background: rgba(67, 56, 202, 0.1);
+        width: 60px;
+        height: 60px;
+        line-height: 60px;
+        border-radius: 50%;
+        margin: 0 auto 1rem;
     }
-
-    .status-closed {
-        background: #e5e7eb;
-        color: #374151;
-    }
-
-    /* Quick Stats Cards */
-    .loan-stat-card {
-        border-left: 4px solid;
-        padding: 1rem;
-    }
-
-    /* Responsive */
+    
+    /* Mobile responsiveness */
     @media (max-width: 768px) {
-        .loans-sidebar {
-            transform: translateX(-100%);
+        .loans-layout {
+            min-height: calc(100vh - 66px);
         }
-
-        .loans-sidebar.active {
-            transform: translateX(0);
+        
+        .quick-stats {
+            padding: 1rem;
         }
-
-        .loans-content {
-            margin-left: 0;
+        
+        .quick-action-card {
+            padding: 1rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .action-buttons .btn {
+            width: 100%;
+            margin-bottom: 0.5rem;
         }
     }
 </style>
 {% endblock %}
 
+{% block top_navigation %}
+<!-- Loans Navigation Items -->
+<li class="nav-item">
+    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+       href="{% url 'loans:dashboard' %}">
+        <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+</li>
+
+<!-- Applications Dropdown -->
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle {% if 'loan_application' in request.resolver_match.url_name %}active{% endif %}" 
+       href="#" role="button" data-bs-toggle="dropdown">
+        <i class="fas fa-file-alt"></i> Applications
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'loans:loan_application_list' %}">All Applications</a></li>
+        <li><a class="dropdown-item" href="{% url 'loans:loan_application_create' %}">New Application</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="{% url 'loans:loan_application_list' %}?status=pending">Pending Review</a></li>
+        <li><a class="dropdown-item" href="{% url 'loans:loan_application_list' %}?status=approved">Approved</a></li>
+        <li><a class="dropdown-item" href="{% url 'loans:loan_application_list' %}?status=rejected">Rejected</a></li>
+    </ul>
+</li>
+
+<!-- Loan Portfolio Dropdown -->
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle {% if 'loan' in request.resolver_match.url_name and 'application' not in request.resolver_match.url_name %}active{% endif %}" 
+       href="#" role="button" data-bs-toggle="dropdown">
+        <i class="fas fa-hand-holding-usd"></i> Loan Portfolio
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'loans:loan_list' %}">All Loans</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="{% url 'loans:loan_list' %}?status=ACTIVE">Active Loans</a></li>
+        <li><a class="dropdown-item" href="{% url 'loans:loan_list' %}?status=OVERDUE">Overdue Loans</a></li>
+        <li><a class="dropdown-item" href="{% url 'loans:loan_list' %}?status=CLOSED">Closed Loans</a></li>
+    </ul>
+</li>
+
+<!-- Payments Dropdown -->
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle {% if 'payment' in request.resolver_match.url_name or request.resolver_match.url_name == 'quick_payment' %}active{% endif %}" 
+       href="#" role="button" data-bs-toggle="dropdown">
+        <i class="fas fa-credit-card"></i> Payments
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'loans:quick_payment' %}">Quick Payment</a></li>
+        <li><a class="dropdown-item" href="{% url 'loans:bulk_payment_processing' %}">Bulk Payments</a></li>
+        <li><a class="dropdown-item" href="#">Payment History</a></li>
+    </ul>
+</li>
+
+<!-- Reports Dropdown -->
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle {% if 'report' in request.resolver_match.url_name %}active{% endif %}" 
+       href="#" role="button" data-bs-toggle="dropdown">
+        <i class="fas fa-chart-bar"></i> Reports
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'loans:loan_portfolio_report' %}">Portfolio Report</a></li>
+        <li><a class="dropdown-item" href="{% url 'loans:overdue_loans_report' %}">Overdue Loans</a></li>
+        <li><a class="dropdown-item" href="{% url 'loans:collections_report' %}">Collections Report</a></li>
+    </ul>
+</li>
+
+<!-- Management Dropdown -->
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle {% if 'loan_product' in request.resolver_match.url_name or 'guarantor' in request.resolver_match.url_name %}active{% endif %}" 
+       href="#" role="button" data-bs-toggle="dropdown">
+        <i class="fas fa-cogs"></i> Management
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'loans:loan_product_list' %}">Loan Products</a></li>
+        <li><a class="dropdown-item" href="{% url 'loans:guarantor_list' %}">Guarantors</a></li>
+        <li><a class="dropdown-item" href="{% url 'loans:loan_calculator' %}">Loan Calculator</a></li>
+    </ul>
+</li>
+
+<!-- Switch App Dropdown -->
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+        <i class="fas fa-exchange-alt"></i> Switch App
+    </a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'accounts:dashboard' %}"><i class="fas fa-user-friends me-2"></i> Accounts</a></li>
+        <li><a class="dropdown-item" href="{% url 'reports:reports_dashboard' %}"><i class="fas fa-chart-bar me-2"></i> Reports</a></li>
+        {% if request.user.is_superuser %}
+        <li><a class="dropdown-item" href="{% url 'accounts:edit_request_list' %}"><i class="fas fa-edit me-2"></i> Edit Requests</a></li>
+        <li><a class="dropdown-item" href="{% url 'accounts:audit_logs' %}"><i class="fas fa-clipboard-list me-2"></i> Audit Logs</a></li>
+        {% endif %}
+    </ul>
+</li>
+{% endblock %}
+
 {% block app_layout %}
 <div class="loans-layout">
-    <!-- Sidebar -->
-    <div class="loans-sidebar" id="loansSidebar">
-        <!-- Header -->
-        <div class="loans-sidebar-header">
-            <a href="{% url 'loans:dashboard' %}" class="loans-brand">
-                <i class="fas fa-hand-holding-usd me-2"></i>
-                Ateesafinancialstewards Loans
-            </a>
-        </div>
-
-        <!-- Navigation -->
-        <nav class="loans-nav">
-            <!-- Dashboard -->
-            <div class="loans-nav-item">
-                <a href="{% url 'loans:dashboard' %}"
-                    class="loans-nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <i class="fas fa-tachometer-alt"></i>
-                    Dashboard
-                </a>
-            </div>
-
-            <!-- Loan Applications Dropdown -->
-            <div class="loans-nav-item">
-                <a class="loans-nav-link dropdown-toggle {% if 'loan_application' in request.resolver_match.url_name %}active{% endif %}"
-                    href="#" role="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-file-alt"></i>
-                    Applications
-                </a>
-                <div class="dropdown-menu loans-dropdown-menu">
-                    <a href="{% url 'loans:loan_application_list' %}"
-                        class="loans-dropdown-item {% if request.resolver_match.url_name == 'loan_application_list' %}active{% endif %}">
-                        All Applications
-                    </a>
-                    <a href="{% url 'loans:loan_application_create' %}"
-                        class="loans-dropdown-item {% if request.resolver_match.url_name == 'loan_application_create' %}active{% endif %}">
-                        New Application
-                    </a>
-                    <a href="{% url 'loans:loan_application_list' %}?status=pending" class="loans-dropdown-item">
-                        Pending Review
-                    </a>
-                </div>
-            </div>
-
-            <!-- Loan Portfolio Dropdown -->
-            <div class="loans-nav-item">
-                <a class="loans-nav-link dropdown-toggle {% if 'loan' in request.resolver_match.url_name and 'application' not in request.resolver_match.url_name %}active{% endif %}"
-                    href="#" role="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-hand-holding-usd"></i>
-                    Loan Portfolio
-                </a>
-                <div class="dropdown-menu loans-dropdown-menu">
-                    <a href="{% url 'loans:loan_list' %}"
-                        class="loans-dropdown-item {% if request.resolver_match.url_name == 'loan_list' %}active{% endif %}">
-                        All Loans
-                    </a>
-                    <a href="{% url 'loans:loan_list' %}?status=ACTIVE" class="loans-dropdown-item">
-                        Active Loans
-                    </a>
-                    <a href="{% url 'loans:loan_list' %}?status=OVERDUE" class="loans-dropdown-item">
-                        Overdue Loans
-                    </a>
-                    <a href="{% url 'loans:loan_list' %}?status=CLOSED" class="loans-dropdown-item">
-                        Closed Loans
-                    </a>
-                </div>
-            </div>
-
-            <!-- Payments Dropdown -->
-            <div class="loans-nav-item">
-                <a class="loans-nav-link dropdown-toggle {% if 'payment' in request.resolver_match.url_name or request.resolver_match.url_name == 'quick_payment' %}active{% endif %}"
-                    href="#" role="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-credit-card"></i>
-                    Payments
-                </a>
-                <div class="dropdown-menu loans-dropdown-menu">
-                    <a href="{% url 'loans:quick_payment' %}"
-                        class="loans-dropdown-item {% if request.resolver_match.url_name == 'quick_payment' %}active{% endif %}">
-                        Quick Payment
-                    </a>
-                    <a href="{% url 'loans:bulk_payment_processing' %}"
-                        class="loans-dropdown-item {% if request.resolver_match.url_name == 'bulk_payment_processing' %}active{% endif %}">
-                        Bulk Payments
-                    </a>
-                    <a href="#" class="loans-dropdown-item">
-                        Payment History
-                    </a>
-                </div>
-            </div>
-
-            <!-- Reports Dropdown -->
-            <div class="loans-nav-item">
-                <a class="loans-nav-link dropdown-toggle {% if 'report' in request.resolver_match.url_name %}active{% endif %}"
-                    href="#" role="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-chart-bar"></i>
-                    Reports
-                </a>
-                <div class="dropdown-menu loans-dropdown-menu">
-                    <a href="{% url 'loans:loan_portfolio_report' %}"
-                        class="loans-dropdown-item {% if request.resolver_match.url_name == 'loan_portfolio_report' %}active{% endif %}">
-                        Portfolio Report
-                    </a>
-                    <a href="{% url 'loans:overdue_loans_report' %}"
-                        class="loans-dropdown-item {% if request.resolver_match.url_name == 'overdue_loans_report' %}active{% endif %}">
-                        Overdue Loans
-                    </a>
-                    <a href="{% url 'loans:collections_report' %}"
-                        class="loans-dropdown-item {% if request.resolver_match.url_name == 'collections_report' %}active{% endif %}">
-                        Collections Report
-                    </a>
-                </div>
-            </div>
-
-            <!-- Management Dropdown -->
-            <div class="loans-nav-item">
-                <a class="loans-nav-link dropdown-toggle {% if 'loan_product' in request.resolver_match.url_name or 'guarantor' in request.resolver_match.url_name %}active{% endif %}"
-                    href="#" role="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-cogs"></i>
-                    Management
-                </a>
-                <div class="dropdown-menu loans-dropdown-menu">
-                    <a href="{% url 'loans:loan_product_list' %}"
-                        class="loans-dropdown-item {% if request.resolver_match.url_name == 'loan_product_list' %}active{% endif %}">
-                        Loan Products
-                    </a>
-                    <a href="{% url 'loans:guarantor_list' %}"
-                        class="loans-dropdown-item {% if request.resolver_match.url_name == 'guarantor_list' %}active{% endif %}">
-                        Guarantors
-                    </a>
-                    <a href="{% url 'loans:loan_calculator' %}"
-                        class="loans-dropdown-item {% if request.resolver_match.url_name == 'loan_calculator' %}active{% endif %}">
-                        Loan Calculator
-                    </a>
-                </div>
-            </div>
-
-            <!-- Switch Apps Dropdown -->
-            <div class="loans-nav-item mt-4">
-                <a class="loans-nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-exchange-alt"></i>
-                    Switch App
-                </a>
-                <div class="dropdown-menu loans-dropdown-menu">
-                    <a href="{% url 'accounts:dashboard' %}" class="loans-dropdown-item">
-                        <i class="fas fa-user-friends me-2"></i> Client Accounts
-                    </a>
-                    <a href="{% url 'reports:reports_dashboard' %}" class="loans-dropdown-item">
-                        <i class="fas fa-chart-bar me-2"></i> Reports System
-                    </a>
-                    {% if request.user.is_superuser %}
-                    <a href="{% url 'accounts:edit_request_list' %}" class="loans-dropdown-item">
-                        <i class="fas fa-edit me-2"></i> Edit Requests
-                    </a>
-                    <a href="{% url 'accounts:audit_logs' %}" class="loans-dropdown-item">
-                        <i class="fas fa-clipboard-list me-2"></i> Audit Logs
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-        </nav>
-
-        <!-- Quick Actions -->
-        <div class="position-absolute bottom-0 start-0 end-0 p-3 border-top border-secondary">
-            <div class="d-grid gap-2">
-                <a href="{% url 'loans:loan_application_create' %}" class="btn btn-sm btn-success">
-                    <i class="fas fa-plus me-1"></i> New Application
-                </a>
-                <a href="{% url 'loans:quick_payment' %}" class="btn btn-sm btn-primary">
-                    <i class="fas fa-money-bill-wave me-1"></i> Quick Payment
-                </a>
-            </div>
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb-nav">
+        <div class="container-fluid">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'loans:dashboard' %}">Loans Dashboard</a></li>
+                    {% block breadcrumb %}{% endblock %}
+                </ol>
+            </nav>
         </div>
     </div>
 
     <!-- Main Content -->
-    <div class="loans-content" id="loansContent">
-        <!-- Topbar -->
-        <nav class="loans-topbar">
-            <div class="container-fluid">
-                <div class="d-flex align-items-center justify-content-between">
-                    <!-- Left: Toggle & Breadcrumb -->
-                    <div class="d-flex align-items-center">
-                        <button class="btn btn-outline-secondary d-md-none me-3" id="sidebarToggle">
-                            <i class="fas fa-bars"></i>
-                        </button>
-
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb mb-0">
-                                <li class="breadcrumb-item">
-                                    <a href="{% url 'loans:dashboard' %}">Loans</a>
-                                </li>
-                                {% block breadcrumb %}{% endblock %}
-                            </ol>
-                        </nav>
-                    </div>
-
-                    <!-- Right: Quick Stats & Actions -->
-                    <div class="d-flex align-items-center gap-3">
-                        <span class="text-muted d-none d-md-block">
-                            <i class="fas fa-calendar-alt me-1"></i>
-                            {% now "M j, Y" %}
-                        </span>
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div class="mb-3 mb-md-0">
+                    <h1 class="h2 fw-bold mb-1">{% block page_title %}{% endblock %}</h1>
+                    <p class="text-muted mb-0">{% block page_subtitle %}{% endblock %}</p>
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <span class="text-muted d-none d-md-inline"><i class="fas fa-calendar-alt me-1"></i>{% now "M j, Y" %}</span>
+                    <div class="action-buttons">
                         <a href="{% url 'loans:loan_application_create' %}" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus me-1"></i> New Application
                         </a>
-                        <a href="{% url 'accounts:logout' %}" class="btn btn-outline-danger btn-sm">
-                            <i class="fas fa-sign-out-alt"></i>
+                        <a href="{% url 'loans:quick_payment' %}" class="btn btn-success btn-sm">
+                            <i class="fas fa-money-bill-wave me-1"></i> Quick Payment
                         </a>
+                        {% block page_actions %}{% endblock %}
                     </div>
                 </div>
             </div>
-        </nav>
-
-        <!-- Content Area -->
-        <div class="container-fluid py-4">
-            <!-- Messages handled centrally in base.html -->
-
-            <!-- Page Header -->
-            <div class="page-header mb-4">
-                <h1 class="h3 fw-bold mb-2">{% block page_title %}{% endblock %}</h1>
-                <p class="text-muted">{% block page_subtitle %}{% endblock %}</p>
-            </div>
-
-            <!-- Page Actions -->
-            {% block page_actions %}{% endblock %}
-
-            <!-- Main Content -->
-            {% block content %}{% endblock %}
         </div>
 
-        <!-- Footer -->
-        <footer class="border-top py-3">
-            <div class="container-fluid">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <p class="text-muted mb-0">
-                            &copy; {% now "Y" %} Ateesafinancialstewards Investments | Loans Management
-                        </p>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <p class="text-muted mb-0">
-                            v2.0 | {% now "F j, Y" %}
-                        </p>
-                    </div>
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Main Content -->
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-top py-4">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-muted mb-0">
+                        &copy; {% now "Y" %} Ateesafinancialstewards Investments | Loans Management
+                    </p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="text-muted mb-0">
+                        v2.0 | {% now "F j, Y" %}
+                    </p>
                 </div>
             </div>
-        </footer>
-    </div>
+        </div>
+    </footer>
 </div>
-
-<script>
-    // Toggle sidebar on mobile
-    document.getElementById('sidebarToggle').addEventListener('click', function () {
-        document.getElementById('loansSidebar').classList.toggle('active');
-        document.getElementById('loansContent').classList.toggle('active');
-    });
-</script>
 {% endblock %}

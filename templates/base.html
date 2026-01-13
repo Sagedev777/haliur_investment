@@ -4,7 +4,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CRITICAL: Updated viewport for mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>{% block title %}Ateesafinancialstewards Investments{% endblock %}</title>
 
     <!-- Google Fonts: Inter & Outfit -->
@@ -27,28 +28,15 @@
         :root {
             /* Modernized Palette */
             --primary: #4338ca;
-            /* Indigo 700 */
             --primary-light: #6366f1;
-            /* Indigo 500 */
             --primary-dark: #312e81;
-            /* Indigo 900 */
-
             --secondary: #0ea5e9;
-            /* Sky 500 */
-
             --success: #10b981;
-            /* Emerald 500 */
             --warning: #f59e0b;
-            /* Amber 500 */
             --danger: #ef4444;
-            /* Red 500 */
-
             --light: #f3f4f6;
-            /* Cool Gray 100 */
             --dark: #111827;
-            /* Gray 900 */
             --text-muted: #6b7280;
-            /* Gray 500 */
 
             /* Bootstrap Overrides */
             --bs-primary: var(--primary);
@@ -72,6 +60,8 @@
             color: var(--dark);
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            padding-top: 76px; /* Space for fixed navbar */
         }
 
         h1,
@@ -83,6 +73,87 @@
         .navbar-brand {
             font-family: 'Outfit', sans-serif;
             font-weight: 600;
+        }
+
+        /* Top Navigation Bar */
+        .navbar-main {
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border-bottom: 1px solid #e5e7eb;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            padding: 0.75rem 0;
+        }
+
+        .navbar-brand img {
+            height: 40px;
+            width: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .navbar-brand img:hover {
+            transform: scale(1.05);
+        }
+
+        .nav-link {
+            color: var(--dark) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            margin: 0 0.1rem;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background-color: rgba(67, 56, 202, 0.1);
+            color: var(--primary) !important;
+        }
+
+        .nav-link i {
+            margin-right: 0.5rem;
+            font-size: 0.9em;
+        }
+
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            padding: 0.5rem 0;
+            margin-top: 0.5rem;
+        }
+
+        .dropdown-item {
+            padding: 0.6rem 1.5rem;
+            color: var(--dark);
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(67, 56, 202, 0.1);
+            color: var(--primary);
+        }
+
+        .dropdown-item i {
+            width: 20px;
+            margin-right: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .user-dropdown .dropdown-toggle {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            background: rgba(67, 56, 202, 0.08);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .user-dropdown .dropdown-toggle::after {
+            margin-left: 0.5rem;
         }
 
         /* Modern Card Styling */
@@ -118,6 +189,8 @@
             transition: all 0.2s ease;
             border: none;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            min-height: 44px;
+            min-width: 44px;
         }
 
         .btn:hover {
@@ -140,9 +213,16 @@
             color: white;
         }
 
-        /* Tables */
+        /* Tables - Mobile responsive */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         .table {
             vertical-align: middle;
+            width: 100%;
+            min-width: 300px;
         }
 
         .table th {
@@ -153,6 +233,7 @@
             color: var(--text-muted);
             background-color: #f9fafb;
             border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
         }
 
         /* Toast Container */
@@ -165,6 +246,8 @@
             border: none;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             border-radius: 10px;
+            max-width: 350px;
+            width: auto;
         }
 
         /* Custom Scrollbar */
@@ -186,20 +269,161 @@
             background: #a8a8a8;
         }
 
-        /* Responsive Tweaks */
+        /* ===== RESPONSIVE FIXES ===== */
+        
+        /* Mobile-first: Stack everything on small screens */
         @media (max-width: 768px) {
+            body {
+                padding-top: 66px;
+            }
+            
+            .navbar-main {
+                padding: 0.5rem 0;
+            }
+            
+            .navbar-brand img {
+                height: 32px;
+            }
+            
+            .nav-link {
+                padding: 0.75rem 1rem !important;
+                margin: 0.1rem 0;
+                text-align: center;
+                border-radius: 6px;
+                background: rgba(0, 0, 0, 0.02);
+            }
+            
+            .dropdown-menu {
+                background: white;
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                margin-top: 0.25rem;
+            }
+            
+            .dropdown-item {
+                padding: 0.75rem 1rem;
+            }
+            
+            .user-dropdown .dropdown-toggle {
+                width: 100%;
+                text-align: left;
+                margin: 0.5rem 0;
+            }
+            
+            /* Container adjustments */
+            .container, .container-fluid {
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+            
+            /* Card adjustments */
             .card {
                 margin-bottom: 1rem;
+                border-radius: 10px;
             }
-
+            
+            .card-header {
+                padding: 1rem !important;
+            }
+            
+            .card-body {
+                padding: 1rem !important;
+            }
+            
+            /* Button adjustments */
             .btn {
-                width: 100%;
+                width: 100% !important;
                 margin-bottom: 0.5rem;
+                padding: 0.75rem 1rem !important;
             }
-
-            .col-md-6.text-end {
-                text-align: left !important;
+            
+            /* Hide unnecessary elements on mobile */
+            .d-none-mobile {
+                display: none !important;
             }
+            
+            /* Force columns to stack */
+            .col-md-6, .col-lg-4, .col-lg-6, .col-xl-3 {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+                margin-bottom: 1rem !important;
+            }
+            
+            /* Text alignment fixes */
+            .text-end, .text-start, .text-center {
+                text-align: center !important;
+            }
+            
+            /* Toast positioning for mobile */
+            .toast-container {
+                position: fixed !important;
+                bottom: 20px !important;
+                right: 10px !important;
+                left: 10px !important;
+                width: auto !important;
+            }
+            
+            .toast {
+                max-width: 100% !important;
+                margin: 0 auto !important;
+            }
+            
+            /* Fix for DataTables on mobile */
+            .dataTables_wrapper .dataTables_filter input {
+                width: 100% !important;
+                margin-bottom: 10px !important;
+            }
+        }
+        
+        /* Tablet adjustments */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                max-width: 95% !important;
+            }
+            
+            .col-md-6 {
+                flex: 0 0 50% !important;
+                max-width: 50% !important;
+            }
+            
+            .nav-link {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Prevent zoom on iOS form inputs */
+        @media screen and (max-width: 768px) {
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+        
+        /* Breadcrumb styling */
+        .breadcrumb {
+            background: transparent;
+            padding: 0.75rem 0;
+            margin-bottom: 1rem;
+        }
+        
+        .breadcrumb-item a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .breadcrumb-item.active {
+            color: var(--text-muted);
+        }
+        
+        /* Page header */
+        .page-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .page-header h1 {
+            margin-bottom: 0.5rem;
         }
     </style>
 
@@ -207,7 +431,60 @@
 </head>
 
 <body>
-    {% block app_layout %}{% endblock %}
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-main">
+        <div class="container-fluid">
+            <!-- Logo and Brand -->
+            <a class="navbar-brand" href="/">
+                <!-- REPLACE THIS WITH YOUR LOGO PATH -->
+                <img src="{% static 'images/logo.png' %}" alt="Ateesafinancialstewards Investments Logo" class="me-2">
+                <span class="d-none d-md-inline">ATEESA<span style="color: var(--primary);">FINANCIALSTEWARDS</span></span>
+            </a>
+            
+            <!-- Mobile Toggle Button -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Navigation Items -->
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <ul class="navbar-nav me-auto">
+                    <!-- Will be populated by child templates -->
+                    {% block top_navigation %}{% endblock %}
+                </ul>
+                
+                <!-- Right Side: User Menu -->
+                {% if user.is_authenticated %}
+                <div class="navbar-nav">
+                    <div class="nav-item dropdown user-dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" 
+                                 style="width: 32px; height: 32px;">
+                                <span class="text-white fw-bold">{{ user.username|first|upper }}</span>
+                            </div>
+                            <span class="d-none d-md-inline">{{ user.username }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user"></i> Profile</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+                {% else %}
+                <div class="navbar-nav">
+                    <a class="nav-link" href="{% url 'core:login' %}"><i class="fas fa-sign-in-alt"></i> Login</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        {% block app_layout %}{% endblock %}
+    </main>
 
     <!-- Toast Container for Messages -->
     {% if messages %}
@@ -255,7 +532,7 @@
                         next: '<i class="fas fa-angle-right"></i>'
                     }
                 },
-                dom: '<"row mb-3"<"col-md-6"l><"col-md-6"f>>rt<"row mt-3"<"col-md-6"i><"col-md-6"p>>',
+                dom: '<"row mb-3"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row mt-3"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"p>>',
                 drawCallback: function () {
                     $('.dataTables_paginate > .pagination').addClass('pagination-sm');
                 }
@@ -265,6 +542,14 @@
             setTimeout(function () {
                 $('.toast').toast('hide');
             }, 5000);
+            
+            // Mobile dropdown fix
+            $('.dropdown-menu a.dropdown-item').click(function() {
+                if ($(window).width() < 768) {
+                    $(this).closest('.dropdown').removeClass('show');
+                    $(this).closest('.dropdown-menu').removeClass('show');
+                }
+            });
         });
 
         // Global Confirm Delete
