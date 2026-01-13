@@ -258,6 +258,76 @@
         border-radius: 50%;
         box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.5);
     }
+    
+    /* Mobile-specific styles */
+    @media (max-width: 768px) {
+        .navbar {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+        
+        .quick-actions {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .btn-action {
+            flex: 1;
+            min-width: 100px;
+            justify-content: center;
+        }
+        
+        .stat-card .h2 {
+            font-size: 1.5rem !important;
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+        }
+        
+        .table-card {
+            padding: 1rem;
+        }
+        
+        .table-title small {
+            display: none;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .col-xl-3 {
+            margin-bottom: 1rem;
+        }
+        
+        .stat-card .h2 {
+            font-size: 1.25rem !important;
+        }
+        
+        .dashboard-header h1 {
+            font-size: 1.5rem;
+        }
+        
+        .table td, .table th {
+            padding: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        .logo {
+            font-size: 1.25rem;
+            padding: 1rem;
+        }
+        
+        .user-profile {
+            margin: 1rem;
+            padding: 0.75rem;
+        }
+    }
 
     @media (max-width: 992px) {
         .sidebar {
@@ -272,6 +342,7 @@
 
         .main-content {
             margin-left: 0;
+            padding: 15px;
         }
 
         .sidebar-toggle {
@@ -354,7 +425,7 @@
     <!-- Dashboard Header -->
     <div class="dashboard-header animate__animated animate__fadeIn">
         <div class="row align-items-center">
-            <div class="col-md-6">
+            <div class="col-12 col-md-6">
                 <h1 class="h3 mb-2 fw-bold text-gray-800">
                     <i class="fas fa-hand-holding-usd me-2 text-primary"></i>
                     Welcome, {{ request.user.get_full_name|default:request.user.username }}
@@ -363,7 +434,7 @@
                     <i class="fas fa-chart-line me-1"></i> Loan Portfolio Overview
                 </p>
             </div>
-            <div class="col-md-6 text-md-end">
+            <div class="col-12 col-md-6 text-md-end mt-3 mt-md-0">
                 <div class="d-inline-block bg-light rounded-pill px-3 py-2">
                     <p class="mb-1 text-primary">
                         <i class="fas fa-calendar-alt me-2"></i> {% now "F d, Y" %}
@@ -378,7 +449,7 @@
 
     <!-- Statistics Cards -->
     <div class="row animate__animated animate__fadeInUp">
-        <div class="col-xl-3 col-md-6">
+        <div class="col-xxl-3 col-xl-4 col-md-6 col-12 mb-3">
             <div class="card stat-card card-clients">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -390,7 +461,7 @@
                                 Account holders
                             </small>
                         </div>
-                        <div class="stat-icon" style="color: var(--primary);">
+                        <div class="stat-icon d-none d-md-block" style="color: var(--primary);">
                             <i class="fas fa-users"></i>
                         </div>
                     </div>
@@ -398,7 +469,7 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6">
+        <div class="col-xxl-3 col-xl-4 col-md-6 col-12 mb-3">
             <div class="card stat-card card-active">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -410,7 +481,7 @@
                                 Eligible for products
                             </small>
                         </div>
-                        <div class="stat-icon" style="color: var(--success);">
+                        <div class="stat-icon d-none d-md-block" style="color: var(--success);">
                             <i class="fas fa-check-circle"></i>
                         </div>
                     </div>
@@ -418,7 +489,7 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6">
+        <div class="col-xxl-3 col-xl-4 col-md-6 col-12 mb-3">
             <div class="card stat-card card-pending">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -430,7 +501,7 @@
                                 Awaiting approval
                             </small>
                         </div>
-                        <div class="stat-icon" style="color: var(--warning);">
+                        <div class="stat-icon d-none d-md-block" style="color: var(--warning);">
                             <i class="fas fa-clock"></i>
                         </div>
                     </div>
@@ -438,7 +509,7 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6">
+        <div class="col-xxl-3 col-xl-4 col-md-6 col-12 mb-3">
             <div class="card stat-card card-default">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -450,7 +521,7 @@
                                 In repayment
                             </small>
                         </div>
-                        <div class="stat-icon" style="color: var(--info);">
+                        <div class="stat-icon d-none d-md-block" style="color: var(--info);">
                             <i class="fas fa-money-check-alt"></i>
                         </div>
                     </div>
@@ -462,34 +533,35 @@
     <!-- Main Content Row -->
     <div class="row animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
         <!-- Eligible Clients -->
-        <div class="col-lg-12 mb-4">
+        <div class="col-lg-12 col-12 mb-4">
             <div class="table-card">
                 <h5 class="table-title">
                     <i class="fas fa-star text-warning"></i> Clients Eligible for New Loans
-                    <small class="text-muted ms-2 fw-normal fs-6">(High savings balance)</small>
+                    <small class="text-muted ms-2 fw-normal fs-6 d-none d-md-inline">(High savings balance)</small>
                 </h5>
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Client</th>
-                                <th>Max Loan Amount</th>
-                                <th>Current Balance</th>
-                                <th>Available Limit</th>
+                                <th class="d-none d-md-table-cell">Client</th>
+                                <th>Max Loan</th>
+                                <th class="d-none d-sm-table-cell">Current Balance</th>
+                                <th>Available</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for item in eligible_for_loan %}
                             <tr>
-                                <td class="fw-semibold">{{ item.client.full_account_name }}</td>
+                                <td class="fw-semibold d-none d-md-table-cell">{{ item.client.full_account_name|truncatechars:15 }}</td>
                                 <td class="text-success fw-bold">UGX {{ item.max_loan|floatformat:0 }}</td>
-                                <td class="text-danger">UGX {{ item.current_loan_balance|floatformat:0 }}</td>
+                                <td class="text-danger d-none d-sm-table-cell">UGX {{ item.current_loan_balance|floatformat:0 }}</td>
                                 <td class="text-primary fw-bold">UGX {{ item.available_limit|floatformat:0 }}</td>
                                 <td>
                                     <a href="{% url 'loans:loan_application_create' %}?client={{ item.client.id }}"
                                         class="btn btn-sm btn-primary">
-                                        <i class="fas fa-file-signature me-1"></i> Apply
+                                        <i class="fas fa-file-signature d-none d-sm-inline me-1"></i>
+                                        <span>Apply</span>
                                     </a>
                                 </td>
                             </tr>
@@ -497,7 +569,7 @@
                             <tr>
                                 <td colspan="5" class="text-center py-4 text-muted">
                                     <i class="fas fa-search-dollar fa-2x mb-2 d-block text-muted"></i>
-                                    No clients currently eligible for new loans based on automated criteria.
+                                    No eligible clients
                                 </td>
                             </tr>
                             {% endfor %}
@@ -508,7 +580,7 @@
         </div>
 
         <!-- Pending Loans -->
-        <div class="col-lg-6">
+        <div class="col-lg-6 col-12 mb-4">
             <div class="table-card">
                 <h5 class="table-title">
                     <i class="fas fa-clock text-warning"></i> Pending Applications
@@ -526,10 +598,10 @@
                         <tbody>
                             {% for loan in pending_loans %}
                             <tr>
-                                <td>{{ loan.client.full_account_name|truncatechars:15 }}</td>
+                                <td>{{ loan.client.full_account_name|truncatechars:10 }}</td>
                                 <td class="fw-bold">UGX {{ loan.requested_amount|floatformat:0 }}</td>
-                                <td>{{ loan.application_date|date:"M d" }}</td>
-                                <td><span class="badge bg-warning text-dark">Pending</span></td>
+                                <td>{{ loan.application_date|date:"m/d" }}</td>
+                                <td><span class="badge bg-warning text-dark">P</span></td>
                             </tr>
                             {% empty %}
                             <tr>
@@ -545,10 +617,10 @@
         </div>
 
         <!-- Active Loans -->
-        <div class="col-lg-6">
+        <div class="col-lg-6 col-12 mb-4">
             <div class="table-card">
                 <h5 class="table-title">
-                    <i class="fas fa-check-circle text-success"></i> Active Loans (Disbursed)
+                    <i class="fas fa-check-circle text-success"></i> Active Loans
                 </h5>
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -556,21 +628,21 @@
                             <tr>
                                 <th>Client</th>
                                 <th>Amount</th>
-                                <th>Approved</th>
+                                <th class="d-none d-sm-table-cell">Approved</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for loan in active_loans %}
                             <tr>
-                                <td>{{ loan.client.full_account_name|truncatechars:15 }}</td>
+                                <td>{{ loan.client.full_account_name|truncatechars:10 }}</td>
                                 <td class="fw-bold">UGX {{ loan.approved_amount|floatformat:0 }}</td>
-                                <td>{{ loan.approval_date|date:"M d, Y" }}</td>
+                                <td class="d-none d-sm-table-cell">{{ loan.approval_date|date:"m/d" }}</td>
                                 <td>
                                     {% if loan.status == 'DISBURSED' %}
-                                    <span class="badge bg-success">Active</span>
+                                    <span class="badge bg-success">A</span>
                                     {% else %}
-                                    <span class="badge bg-info">Approved</span>
+                                    <span class="badge bg-info">AP</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -593,7 +665,7 @@
         <p class="mb-0">
             <i class="fas fa-shield-alt me-1"></i>
             Ateesafinancialstewards Loan & Savings Management System v1.0 © {% now "Y" %}
-            <span class="mx-2">•</span>
+            <span class="mx-2 d-none d-md-inline">•</span>
             <span class="text-success"><i class="fas fa-circle fa-xs"></i> System Status: Operational</span>
         </p>
     </footer>

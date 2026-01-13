@@ -6,9 +6,11 @@
 {% block page_subtitle %}Welcome back, {{ request.user.username }}{% endblock %}
 
 {% block page_actions %}
-<div class="btn-group shadow-sm">
+<div class="btn-group shadow-sm w-100 w-md-auto mb-3 mb-md-0">
     <a href="{% url 'accounts:account_create' %}" class="btn btn-primary">
-        <i class="fas fa-user-plus me-2"></i>New Account
+        <i class="fas fa-user-plus me-2"></i>
+        <span class="d-none d-md-inline">New Account</span>
+        <span class="d-md-none">New</span>
     </a>
     <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
         <span class="visually-hidden">Toggle Dropdown</span>
@@ -28,9 +30,50 @@
 {% endblock %}
 
 {% block content %}
+<style>
+    /* Mobile-specific styles */
+    @media (max-width: 768px) {
+        .stat-card .h3 {
+            font-size: 1.5rem !important;
+        }
+        .stat-card .stat-icon {
+            display: none;
+        }
+        .card-header h6 {
+            font-size: 0.9rem;
+        }
+        .table td, .table th {
+            padding: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .quick-actions .btn {
+            padding: 0.75rem !important;
+        }
+        .quick-actions .btn i {
+            font-size: 1.25rem !important;
+            margin-bottom: 0.25rem !important;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .col-xl-3 {
+            margin-bottom: 1rem;
+        }
+        .stat-card .h3 {
+            font-size: 1.25rem !important;
+        }
+        .text-xs {
+            font-size: 0.7rem !important;
+        }
+        .quick-actions .col-md-6 {
+            margin-bottom: 0.5rem;
+        }
+    }
+</style>
+
 <div class="row mb-4">
     <!-- Statistics Cards -->
-    <div class="col-xl-3 col-md-6 mb-4">
+    <div class="col-xxl-3 col-xl-4 col-md-6 col-12 mb-4">
         <div class="card stat-card border-start-primary border-start-4 shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center">
@@ -44,7 +87,7 @@
                             </span>
                         </div>
                     </div>
-                    <div class="stat-icon">
+                    <div class="stat-icon d-none d-md-block">
                         <i class="fas fa-users fa-2x text-gray-300"></i>
                     </div>
                 </div>
@@ -57,7 +100,7 @@
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
+    <div class="col-xxl-3 col-xl-4 col-md-6 col-12 mb-4">
         <div class="card stat-card border-start-success border-start-4 shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center">
@@ -69,7 +112,7 @@
                             <i class="fas fa-piggy-bank me-1"></i> Combined savings balance
                         </div>
                     </div>
-                    <div class="stat-icon">
+                    <div class="stat-icon d-none d-md-block">
                         <i class="fas fa-piggy-bank fa-2x text-gray-300"></i>
                     </div>
                 </div>
@@ -82,7 +125,7 @@
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
+    <div class="col-xxl-3 col-xl-4 col-md-6 col-12 mb-4">
         <div class="card stat-card border-start-warning border-start-4 shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center">
@@ -94,7 +137,7 @@
                             <i class="fas fa-clock me-1"></i> Awaiting approval
                         </div>
                     </div>
-                    <div class="stat-icon">
+                    <div class="stat-icon d-none d-md-block">
                         <i class="fas fa-hand-holding-usd fa-2x text-gray-300"></i>
                     </div>
                 </div>
@@ -107,7 +150,7 @@
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
+    <div class="col-xxl-3 col-xl-4 col-md-6 col-12 mb-4">
         <div class="card stat-card border-start-info border-start-4 shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center">
@@ -119,7 +162,7 @@
                             <i class="fas fa-exchange-alt me-1"></i> Recent savings activity
                         </div>
                     </div>
-                    <div class="stat-icon">
+                    <div class="stat-icon d-none d-md-block">
                         <i class="fas fa-exchange-alt fa-2x text-gray-300"></i>
                     </div>
                 </div>
@@ -135,34 +178,39 @@
 
 <div class="row mb-4">
     <!-- Recent Clients -->
-    <div class="col-lg-6 mb-4">
+    <div class="col-xl-6 col-12 mb-4">
         <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 fw-bold text-primary">
+            <div class="card-header bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                <h6 class="m-0 fw-bold text-primary mb-2 mb-md-0">
                     <i class="fas fa-users me-2"></i>Recent Client Accounts
                 </h6>
                 <a href="{% url 'accounts:account_list' %}" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-eye me-1"></i> View All
+                    <i class="fas fa-eye me-1"></i> 
+                    <span class="d-none d-sm-inline">View All</span>
+                    <span class="d-sm-none">All</span>
                 </a>
             </div>
             <div class="card-body p-0">
-                <div class="table- responsive">
+                <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th class="border-0 ps-4">Account No.</th>
-                                <th class="border-0">Name</th>
-                                <th class="border-0">Type</th>
-                                <th class="border-0 pe-4">Status</th>
+                                <th class="border-0 ps-3 ps-md-4">Account No.</th>
+                                <th class="border-0 d-none d-sm-table-cell">Name</th>
+                                <th class="border-0 d-none d-md-table-cell">Type</th>
+                                <th class="border-0 pe-3 pe-md-4">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for account in recent_accounts %}
                             <tr>
-                                <td class="ps-4 fw-semibold">{{ account.account_number }}</td>
-                                <td>{{ account.full_account_name|truncatechars:20 }}</td>
-                                <td>{{ account.get_account_type_display }}</td>
-                                <td class="pe-4">
+                                <td class="ps-3 ps-md-4 fw-semibold">
+                                    <span class="d-sm-none">{{ account.account_number|slice:"-4:" }}</span>
+                                    <span class="d-none d-sm-inline">{{ account.account_number }}</span>
+                                </td>
+                                <td class="d-none d-sm-table-cell">{{ account.full_account_name|truncatechars:20 }}</td>
+                                <td class="d-none d-md-table-cell">{{ account.get_account_type_display }}</td>
+                                <td class="pe-3 pe-md-4">
                                     {% if account.account_status == "ACTIVE" %}
                                     <span
                                         class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Active</span>
@@ -190,14 +238,16 @@
     </div>
 
     <!-- Recent Transactions -->
-    <div class="col-lg-6 mb-4">
+    <div class="col-xl-6 col-12 mb-4">
         <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 fw-bold text-primary">
+            <div class="card-header bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                <h6 class="m-0 fw-bold text-primary mb-2 mb-md-0">
                     <i class="fas fa-exchange-alt me-2"></i>Recent Savings Transactions
                 </h6>
                 <a href="{% url 'accounts:savings_list' %}" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-eye me-1"></i> View All
+                    <i class="fas fa-eye me-1"></i>
+                    <span class="d-none d-sm-inline">View All</span>
+                    <span class="d-sm-none">All</span>
                 </a>
             </div>
             <div class="card-body p-0">
@@ -205,27 +255,36 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th class="border-0 ps-4">Account</th>
+                                <th class="border-0 ps-3 ps-md-4 d-none d-sm-table-cell">Account</th>
                                 <th class="border-0">Type</th>
                                 <th class="border-0">Amount</th>
-                                <th class="border-0 pe-4">Date</th>
+                                <th class="border-0 pe-3 pe-md-4">Date</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for transaction in recent_savings %}
                             <tr>
-                                <td class="ps-4 fw-semibold">{{ transaction.client_account.account_number }}</td>
+                                <td class="ps-3 ps-md-4 fw-semibold d-none d-sm-table-cell">
+                                    {{ transaction.client_account.account_number }}
+                                </td>
                                 <td>
                                     {% if transaction.transaction_type == "DEPOSIT" %}
-                                    <span
-                                        class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Deposit</span>
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                                        <span class="d-none d-sm-inline">Deposit</span>
+                                        <span class="d-sm-none">D</span>
+                                    </span>
                                     {% else %}
-                                    <span
-                                        class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">Withdrawal</span>
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">
+                                        <span class="d-none d-sm-inline">Withdrawal</span>
+                                        <span class="d-sm-none">W</span>
+                                    </span>
                                     {% endif %}
                                 </td>
                                 <td class="fw-bold">UGX {{ transaction.amount|floatformat:0 }}</td>
-                                <td class="pe-4 text-muted">{{ transaction.transaction_date|date:"M d, H:i" }}</td>
+                                <td class="pe-3 pe-md-4 text-muted">
+                                    <span class="d-none d-md-inline">{{ transaction.transaction_date|date:"M d, H:i" }}</span>
+                                    <span class="d-md-none">{{ transaction.transaction_date|date:"m/d H:i" }}</span>
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>
@@ -245,7 +304,7 @@
 
 <div class="row">
     <!-- Quick Actions -->
-    <div class="col-lg-6 mb-4">
+    <div class="col-lg-6 col-12 mb-4">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-header bg-white border-0 py-3">
                 <h6 class="m-0 fw-bold text-primary">
@@ -254,36 +313,60 @@
             </div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-sm-6 col-12">
                         <a href="{% url 'accounts:account_create' %}"
-                            class="btn btn-primary w-100 p-3 d-flex flex-column align-items-center shadow-sm hover-effect">
-                            <i class="fas fa-user-plus fa-2x mb-2"></i>
-                            <span class="fw-semibold">New Client Account</span>
-                            <small class="text-white text-opacity-75 mt-1">Register new client</small>
+                            class="btn btn-primary w-100 p-2 p-md-3 d-flex flex-column align-items-center shadow-sm hover-effect">
+                            <i class="fas fa-user-plus fa-lg fa-2x-md mb-2"></i>
+                            <span class="fw-semibold text-center">
+                                <span class="d-none d-md-inline">New Client Account</span>
+                                <span class="d-md-none">New Client</span>
+                            </span>
+                            <small class="text-white text-opacity-75 mt-1 text-center">
+                                <span class="d-none d-md-inline">Register new client</span>
+                                <span class="d-md-none">Register</span>
+                            </small>
                         </a>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-sm-6 col-12">
                         <a href="{% url 'accounts:savings_deposit' %}"
-                            class="btn btn-success w-100 p-3 d-flex flex-column align-items-center shadow-sm hover-effect">
-                            <i class="fas fa-money-bill-wave fa-2x mb-2"></i>
-                            <span class="fw-semibold">Savings Deposit</span>
-                            <small class="text-white text-opacity-75 mt-1">Add funds to account</small>
+                            class="btn btn-success w-100 p-2 p-md-3 d-flex flex-column align-items-center shadow-sm hover-effect">
+                            <i class="fas fa-money-bill-wave fa-lg fa-2x-md mb-2"></i>
+                            <span class="fw-semibold text-center">
+                                <span class="d-none d-md-inline">Savings Deposit</span>
+                                <span class="d-md-none">Deposit</span>
+                            </span>
+                            <small class="text-white text-opacity-75 mt-1 text-center">
+                                <span class="d-none d-md-inline">Add funds to account</span>
+                                <span class="d-md-none">Add funds</span>
+                            </small>
                         </a>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-sm-6 col-12">
                         <a href="{% url 'accounts:savings_withdrawal' %}"
-                            class="btn btn-warning w-100 p-3 d-flex flex-column align-items-center shadow-sm hover-effect">
-                            <i class="fas fa-wallet fa-2x mb-2"></i>
-                            <span class="fw-semibold">Savings Withdrawal</span>
-                            <small class="text-white text-opacity-75 mt-1">Withdraw from account</small>
+                            class="btn btn-warning w-100 p-2 p-md-3 d-flex flex-column align-items-center shadow-sm hover-effect">
+                            <i class="fas fa-wallet fa-lg fa-2x-md mb-2"></i>
+                            <span class="fw-semibold text-center">
+                                <span class="d-none d-md-inline">Savings Withdrawal</span>
+                                <span class="d-md-none">Withdrawal</span>
+                            </span>
+                            <small class="text-white text-opacity-75 mt-1 text-center">
+                                <span class="d-none d-md-inline">Withdraw from account</span>
+                                <span class="d-md-none">Withdraw</span>
+                            </small>
                         </a>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-sm-6 col-12">
                         <a href="{% url 'accounts:reports_dashboard' %}"
-                            class="btn btn-info w-100 p-3 d-flex flex-column align-items-center shadow-sm hover-effect">
-                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
-                            <span class="fw-semibold">Generate Reports</span>
-                            <small class="text-white text-opacity-75 mt-1">View analytics & reports</small>
+                            class="btn btn-info w-100 p-2 p-md-3 d-flex flex-column align-items-center shadow-sm hover-effect">
+                            <i class="fas fa-chart-bar fa-lg fa-2x-md mb-2"></i>
+                            <span class="fw-semibold text-center">
+                                <span class="d-none d-md-inline">Generate Reports</span>
+                                <span class="d-md-none">Reports</span>
+                            </span>
+                            <small class="text-white text-opacity-75 mt-1 text-center">
+                                <span class="d-none d-md-inline">View analytics & reports</span>
+                                <span class="d-md-none">Analytics</span>
+                            </small>
                         </a>
                     </div>
                 </div>
@@ -292,7 +375,7 @@
     </div>
 
     <!-- System Information -->
-    <div class="col-lg-6 mb-4">
+    <div class="col-lg-6 col-12 mb-4">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-header bg-white border-0 py-3">
                 <h6 class="m-0 fw-bold text-primary">
@@ -301,7 +384,7 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-6">
+                    <div class="col-sm-6 col-12">
                         <div class="mb-4">
                             <small class="text-muted d-block mb-1">
                                 <i class="fas fa-user me-1"></i> Logged in as
@@ -315,7 +398,7 @@
                             <strong>{{ request.user.last_login|date:"M d, Y H:i"|default:"Never" }}</strong>
                         </div>
                     </div>
-                    <div class="col-6">
+                    <div class="col-sm-6 col-12">
                         <div class="mb-4">
                             <small class="text-muted d-block mb-1">
                                 <i class="fas fa-calendar me-1"></i> Current Date
@@ -331,8 +414,8 @@
                     </div>
                 </div>
                 <hr class="my-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3">
+                    <div class="mb-2 mb-sm-0">
                         <span class="text-muted">System Status:</span>
                         <span class="ms-2 fw-semibold">Operational</span>
                     </div>
@@ -341,8 +424,10 @@
                             <i class="fas fa-circle fa-xs"></i>
                         </span>
                         <span
-                            class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">All
-                            Systems OK</span>
+                            class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                            <span class="d-none d-sm-inline">All Systems OK</span>
+                            <span class="d-sm-none">OK</span>
+                        </span>
                     </div>
                 </div>
                 <div class="mt-3">
@@ -356,7 +441,6 @@
         </div>
     </div>
 </div>
-
 
 {% endblock %}
 
@@ -379,9 +463,10 @@
                 hour12: false
             });
 
+            // Update all time elements
             const timeElements = document.querySelectorAll('strong');
             timeElements.forEach(el => {
-                if (el.textContent.includes(':')) {
+                if (el.textContent.match(/^\d{2}:\d{2}$/)) {
                     el.textContent = timeString;
                 }
             });

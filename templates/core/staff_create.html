@@ -4,50 +4,282 @@
 {% block title %}Add Staff Member - Ateesafinancialstewards Investments{% endblock %}
 
 {% block app_layout %}
-<div class="container py-5">
+<div class="container py-4 py-md-5">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Add New Staff Member</h6>
+        <div class="col-12 col-md-10 col-lg-8 col-xl-6">
+            <!-- Page Header -->
+            <div class="page-header mb-4 mb-md-5">
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'core:admin_dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Add Staff</li>
+                    </ol>
+                </nav>
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h1 class="h3 mb-1 text-dark">Add New Staff Member</h1>
+                        <p class="text-muted mb-0">Create a new staff account with appropriate permissions</p>
+                    </div>
+                    <div class="d-none d-md-block">
+                        <a href="{% url 'core:admin_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                        </a>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form method="post">
+            </div>
+
+            <!-- Staff Creation Card -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0 pt-4 pb-3 px-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                            <i class="fas fa-user-plus text-primary fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Staff Information</h5>
+                            <p class="text-muted small mb-0">Fill in all required fields to create account</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" id="staffCreateForm">
                         {% csrf_token %}
 
+                        <!-- Non-field errors -->
                         {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
                             {% for error in form.non_field_errors %}
                             {{ error }}
                             {% endfor %}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                         {% endif %}
 
-                        {% for field in form %}
-                        <div class="mb-3">
-                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                            {{ field }}
-                            {% if field.help_text %}
-                            <div class="form-text">{{ field.help_text }}</div>
-                            {% endif %}
-                            {% if field.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in field.errors %}
-                                {{ error }}
-                                {% endfor %}
+                        <!-- Form fields -->
+                        <div class="row g-3 mb-4">
+                            {% for field in form %}
+                            <div class="col-12 {% if 'password' not in field.name and field.name != 'email' %}col-md-6{% endif %}">
+                                <div class="form-group">
+                                    <label for="{{ field.id_for_label }}" class="form-label fw-medium">
+                                        {{ field.label }}
+                                        {% if field.field.required %}
+                                        <span class="text-danger">*</span>
+                                        {% endif %}
+                                    </label>
+                                    
+                                    {% if 'password' in field.name %}
+                                    <div class="input-group">
+                                        {{ field }}
+                                        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="{{ field.id_for_label }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    {% else %}
+                                    {{ field }}
+                                    {% endif %}
+                                    
+                                    {% if field.help_text %}
+                                    <div class="form-text small mt-1">
+                                        <i class="fas fa-info-circle me-1"></i> {{ field.help_text }}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if field.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        {% for error in field.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
                             </div>
-                            {% endif %}
+                            {% endfor %}
                         </div>
-                        {% endfor %}
 
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Create Staff Account</button>
-                            <a href="{% url 'core:admin_dashboard' %}" class="btn btn-secondary">Cancel</a>
+                        <!-- Permissions Section (Optional - if your form has permission fields) -->
+                        <div class="permissions-section mb-4">
+                            <h6 class="mb-3 text-dark">Staff Permissions</h6>
+                            <div class="alert alert-info bg-light border-info border-start border-4">
+                                <div class="d-flex">
+                                    <i class="fas fa-shield-alt text-info mt-1 me-3"></i>
+                                    <div class="small">
+                                        <strong class="d-block mb-1">Default Permissions:</strong>
+                                        Staff members will have access to client management and reporting features based on their role.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex flex-column flex-md-row gap-3 pt-3 border-top">
+                            <button type="submit" class="btn btn-primary btn-lg flex-fill">
+                                <i class="fas fa-user-plus me-2"></i> Create Staff Account
+                            </button>
+                            <button type="reset" class="btn btn-outline-secondary flex-fill">
+                                <i class="fas fa-redo me-2"></i> Reset Form
+                            </button>
+                            <a href="{% url 'core:admin_dashboard' %}" class="btn btn-outline-dark flex-fill d-md-none">
+                                <i class="fas fa-times me-2"></i> Cancel
+                            </a>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <!-- Mobile Bottom Navigation -->
+            <div class="d-block d-md-none fixed-bottom bg-white border-top p-3 shadow-sm">
+                <div class="container">
+                    <a href="{% url 'core:admin_dashboard' %}" class="btn btn-outline-dark w-100">
+                        <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Custom styling for form elements */
+.form-control, .form-select {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.15);
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1.5rem !important;
+    }
+    
+    .form-control, .form-select {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.9rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Password toggle button */
+.toggle-password {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 0;
+}
+
+.input-group .form-control:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* Form validation styling */
+.invalid-feedback {
+    display: block;
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+/* Card hover effect */
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08) !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Password toggle functionality
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const passwordField = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    });
+    
+    // Form validation
+    const form = document.getElementById('staffCreateForm');
+    const requiredFields = form.querySelectorAll('[required]');
+    
+    requiredFields.forEach(field => {
+        field.addEventListener('blur', function() {
+            if (!this.value.trim()) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+    });
+    
+    // Form reset handler
+    form.addEventListener('reset', function() {
+        this.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+    });
+    
+    // Auto-focus first field
+    const firstField = form.querySelector('input:not([type="hidden"]), select, textarea');
+    if (firstField) {
+        firstField.focus();
+    }
+});
+</script>
 {% endblock %}

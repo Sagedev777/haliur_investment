@@ -9,10 +9,64 @@
 {% endblock %}
 
 {% block content %}
+<style>
+    /* Mobile-specific styles */
+    @media (max-width: 768px) {
+        .page-header .row {
+            flex-direction: column;
+        }
+        .page-header .col-auto {
+            margin-top: 1rem;
+        }
+        .stat-card .h3 {
+            font-size: 1.5rem !important;
+        }
+        .stat-icon {
+            display: none !important;
+        }
+        .table td, .table th {
+            padding: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .card-header h5 {
+            font-size: 1rem;
+        }
+        .btn-group {
+            display: flex;
+            width: 100%;
+        }
+        .btn-group .btn {
+            flex: 1;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .col-xl-3 {
+            margin-bottom: 1rem;
+        }
+        .stat-card .h3 {
+            font-size: 1.25rem !important;
+        }
+        .text-muted {
+            font-size: 0.8rem !important;
+        }
+        .today-summary .col-4 {
+            margin-bottom: 0.5rem;
+        }
+        .today-summary h3 {
+            font-size: 1.5rem !important;
+        }
+        .quick-actions .btn {
+            padding: 0.5rem !important;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
 <!-- Page Header -->
 <div class="page-header mb-4">
     <div class="row align-items-center">
-        <div class="col">
+        <div class="col-12 col-md">
             <h1 class="h2 mb-2 fw-bold text-gray-800">
                 <i class="fas fa-hand-holding-usd me-2 text-primary"></i>Loan Dashboard
             </h1>
@@ -20,13 +74,17 @@
                 <i class="fas fa-chart-line me-1"></i> Overview of loan portfolio and performance
             </p>
         </div>
-        <div class="col-auto">
-            <div class="btn-group" role="group">
+        <div class="col-12 col-md-auto mt-3 mt-md-0">
+            <div class="btn-group w-100 w-md-auto" role="group">
                 <button type="button" class="btn btn-outline-primary" onclick="window.print()">
-                    <i class="fas fa-print me-1"></i>Print
+                    <i class="fas fa-print me-1 d-none d-sm-inline"></i>
+                    <span class="d-none d-sm-inline">Print</span>
+                    <span class="d-sm-none">Print</span>
                 </button>
                 <a href="{% url 'loans:loan_portfolio_report' %}?export=csv" class="btn btn-outline-success">
-                    <i class="fas fa-file-export me-1"></i>Export
+                    <i class="fas fa-file-export me-1 d-none d-sm-inline"></i>
+                    <span class="d-none d-sm-inline">Export</span>
+                    <span class="d-sm-none">Export</span>
                 </a>
             </div>
         </div>
@@ -35,19 +93,19 @@
 
 <!-- Key Metrics -->
 <div class="row mb-4">
-    <div class="col-xl-3 col-md-6 mb-3">
+    <div class="col-xxl-3 col-xl-4 col-md-6 col-12 mb-3">
         <div class="card stat-card border-start-primary border-top-0 border-end-0 border-bottom-0 border-start-4 shadow-sm h-100">
             <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div>
+                    <div class="w-100">
                         <h6 class="text-muted mb-2">Total Portfolio</h6>
                         <h3 class="mb-1 fw-bold text-gray-800">UGX {{ total_portfolio|floatformat:0|intcomma }}</h3>
-                        <small class="text-muted">
+                        <small class="text-muted d-block">
                             <i class="fas fa-arrow-up text-success me-1"></i>
                             {{ active_loans }} active loans
                         </small>
                     </div>
-                    <div class="stat-icon text-primary opacity-75">
+                    <div class="stat-icon text-primary opacity-75 d-none d-md-block">
                         <i class="fas fa-chart-line fa-2x"></i>
                     </div>
                 </div>
@@ -55,16 +113,16 @@
         </div>
     </div>
     
-    <div class="col-xl-3 col-md-6 mb-3">
+    <div class="col-xxl-3 col-xl-4 col-md-6 col-12 mb-3">
         <div class="card stat-card border-start-success border-top-0 border-end-0 border-bottom-0 border-start-4 shadow-sm h-100">
             <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div>
+                    <div class="w-100">
                         <h6 class="text-muted mb-2">Total Disbursed</h6>
                         <h3 class="mb-1 fw-bold text-gray-800">UGX {{ total_disbursed|floatformat:0|intcomma }}</h3>
-                        <small class="text-muted">Total loans disbursed</small>
+                        <small class="text-muted d-block">Total loans disbursed</small>
                     </div>
-                    <div class="stat-icon text-success opacity-75">
+                    <div class="stat-icon text-success opacity-75 d-none d-md-block">
                         <i class="fas fa-hand-holding-usd fa-2x"></i>
                     </div>
                 </div>
@@ -72,19 +130,19 @@
         </div>
     </div>
     
-    <div class="col-xl-3 col-md-6 mb-3">
+    <div class="col-xxl-3 col-xl-4 col-md-6 col-12 mb-3">
         <div class="card stat-card border-start-warning border-top-0 border-end-0 border-bottom-0 border-start-4 shadow-sm h-100">
             <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div>
+                    <div class="w-100">
                         <h6 class="text-muted mb-2">Overdue Amount</h6>
                         <h3 class="mb-1 fw-bold text-gray-800">UGX {{ overdue_loans_amount|floatformat:0|intcomma }}</h3>
-                        <small class="text-muted">
+                        <small class="text-muted d-block">
                             <i class="fas fa-exclamation-triangle text-warning me-1"></i>
                             {{ overdue_loans }} overdue loans
                         </small>
                     </div>
-                    <div class="stat-icon text-warning opacity-75">
+                    <div class="stat-icon text-warning opacity-75 d-none d-md-block">
                         <i class="fas fa-exclamation-circle fa-2x"></i>
                     </div>
                 </div>
@@ -92,16 +150,16 @@
         </div>
     </div>
     
-    <div class="col-xl-3 col-md-6 mb-3">
-        <div class="card stat-card border-start-info border-top-0 borderend-0 border-bottom-0 border-start-4 shadow-sm h-100">
+    <div class="col-xxl-3 col-xl-4 col-md-6 col-12 mb-3">
+        <div class="card stat-card border-start-info border-top-0 border-end-0 border-bottom-0 border-start-4 shadow-sm h-100">
             <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div>
+                    <div class="w-100">
                         <h6 class="text-muted mb-2">Pending Applications</h6>
                         <h3 class="mb-1 fw-bold text-gray-800">{{ pending_applications }}</h3>
-                        <small class="text-muted">Awaiting review</small>
+                        <small class="text-muted d-block">Awaiting review</small>
                     </div>
-                    <div class="stat-icon text-info opacity-75">
+                    <div class="stat-icon text-info opacity-75 d-none d-md-block">
                         <i class="fas fa-file-alt fa-2x"></i>
                     </div>
                 </div>
@@ -113,36 +171,47 @@
 <!-- Charts and Tables -->
 <div class="row mb-4">
     <!-- Recent Applications -->
-    <div class="col-lg-6 mb-4">
+    <div class="col-xl-6 col-12 mb-4">
         <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-white border-0 py-3">
-                <h5 class="card-title mb-0 fw-bold text-gray-800">
-                    <i class="fas fa-file-contract me-2 text-primary"></i>Recent Loan Applications
+            <div class="card-header bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                <h5 class="card-title mb-2 mb-md-0 fw-bold text-gray-800">
+                    <i class="fas fa-file-contract me-2 text-primary d-none d-sm-inline"></i>
+                    <span class="d-none d-sm-inline">Recent Loan Applications</span>
+                    <span class="d-sm-none">Recent Apps</span>
                 </h5>
+                <div class="d-none d-md-block">
+                    <a href="{% url 'loans:loan_application_list' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye me-1"></i> View All
+                    </a>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th class="border-0">App #</th>
-                                <th class="border-0">Client</th>
+                                <th class="border-0 ps-3 ps-md-4">App #</th>
+                                <th class="border-0 d-none d-sm-table-cell">Client</th>
                                 <th class="border-0">Amount</th>
-                                <th class="border-0">Status</th>
-                                <th class="border-0">Date</th>
+                                <th class="border-0 d-none d-md-table-cell">Status</th>
+                                <th class="border-0 pe-3 pe-md-4">Date</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for app in recent_applications %}
                             <tr>
-                                <td>
+                                <td class="ps-3 ps-md-4">
                                     <a href="{% url 'loans:loan_application_detail' app.pk %}" class="text-decoration-none fw-semibold text-primary">
-                                        {{ app.application_number|truncatechars:8 }}
+                                        <span class="d-sm-none">{{ app.application_number|slice:"-4:" }}</span>
+                                        <span class="d-none d-sm-inline">{{ app.application_number|truncatechars:8 }}</span>
                                     </a>
                                 </td>
-                                <td>{{ app.client.full_account_name|truncatechars:20 }}</td>
-                                <td class="fw-semibold">UGX {{ app.requested_amount|floatformat:0|intcomma }}</td>
-                                <td>
+                                <td class="d-none d-sm-table-cell">{{ app.client.full_account_name|truncatechars:20 }}</td>
+                                <td class="fw-semibold">
+                                    <span class="d-none d-sm-inline">UGX {{ app.requested_amount|floatformat:0|intcomma }}</span>
+                                    <span class="d-sm-none">{{ app.requested_amount|floatformat:0|intword }}</span>
+                                </td>
+                                <td class="d-none d-md-table-cell">
                                     {% if app.status == 'SUBMITTED' %}
                                     <span class="badge badge-status-pending bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">Pending</span>
                                     {% elif app.status == 'APPROVED' %}
@@ -153,7 +222,10 @@
                                     <span class="badge badge-secondary">{{ app.status }}</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-muted">{{ app.application_date|date:"M d" }}</td>
+                                <td class="pe-3 pe-md-4 text-muted">
+                                    <span class="d-none d-md-inline">{{ app.application_date|date:"M d" }}</span>
+                                    <span class="d-md-none">{{ app.application_date|date:"m/d" }}</span>
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>
@@ -166,8 +238,8 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="card-footer bg-white border-0 py-3">
-                    <a href="{% url 'loans:loan_application_list' %}" class="btn btn-sm btn-outline-primary">
+                <div class="card-footer bg-white border-0 py-3 d-md-none">
+                    <a href="{% url 'loans:loan_application_list' %}" class="btn btn-sm btn-outline-primary w-100">
                         <i class="fas fa-eye me-1"></i> View All Applications
                     </a>
                 </div>
@@ -176,35 +248,50 @@
     </div>
     
     <!-- Upcoming Payments -->
-    <div class="col-lg-6 mb-4">
+    <div class="col-xl-6 col-12 mb-4">
         <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-white border-0 py-3">
-                <h5 class="card-title mb-0 fw-bold text-gray-800">
-                    <i class="fas fa-calendar-check me-2 text-success"></i>Upcoming Payments (Next 7 Days)
+            <div class="card-header bg-white border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                <h5 class="card-title mb-2 mb-md-0 fw-bold text-gray-800">
+                    <i class="fas fa-calendar-check me-2 text-success d-none d-sm-inline"></i>
+                    <span class="d-none d-sm-inline">Upcoming Payments</span>
+                    <span class="d-sm-none">Upcoming</span>
                 </h5>
+                <div class="d-none d-md-block">
+                    <a href="{% url 'loans:loan_list' %}?status=ACTIVE" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye me-1"></i> Active Loans
+                    </a>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th class="border-0">Loan #</th>
-                                <th class="border-0">Client</th>
+                                <th class="border-0 ps-3 ps-md-4">Loan #</th>
+                                <th class="border-0 d-none d-sm-table-cell">Client</th>
                                 <th class="border-0">Due Date</th>
-                                <th class="border-0">Amount</th>
-                                <th class="border-0">Action</th>
+                                <th class="border-0 d-none d-sm-table-cell">Amount</th>
+                                <th class="border-0 pe-3 pe-md-4">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for payment in upcoming_payments %}
                             <tr>
-                                <td class="fw-semibold">{{ payment.loan.loan_number|truncatechars:8 }}</td>
-                                <td>{{ payment.loan.client.full_account_name|truncatechars:20 }}</td>
-                                <td class="text-primary fw-semibold">{{ payment.due_date|date:"M d, Y" }}</td>
-                                <td class="fw-bold">UGX {{ payment.total_amount|floatformat:0|intcomma }}</td>
-                                <td>
+                                <td class="ps-3 ps-md-4 fw-semibold">
+                                    <span class="d-sm-none">{{ payment.loan.loan_number|slice:"-4:" }}</span>
+                                    <span class="d-none d-sm-inline">{{ payment.loan.loan_number|truncatechars:8 }}</span>
+                                </td>
+                                <td class="d-none d-sm-table-cell">{{ payment.loan.client.full_account_name|truncatechars:20 }}</td>
+                                <td class="text-primary fw-semibold">
+                                    <span class="d-none d-md-inline">{{ payment.due_date|date:"M d, Y" }}</span>
+                                    <span class="d-md-none">{{ payment.due_date|date:"m/d" }}</span>
+                                </td>
+                                <td class="d-none d-sm-table-cell fw-bold">UGX {{ payment.total_amount|floatformat:0|intcomma }}</td>
+                                <td class="pe-3 pe-md-4">
                                     <a href="{% url 'loans:process_payment' payment.loan.pk %}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-money-bill-wave me-1"></i> Pay
+                                        <i class="fas fa-money-bill-wave me-1 d-none d-sm-inline"></i>
+                                        <span class="d-none d-sm-inline">Pay</span>
+                                        <span class="d-sm-none">Pay</span>
                                     </a>
                                 </td>
                             </tr>
@@ -212,15 +299,16 @@
                             <tr>
                                 <td colspan="5" class="text-center py-5 text-muted">
                                     <i class="fas fa-calendar-check fa-2x mb-3 d-block opacity-50"></i>
-                                    No upcoming payments in next 7 days
+                                    <span class="d-none d-sm-inline">No upcoming payments in next 7 days</span>
+                                    <span class="d-sm-none">No upcoming</span>
                                 </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                <div class="card-footer bg-white border-0 py-3">
-                    <a href="{% url 'loans:loan_list' %}?status=ACTIVE" class="btn btn-sm btn-outline-primary">
+                <div class="card-footer bg-white border-0 py-3 d-md-none">
+                    <a href="{% url 'loans:loan_list' %}?status=ACTIVE" class="btn btn-sm btn-outline-primary w-100">
                         <i class="fas fa-eye me-1"></i> View Active Loans
                     </a>
                 </div>
@@ -232,41 +320,54 @@
 <!-- Second Row -->
 <div class="row mb-4">
     <!-- Overdue Loans -->
-    <div class="col-lg-6 mb-4">
+    <div class="col-xl-6 col-12 mb-4">
         <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-warning bg-opacity-10 border-0 py-3">
-                <h5 class="card-title mb-0 fw-bold text-gray-800">
-                    <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Overdue Loans
+            <div class="card-header bg-warning bg-opacity-10 border-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                <h5 class="card-title mb-2 mb-md-0 fw-bold text-gray-800">
+                    <i class="fas fa-exclamation-triangle me-2 text-warning d-none d-sm-inline"></i>
+                    <span class="d-none d-sm-inline">Overdue Loans</span>
+                    <span class="d-sm-none">Overdue</span>
                 </h5>
+                <div class="d-none d-md-block">
+                    <a href="{% url 'loans:overdue_loans_report' %}" class="btn btn-sm btn-outline-warning">
+                        <i class="fas fa-file-alt me-1"></i> Report
+                    </a>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th class="border-0">Loan #</th>
-                                <th class="border-0">Client</th>
-                                <th class="border-0">Days Overdue</th>
-                                <th class="border-0">Amount Due</th>
-                                <th class="border-0">Action</th>
+                                <th class="border-0 ps-3 ps-md-4">Loan #</th>
+                                <th class="border-0 d-none d-sm-table-cell">Client</th>
+                                <th class="border-0">Days</th>
+                                <th class="border-0 d-none d-sm-table-cell">Amount Due</th>
+                                <th class="border-0 pe-3 pe-md-4">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for loan in overdue_list %}
                             <tr>
-                                <td>
+                                <td class="ps-3 ps-md-4">
                                     <a href="{% url 'loans:loan_detail' loan.pk %}" class="text-decoration-none fw-semibold text-primary">
-                                        {{ loan.loan_number|truncatechars:8 }}
+                                        <span class="d-sm-none">{{ loan.loan_number|slice:"-4:" }}</span>
+                                        <span class="d-none d-sm-inline">{{ loan.loan_number|truncatechars:8 }}</span>
                                     </a>
                                 </td>
-                                <td>{{ loan.client.full_account_name|truncatechars:20 }}</td>
+                                <td class="d-none d-sm-table-cell">{{ loan.client.full_account_name|truncatechars:20 }}</td>
                                 <td>
-                                    <span class="badge bg-danger">{{ loan.days_overdue }} days</span>
+                                    <span class="badge bg-danger">
+                                        <span class="d-none d-sm-inline">{{ loan.days_overdue }} days</span>
+                                        <span class="d-sm-none">{{ loan.days_overdue }}</span>
+                                    </span>
                                 </td>
-                                <td class="fw-bold">UGX {{ loan.overdue_amount|floatformat:0|intcomma }}</td>
-                                <td>
+                                <td class="d-none d-sm-table-cell fw-bold">UGX {{ loan.overdue_amount|floatformat:0|intcomma }}</td>
+                                <td class="pe-3 pe-md-4">
                                     <a href="{% url 'loans:process_payment' loan.pk %}" class="btn btn-sm btn-outline-warning">
-                                        <i class="fas fa-bullhorn me-1"></i> Collect
+                                        <i class="fas fa-bullhorn me-1 d-none d-sm-inline"></i>
+                                        <span class="d-none d-sm-inline">Collect</span>
+                                        <span class="d-sm-none">Collect</span>
                                     </a>
                                 </td>
                             </tr>
@@ -281,8 +382,8 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="card-footer bg-white border-0 py-3">
-                    <a href="{% url 'loans:overdue_loans_report' %}" class="btn btn-sm btn-outline-warning">
+                <div class="card-footer bg-white border-0 py-3 d-md-none">
+                    <a href="{% url 'loans:overdue_loans_report' %}" class="btn btn-sm btn-outline-warning w-100">
                         <i class="fas fa-file-alt me-1"></i> View Overdue Report
                     </a>
                 </div>
@@ -291,31 +392,48 @@
     </div>
     
     <!-- Today's Stats -->
-    <div class="col-lg-6 mb-4">
+    <div class="col-xl-6 col-12 mb-4">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-header bg-white border-0 py-3">
                 <h5 class="card-title mb-0 fw-bold text-gray-800">
-                    <i class="fas fa-chart-pie me-2 text-info"></i>Today's Summary
+                    <i class="fas fa-chart-pie me-2 text-info d-none d-sm-inline"></i>
+                    <span class="d-none d-sm-inline">Today's Summary</span>
+                    <span class="d-sm-none">Today</span>
                 </h5>
             </div>
             <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-4">
-                        <div class="p-3">
+                <div class="row text-center today-summary">
+                    <div class="col-4 col-sm-4">
+                        <div class="p-2 p-sm-3">
                             <h3 class="text-primary fw-bold">{{ applications_today }}</h3>
-                            <small class="text-muted">Applications</small>
+                            <small class="text-muted">
+                                <span class="d-none d-sm-inline">Applications</span>
+                                <span class="d-sm-none">Apps</span>
+                            </small>
                         </div>
                     </div>
-                    <div class="col-4">
-                        <div class="p-3">
-                            <h3 class="text-success fw-bold">UGX {{ disbursements_today|floatformat:0|intcomma }}</h3>
-                            <small class="text-muted">Disbursed</small>
+                    <div class="col-4 col-sm-4">
+                        <div class="p-2 p-sm-3">
+                            <h3 class="text-success fw-bold">
+                                <span class="d-none d-sm-inline">UGX {{ disbursements_today|floatformat:0|intcomma }}</span>
+                                <span class="d-sm-none">{{ disbursements_today|floatformat:0|intword }}</span>
+                            </h3>
+                            <small class="text-muted">
+                                <span class="d-none d-sm-inline">Disbursed</span>
+                                <span class="d-sm-none">Disb.</span>
+                            </small>
                         </div>
                     </div>
-                    <div class="col-4">
-                        <div class="p-3">
-                            <h3 class="text-info fw-bold">UGX {{ payments_today|floatformat:0|intcomma }}</h3>
-                            <small class="text-muted">Collections</small>
+                    <div class="col-4 col-sm-4">
+                        <div class="p-2 p-sm-3">
+                            <h3 class="text-info fw-bold">
+                                <span class="d-none d-sm-inline">UGX {{ payments_today|floatformat:0|intcomma }}</span>
+                                <span class="d-sm-none">{{ payments_today|floatformat:0|intword }}</span>
+                            </h3>
+                            <small class="text-muted">
+                                <span class="d-none d-sm-inline">Collections</span>
+                                <span class="d-sm-none">Coll.</span>
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -323,14 +441,20 @@
                 <!-- Quick Actions -->
                 <div class="text-center">
                     <div class="d-flex flex-wrap gap-2 justify-content-center">
-                        <a href="{% url 'loans:loan_application_create' %}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i>New Application
+                        <a href="{% url 'loans:loan_application_create' %}" class="btn btn-primary btn-sm btn-md-normal">
+                            <i class="fas fa-plus me-1 d-none d-sm-inline"></i>
+                            <span class="d-none d-sm-inline">New Application</span>
+                            <span class="d-sm-none">New App</span>
                         </a>
-                        <a href="{% url 'loans:quick_payment' %}" class="btn btn-success">
-                            <i class="fas fa-money-bill-wave me-1"></i>Quick Payment
+                        <a href="{% url 'loans:quick_payment' %}" class="btn btn-success btn-sm btn-md-normal">
+                            <i class="fas fa-money-bill-wave me-1 d-none d-sm-inline"></i>
+                            <span class="d-none d-sm-inline">Quick Payment</span>
+                            <span class="d-sm-none">Payment</span>
                         </a>
-                        <a href="{% url 'loans:loan_calculator' %}" class="btn btn-info">
-                            <i class="fas fa-calculator me-1"></i>Calculator
+                        <a href="{% url 'loans:loan_calculator' %}" class="btn btn-info btn-sm btn-md-normal">
+                            <i class="fas fa-calculator me-1 d-none d-sm-inline"></i>
+                            <span class="d-none d-sm-inline">Calculator</span>
+                            <span class="d-sm-none">Calc</span>
                         </a>
                     </div>
                 </div>
@@ -345,11 +469,15 @@
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white border-0 py-3">
                 <h5 class="card-title mb-0 fw-bold text-gray-800">
-                    <i class="fas fa-chart-line me-2"></i>Monthly Performance
+                    <i class="fas fa-chart-line me-2 d-none d-sm-inline"></i>
+                    <span class="d-none d-sm-inline">Monthly Performance</span>
+                    <span class="d-sm-none">Performance</span>
                 </h5>
             </div>
             <div class="card-body">
-                <canvas id="performanceChart" height="100"></canvas>
+                <div class="chart-container" style="position: relative; height: 250px; width:100%">
+                    <canvas id="performanceChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -380,6 +508,22 @@
     
     .card {
         border-radius: 0.5rem;
+    }
+    
+    /* Button adjustments for mobile */
+    .btn-md-normal {
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .btn-md-normal {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        .chart-container {
+            height: 200px !important;
+        }
     }
 </style>
 
@@ -418,21 +562,32 @@
                 legend: {
                     position: 'top',
                     labels: {
-                        padding: 20,
+                        padding: 10,
                         usePointStyle: true,
+                        font: {
+                            size: window.innerWidth < 768 ? 10 : 12
+                        }
                     }
                 },
                 tooltip: {
                     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                    padding: 12,
+                    padding: 8,
                     titleFont: {
-                        size: 14
+                        size: window.innerWidth < 768 ? 11 : 14
                     },
                     bodyFont: {
-                        size: 13
+                        size: window.innerWidth < 768 ? 10 : 13
                     },
                     callbacks: {
                         label: function(context) {
+                            if (window.innerWidth < 576) {
+                                // Short format for mobile
+                                var value = context.raw;
+                                if (value >= 1000000) {
+                                    return 'UGX ' + (value / 1000000).toFixed(1) + 'M';
+                                }
+                                return 'UGX ' + value.toLocaleString();
+                            }
                             return 'UGX ' + context.raw.toLocaleString();
                         }
                     }
@@ -446,13 +601,28 @@
                     },
                     ticks: {
                         callback: function(value) {
+                            if (window.innerWidth < 576) {
+                                // Short format for mobile
+                                if (value >= 1000000) {
+                                    return 'UGX ' + (value / 1000000).toFixed(1) + 'M';
+                                }
+                                return 'UGX ' + value;
+                            }
                             return 'UGX ' + value.toLocaleString();
+                        },
+                        font: {
+                            size: window.innerWidth < 768 ? 9 : 11
                         }
                     }
                 },
                 x: {
                     grid: {
                         display: false
+                    },
+                    ticks: {
+                        font: {
+                            size: window.innerWidth < 768 ? 9 : 11
+                        }
                     }
                 }
             },
@@ -462,8 +632,8 @@
             },
             elements: {
                 point: {
-                    radius: 3,
-                    hoverRadius: 6
+                    radius: window.innerWidth < 768 ? 2 : 3,
+                    hoverRadius: window.innerWidth < 768 ? 4 : 6
                 }
             }
         }
@@ -476,6 +646,11 @@
             card.style.animationDelay = `${index * 0.1}s`;
             card.classList.add('animate__animated', 'animate__fadeInUp');
         });
+    });
+    
+    // Update chart on window resize
+    window.addEventListener('resize', function() {
+        chart.update();
     });
 </script>
 {% endblock %}
